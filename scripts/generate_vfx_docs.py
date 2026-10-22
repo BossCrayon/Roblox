@@ -9,6 +9,9 @@ files = [
     'src/ReplicatedStorage/Shared/AnimConfig.lua',
     'src/ReplicatedStorage/Shared/VfxConfig.lua',
     'src/ReplicatedStorage/Shared/VisualBudget.lua',
+    'src/ServerScriptService/AdminConfig.lua',
+    'src/ServerScriptService/Domain/AdminProgression.lua',
+    'src/ServerScriptService/Bootstrap.server.lua',
     'src/ServerScriptService/Services/WorldService.lua',
 ]
 files.extend(str(p.relative_to(root)) for p in sorted(

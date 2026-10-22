@@ -30,6 +30,11 @@
     "explorer_path": "ServerScriptService/Domain/VisualAccess"
   },
   {
+    "file": "src/ServerScriptService/Domain/AdminProgression.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ServerScriptService/Domain/AdminProgression"
+  },
+  {
     "file": "src/StarterPlayer/StarterPlayerScripts/UI/Kit.lua",
     "script_class": "ModuleScript",
     "explorer_path": "StarterPlayer/StarterPlayerScripts/UI/Kit"

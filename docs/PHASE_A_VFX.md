@@ -76,6 +76,8 @@ Every building block has a texture-free fallback. Simplified detail is selected 
 
 ## Preview and accessibility
 
+The later [admin powers update](ADMIN_POWERS.md) adds an authorized **ADMIN** shortcut and arbitrary pathway/Sequence 9–1 selection. F8 still opens the same panel. `johnskie816` is configured in the server allowlist; the server resolves its numeric ID through Roblox.
+
 The VFX Test Room runs on the local client in Studio and requires server-validated developer access. Open **F8** using the individual creator account or an ID explicitly listed in `ServerScriptService.AdminConfig.AdminUserIds`, then use the VFX Test Room control. An unpublished place may have CreatorId 0; put your real numeric Roblox user ID in the existing server allowlist if needed. Usernames, group membership and Studio's negative synthetic user IDs do not confer access.
 
 The preview room is cosmetic. Its controls do not call a damage remote or modify the server world. Close it before checking normal combat. It provides the eleven reusable blocks in each of the three power tiers and each pathway palette. Reduced motion disables camera shake, FOV kicks, cosmetic hit-stop, impact flashes, hit highlights/recoil and screen flashes; damage numbers and slow death fades remain. ImpactFlash and ScreenEdgePulse share a maximum-three-per-second gate. Low graphics chooses simplified geometry and lower budgets. The normal Journal settings apply the same preferences during play.

@@ -11,6 +11,7 @@ files=[
  'src/ReplicatedStorage/Shared/RuntimeConfig.lua',
  'src/ServerScriptService/AdminConfig.lua',
  'src/ServerScriptService/Domain/VisualAccess.lua',
+ 'src/ServerScriptService/Domain/AdminProgression.lua',
  'src/StarterPlayer/StarterPlayerScripts/UI/Kit.lua',
  'src/StarterPlayer/StarterPlayerScripts/UI/Hud.lua',
  'src/StarterPlayer/StarterPlayerScripts/UI/Menus.lua',
@@ -33,7 +34,7 @@ for file in files:
     path=str(p.relative_to('src').parent/name)
     manifest.append(dict(file=file,script_class=kind,explorer_path=path))
 parts=['# Phase 1 — complete copy/paste code\n',
-       'All 16 added or changed production Luau files are supplied in full. Create Folder parents, keep every existing unchanged module, and **replace** same-name scripts rather than running duplicate Bootstrap/Mysteries entrypoints. Install while Play is stopped. Theme is deliberately first. The complete built place is `studio/Mysteries.rbxlx`.\n',
+       f'All {len(files)} production Luau files are supplied in full, including later admin-control updates. Create Folder parents, keep every existing unchanged module, and **replace** same-name scripts rather than running duplicate Bootstrap/Mysteries entrypoints. Install while Play is stopped. Theme is deliberately first. The complete built place is `studio/Mysteries.rbxlx`.\n',
        'The reference concept images were not received. This implementation follows the Art Bible. Only Phase 1 is implemented; permanent label replacement and map redesign remain later phases.\n',
        '| File | Class | Explorer path |\n|---|---|---|']
 for entry in manifest:parts.append('| `'+entry['file']+'` | '+entry['script_class']+' | `'+entry['explorer_path']+'` |')

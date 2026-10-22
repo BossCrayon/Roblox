@@ -165,6 +165,7 @@ return function(data: any,load: any,sharedNode: any)
     hud:Resize(layout);menus:Resize(layout);dev:Resize(layout);feedback:Resize(layout)
     hud:Render(state,now);menus:Update(state);feedback:Update(state);dev:Update(state)
     check(not dev.Root.Visible and not dev.Allowed,"No public developer panel")
+    check(not dev.ToggleButton.Visible,"Admin button hidden from ordinary players")
     dev:Toggle();check(not dev.Root.Visible,"F8 component cannot open without server permission")
     for i=2,6 do
         check(hud.Slots[i].Seal.Visible and hud.Slots[i].Cost.Text=="" and not hud.Slots[i].KeyBadge.Visible,"Vacant slots show seals without placeholder text")
@@ -180,6 +181,11 @@ return function(data: any,load: any,sharedNode: any)
         viewport.X=case[1];viewport.Y=case[2]
         local l=Layout.Resolve(T,case[1],case[2],case[3]);hud:Resize(l);menus:Resize(l);feedback:Resize(l);dev:Resize(l)
         check(hud.Hotbar.AbsoluteSize.X==l.Hotbar.W,"Component applies measured hotbar width")
+        local button={X=dev.ToggleButton.AbsolutePosition.X,Y=dev.ToggleButton.AbsolutePosition.Y,
+            W=dev.ToggleButton.AbsoluteSize.X,H=dev.ToggleButton.AbsoluteSize.Y}
+        check(not Layout.Intersects(button,l.Resources),"Admin button clears vitals on all devices")
+        check(not Layout.Intersects(button,l.Journal),"Admin button clears Journal on all devices")
+        check(button.X>=0 and button.Y>=0 and button.X+button.W<=l.Width and button.Y+button.H<=l.Height,"Admin touch target stays in safe area")
     end
     viewport.X=1920;viewport.Y=1044;menus:Resize(layout)
     state.PathwayId=false;state.Sequence=false;state.Digestion=0;state.Loadout={};state.Gold=0
@@ -206,8 +212,23 @@ return function(data: any,load: any,sharedNode: any)
     check(requests[#requests].Action=="Buy","Altar uses validated server purchase intent")
     local developerState=table.clone(state);developerState.Developer=true;developerState.DeveloperInfo={SessionOnly=true,Mode="Normal",Ready=true}
     dev:Update(developerState);dev:Toggle();check(dev.Root.Visible,"Authorized F8 panel opens")
-    dev.Buttons[1].Activated:Fire();check(requests[#requests].Action=="DevMastery","Test action is isolated to developer UI")
+    check(dev.ToggleButton.Visible,"Authorized user gets visible admin button")
+    dev.ToggleButton.Activated:Fire();check(not dev.Root.Visible,"Visible admin button closes panel")
+    dev.ToggleButton.Activated:Fire();check(dev.Root.Visible,"Visible admin button opens panel")
+    local beforeAdmin=#requests
+    dev.PathButtons.Apprentice.Activated:Fire();dev.SequenceButtons[4].Activated:Fire()
+    check(#requests==beforeAdmin,"Selecting pathway/sequence waits for Apply")
+    dev.Apply.Activated:Fire()
+    check(requests[#requests].Action=="AdminSet" and requests[#requests].Payload.PathwayId=="Apprentice"
+        and requests[#requests].Payload.Sequence==4,"Admin submits exact selected pathway and sequence")
+    dev.Apply.Activated:Fire();check(#requests==beforeAdmin+1,"Pending admin change suppresses duplicate submits")
+    developerState.PathwayId="Apprentice";developerState.Sequence=4;developerState.DeveloperInfo.SessionOnly=false
+    dev:Update(developerState);check(dev.Apply.Interactable,"Admin selector works in live saved sessions")
+    dev:SetSuppressed(true);check(not dev.ToggleButton.Visible and not dev.Root.Visible,"Modal hides admin controls")
+    dev:SetSuppressed(false);check(dev.ToggleButton.Visible,"Admin shortcut restored after modal")
     dev:Update(state);check(not dev.Root.Visible,"Permission loss closes developer UI")
+    check(not dev.ToggleButton.Visible,"Permission loss removes admin shortcut")
+    dev.Apply.Activated:Fire();check(#requests==beforeAdmin+1,"Unauthorized client component cannot submit an admin command")
     local VM={}
     local function v3(x,y,z) return setmetatable({X=x,Y=y,Z=z},VM) end
     VM.__sub=function(a,b) return v3(a.X-b.X,a.Y-b.Y,a.Z-b.Z) end

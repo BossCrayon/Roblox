@@ -63,6 +63,8 @@ end
 local data=moduleRequire(nodes.GameData)
 ''', 'local validate = assert(loadstring(' + literal((root/('tests/stats.luau' if '--stats' in sys.argv else ('tests/catalog.luau' if '--catalog' in sys.argv else 'tests/validate.luau'))).read_text()) + ', "validate"))()', 'validate(data)']
 if '--stats' not in sys.argv and '--catalog' not in sys.argv:
+    lines += ['local adminTests=assert(loadstring(' + literal((root/'tests/admin.luau').read_text()) + ', "admin"))()',
+              'adminTests(data,moduleRequire(nodes["Server/Domain/PlayerDomain"]),moduleRequire(nodes["Server/Domain/AdminProgression"]))']
     lines += ['local coreTests=assert(loadstring(' + literal((root/'tests/core.luau').read_text()) + ', "core"))()',
               'coreTests(data,moduleRequire(nodes["Server/Domain/PlayerDomain"]),moduleRequire(nodes["Server/Domain/SessionStore"]),moduleRequire(nodes["Server/Domain/RateLimiter"]))']
     lines += ['local effectTests=assert(loadstring(' + literal((root/'tests/effects.luau').read_text()) + ', "effects"))()',

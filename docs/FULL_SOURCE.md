@@ -2,9 +2,11 @@
 
 # Mysteries — playable Roblox foundation
 
+> **Admin powers:** `johnskie816` is configured in the server allowlist. Click **ADMIN**, choose a pathway and Sequence 9–1, then **Apply pathway & sequence**. [Setup, behavior and Studio checks](docs/ADMIN_POWERS.md). Published-server selections save to your profile; Studio session-only selections reset when you stop Play.
+
 > **Animation/VFX — Phase A:** bounded client pools, 12 procedural animations, 11 reusable effect blocks, quality/120-stud LOD, reduced motion, low graphics and an authorized F8 Studio preview room. [Complete code, script classes/Explorer paths, and post-code tests](docs/PHASE_A_VFX_CODE.md) · [Numeric properties and exact screenshots/recordings to send](docs/PHASE_A_VFX.md). Pathway-specific choreography starts in Phase B.
 
-> **Visual overhaul — Phase 1:** the current build includes a themed HUD, Journal/Pathway/Inventory tabs, confirmation-based potion UI, custom prompts, feedback and F8-only developer diagnostics. [Full copy-ready code and script destinations](docs/PHASE1_UI_CODE.md) · [Studio checklist and exact screenshot requests](docs/PHASE1_UI.md). World relayout and permanent label replacement remain later visual phases.
+> **Visual overhaul — Phase 1:** the current build includes a themed HUD, Journal/Pathway/Inventory tabs, confirmation-based potion UI, custom prompts, feedback and authorized developer diagnostics. [Full copy-ready code and script destinations](docs/PHASE1_UI_CODE.md) · [Studio checklist and exact screenshot requests](docs/PHASE1_UI.md). World relayout and permanent label replacement remain later visual phases.
 
 The six requested implementation phases are represented in this project: data, server progression/persistence, all 54 selected ability executors across Sequences 9–1, HUD/input, procedural NPCs/world, and a first balance pass. The roster remains **Seer/Fool, Marauder/Error, and Apprentice/Door only**, with no Sequence 0.
 
@@ -19,7 +21,7 @@ This is a playable foundation with bounded gameplay interpretations of the power
 
 Studio defaults to **session-only storage**, with storage diagnostics restricted to the authorized F8 developer panel. No Studio API access is required for that demo and progress does not survive the server closing. Published servers always use real DataStoreService; they never silently fall back to volatile storage.
 
-**F8 developer controls** provide Studio-only mastery for the individual creator or a server-allowlisted user. They require Studio and session-only storage; public mastery stones are removed. See `docs/PHASE1_UI.md` for unpublished-place setup. Unauthorized remote requests cannot grant mastery.
+The **ADMIN button** and **F8 shortcut** open pathway/sequence controls for the individual creator or a server-allowlisted account. `johnskie816` is configured by username and resolved to its numeric ID on the Roblox server; explicit numeric IDs also work. The server validates every change. The VFX test-room button remains Studio-only. See [admin setup](docs/ADMIN_POWERS.md).
 
 ## Progression loop
 
@@ -95,7 +97,8 @@ Validation covers:
 - **1,306 data assertions:** roster, references, stats, jumps, bounds and immutability.
 - **2,163 domain assertions:** complete 9→1 advancement, acting deduplication, sanity, resources, cast reservations, lease contention/expiry, corrupt saves, retries and ambiguous committed responses.
 - **388 executor/target assertions:** all 54 abilities across 28 handlers, ownership/range/visibility checks, limited loot and recordings, safe teleport rejection, real adapter damage decisions, one-use substitutes, graft reflections, and high-tier resistance. Roblox engine dependencies are mocked.
-- **221 UI assertions:** responsive geometry, preview/confirm/cancel behavior, prompt lifecycle, role checks and GUI component updates with engine stand-ins.
+- **259 UI assertions:** responsive geometry, preview/confirm/cancel behavior, prompt lifecycle, role checks, admin selection/duplicate submission/modal visibility and GUI component updates with engine stand-ins.
+- **572 admin progression assertions:** authorization denial, malformed inputs, all 27 pathway/sequence choices, valid loadouts/stats, persistence compatibility and cleanup bookkeeping.
 - Animation/VFX assertions cover atomic budgets, seven pooled classes, culling/quality, all eleven blocks, animation blending/cleanup, camera caps/restoration and server-confirmed death presentation with engine stand-ins.
 - Compilation of production and test Luau, strict Roblox API/type analysis, a real Rojo place build, and inspection that every script in the place exactly matches its source.
 
@@ -656,7 +659,8 @@ return freeze({
         Notice={Width=560,Height=48,CompactHeight=36,BottomGap=18},Advance={Width=560,Height=100,Top=84},
         Cast={Width=236,Height=34,CenterOffset=66,Track=3,Reticle=14},
         Actions={Width=100,Height=44,Gap=8,Bottom=32,PhoneBottom=218},
-        Developer={Width=400,Height=304,Top=72,Pad=12,Row=44,Gap=8},
+        Developer={Width=400,Height=524,Top=72,Pad=12,Row=44,Gap=8,Columns=3,
+            ButtonWidth=88,ButtonHeight=44,ButtonGap=8},
         Vignette={Thickness=0.12,MaxAlpha=0.22,Low=20,BreathMin=0.6,FlashAlpha=0.16},
         Damage={Rise=22,Width=90,Height=30,Max=12,OffsetStuds=3},
         Prompt={Width=188,Height=52,Icon=28,Pad=10,TextX=46,ActionHeight=22,ObjectHeight=16,
@@ -990,8 +994,10 @@ return table.freeze(Model)
 
 ```lua
 --!strict
--- Server-only allowlist: enter Roblox numeric user IDs here. Group membership is not authorization.
-return table.freeze({AdminUserIds=table.freeze({})})
+-- Server-only allowlist. Roblox resolves these configured usernames to numeric IDs.
+-- Add numeric IDs for stable access after a username change. Never accept client names.
+return table.freeze({AdminUserIds=table.freeze({}),AdminUsernames=table.freeze({"johnskie816"}),
+    LookupAttempts=3,LookupRetrySeconds=2})
 ```
 
 
@@ -1010,10 +1016,26 @@ local data=require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("GameDa
 local Theme=require(ReplicatedStorage.Shared.Theme)
 local Access=require(script.Parent.Domain.VisualAccess)
 local AdminConfig=require(script.Parent.AdminConfig)
+local adminIds=table.clone(AdminConfig.AdminUserIds)
+task.spawn(function()
+    for _,username in ipairs(AdminConfig.AdminUsernames) do
+        local resolved=false
+        for attempt=1,AdminConfig.LookupAttempts do
+            local ok,id=pcall(function() return Players:GetUserIdFromNameAsync(username) end)
+            if ok and type(id)=="number" and id>0 and id%1==0 then
+                if not table.find(adminIds,id) then table.insert(adminIds,id) end
+                resolved=true;break
+            end
+            if attempt<AdminConfig.LookupAttempts then task.wait(AdminConfig.LookupRetrySeconds) end
+        end
+        if not resolved then warn("Admin username could not be resolved: "..username..". Configure its numeric ID in AdminConfig.") end
+    end
+end)
 local function isDeveloper(player: Player): boolean
-    return Access.IsDeveloper(player.UserId,game.CreatorId,game.CreatorType==Enum.CreatorType.User,AdminConfig.AdminUserIds)
+    return Access.IsDeveloper(player.UserId,game.CreatorId,game.CreatorType==Enum.CreatorType.User,adminIds)
 end
 local Domain=require(script.Parent.Domain.PlayerDomain)
+local AdminProgression=require(script.Parent.Domain.AdminProgression)
 local Sessions=require(script.Parent.Domain.SessionStore)
 local RateLimiter=require(script.Parent.Domain.RateLimiter)
 local World=require(script.Parent.Services.WorldService)
@@ -1199,6 +1221,17 @@ intent.OnServerEvent:Connect(function(player: Player,action: any,payload: any)
         notify(player,message)
     elseif action=="CloseAltar" then
         s.AltarTicket=nil
+    elseif action=="AdminSet" then
+        local hum=world:Humanoid(player)
+        local authorized=isDeveloper(player)
+        local ok,message=false,"Wait until your character is alive and loaded"
+        if not authorized or (hum and hum.Health>0) then
+            ok,message=AdminProgression.Apply(domain,s,payload.PathwayId,payload.Sequence,now,authorized)
+        end
+        if ok then
+            effects:RemoveGates(player);world:Cleanup(player);applyStats(player,s,true)
+        end
+        notify(player,message)
     elseif action=="DevMastery" then
         if isDeveloper(player) and sessionOnly and RunService:IsStudio() and type(payload.PathwayId)=="string" and data.Pathways[payload.PathwayId] then
             local interact=world.OnInteraction
@@ -1309,6 +1342,43 @@ game:BindToClose(function()
     local deadline=os.clock()+25
     while (waiting>0 or releaseCount>0) and os.clock()<deadline do task.wait(0.05) end
 end)
+```
+
+
+## src/ServerScriptService/Domain/AdminProgression.lua
+
+**ModuleScript** at `ServerScriptService/Domain/AdminProgression`. Create matching Folder parents.
+
+```lua
+--!strict
+-- Only Bootstrap supplies authorization, derived from the creator/server allowlist.
+-- This explicit admin override never runs through normal potion advancement.
+local Admin={}
+function Admin.Apply(domain: any,state: any,pathway: any,sequence: any,now: number,authorized: boolean): (boolean,string)
+    if authorized~=true then return false,"Admin access required" end
+    if not state or not state.Ready or state.Dead then return false,"Wait until your character is alive and loaded" end
+    if type(pathway)~="string" or #pathway>80 or not domain.Data.Pathways[pathway]
+        or not domain.Finite(sequence) or sequence%1~=0 or not domain.Data.Pathways[pathway].Sequences[sequence] then
+        return false,"Choose a valid pathway and Sequence 9–1"
+    end
+    local profile=domain:Snapshot(state)
+    profile.PathwayId=pathway;profile.Sequence=sequence
+    profile.Digestion=domain.Data.Progression.Digestion.Default
+    profile.ActingProgress=domain.Data.Progression.Acting.Default
+    profile.ObjectiveProgress={};profile.AbilityLoadout={};profile.Sanity=domain.Data.Progression.Sanity.Max
+    local replacement=domain:NewState(profile,now)
+    domain:AutoEquip(replacement)
+    local serial=state.CastSerial
+    -- Keep this state table and its save/movement bookkeeping: autosave callbacks
+    -- and Humanoid callbacks can already reference it. Appearance restoration
+    -- metadata is retained for EffectService.Step after statuses are cleared.
+    for key,value in pairs(replacement) do state[key]=value end
+    state.Pending=nil;state.RecordedPower=nil;state.StolenPower=nil;state.AltarTicket=nil
+    state.ArchiveRead=nil;state.SecretUntil=nil;state.FailureApplied=false
+    state.CastSerial=serial+1
+    return true,"Admin: "..pathway.." · Sequence "..sequence.." · "..domain.Data.Pathways[pathway].Sequences[sequence].Name
+end
+return table.freeze(Admin)
 ```
 
 
@@ -2444,6 +2514,7 @@ local menus: any=nil
 local hud: any=nil
 local presentation: any=nil
 local testRoom: any=nil
+local developer: any=nil
 local promptUI=Prompts.new(safeRoot)
 local function send(action: string,payload: any) intent:FireServer(action,payload) end
 local function touchAim(): boolean
@@ -2488,6 +2559,7 @@ hud=Hud.new(safeRoot,data,{Cast=cast,Melee=melee,Touch=UserInputService.TouchEna
 end})
 local function updateModal()
     modal=menuModal or roomModal;promptUI:SetModal(modal);hud.Tooltip.Visible=false
+    if developer then developer:SetSuppressed(modal) end
 end
 local function visualSettings(reduced: boolean,low: boolean)
     feedback:SetReducedMotion(reduced)
@@ -2504,7 +2576,6 @@ end,ReducedMotion=function(reduced: boolean) visualSettings(reduced,menus.LowGra
     LowGraphics=function(low: boolean) visualSettings(menus.ReducedMotion,low) end})
 presentation=Presentation.new(gui,data,{Damage=function(event: any) feedback:Damage(event) end,
     ScreenEdgePulse=function() feedback:Flash() end})
-local developer: any=nil
 testRoom=VfxTestRoom.new(safeRoot,presentation,{Modal=function(open: boolean) roomModal=open;updateModal() end,
     ReducedMotion=function(reduced: boolean) menus.ReducedMotion=reduced;visualSettings(reduced,menus.LowGraphics) end,
     LowGraphics=function(low: boolean) menus.LowGraphics=low;visualSettings(menus.ReducedMotion,low) end,
@@ -2595,51 +2666,120 @@ script.Destroying:Connect(function() testRoom:Close();presentation:Destroy() end
 
 ```lua
 --!strict
-local T=require(game:GetService("ReplicatedStorage").Shared.Theme)
+local Shared=game:GetService("ReplicatedStorage").Shared
+local T=require(Shared.Theme)
+local Data=require(Shared.GameData)
 local Kit=require(script.Parent.Kit)
 local Developer={}
 function Developer.new(parent: Instance,send: any,testRoom: (() -> ())?): any
-    local self: any={Allowed=false,State=nil}
+    local D=T.Layout.Developer
+    local self: any=setmetatable({Allowed=false,State=nil,Pathway="Seer",Sequence=9,Initialized=false,Dirty=false,Waiting=false,Suppressed=false,
+        PathButtons={},SequenceButtons={},Buttons={}},{__index=Developer})
     self.Root=Kit.Panel(parent,"DeveloperPanel");self.Root.ZIndex=T.Layers.Developer;self.Root.Visible=false
-    local title=Kit.Text(self.Root,"DEVELOPER · F8",T.Type.Heading,T.Fonts.Heading)
-    title.Position=UDim2.fromOffset(T.Layout.Developer.Pad,0);title.Size=UDim2.new(1,-T.Layout.Developer.Pad*2,0,T.Layout.Developer.Row)
-    self.Scroll=Kit.New("ScrollingFrame",self.Root,{Name="DeveloperControls",BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=T.Style.Stroke,
-        CanvasSize=UDim2.fromOffset(0,T.Layout.Developer.Height-T.Layout.Developer.Row),ScrollingDirection=Enum.ScrollingDirection.Y,
-        Position=UDim2.fromOffset(0,T.Layout.Developer.Row),Size=UDim2.new(1,0,1,-T.Layout.Developer.Row)})
+    self.ToggleButton=Kit.Button(parent,"ADMIN",function() self:Toggle() end)
+    self.ToggleButton.Name="AdminPowersButton";self.ToggleButton.ZIndex=T.Layers.Developer;self.ToggleButton.Visible=false
+    local title=Kit.Text(self.Root,"ADMIN POWERS · F8",T.Type.Heading,T.Fonts.Heading)
+    title.Position=UDim2.fromOffset(D.Pad,0);title.Size=UDim2.new(1,-D.Pad*2,0,D.Row)
+    self.Scroll=Kit.New("ScrollingFrame",self.Root,{Name="DeveloperControls",BackgroundTransparency=1,BorderSizePixel=0,
+        ScrollBarThickness=T.Style.Stroke,ScrollingDirection=Enum.ScrollingDirection.Y,
+        Position=UDim2.fromOffset(0,D.Row),Size=UDim2.new(1,0,1,-D.Row)})
     self.Info=Kit.Text(self.Scroll,"",T.Type.Small,T.Fonts.Number)
-    self.Info.Position=UDim2.fromOffset(T.Layout.Developer.Pad,0);self.Info.Size=UDim2.new(1,-T.Layout.Developer.Pad*2,0,T.Layout.Developer.Row*2)
-    self.Buttons={}
+    self.Info.Position=UDim2.fromOffset(D.Pad,0);self.Info.Size=UDim2.new(1,-D.Pad*2,0,D.Row*2)
+    local y=D.Row*2
+    local label=Kit.Text(self.Scroll,"Choose pathway",T.Type.Body,T.Fonts.Heading)
+    label.Position=UDim2.fromOffset(D.Pad,y);label.Size=UDim2.new(1,-D.Pad*2,0,D.Row);y+=D.Row
+    local function cell(button: TextButton,column: number,top: number)
+        button.Size=UDim2.new(1/D.Columns,-(D.Pad*2+D.Gap*(D.Columns-1))/D.Columns,0,D.Row)
+        button.Position=UDim2.new(column/D.Columns,D.Pad+column*D.Gap/D.Columns,0,top)
+        button.TextSize=T.Type.Small
+    end
     for i,id in ipairs({"Seer","Marauder","Apprentice"}) do
-        local b=Kit.Button(self.Scroll,"Studio mastery: "..id,function()
-            if self.Allowed then send("DevMastery",{PathwayId=id}) end
+        local b=Kit.Button(self.Scroll,id,function()
+            if not self:CanChange() then return end
+            self.Pathway=id;self.Dirty=true;self:Selection()
         end)
-        b.Position=UDim2.fromOffset(T.Layout.Developer.Pad,T.Layout.Developer.Row*2+(i-1)*(T.Layout.Developer.Row+T.Layout.Developer.Gap))
-        b.Size=UDim2.new(1,-T.Layout.Developer.Pad*2,0,T.Layout.Developer.Row);table.insert(self.Buttons,b)
+        cell(b,i-1,y);self.PathButtons[id]=b;table.insert(self.Buttons,b)
     end
+    y+=D.Row+D.Gap
+    self.Selected=Kit.Text(self.Scroll,"",T.Type.Small,T.Fonts.Heading)
+    self.Selected.Position=UDim2.fromOffset(D.Pad,y);self.Selected.Size=UDim2.new(1,-D.Pad*2,0,D.Row);y+=D.Row
+    for sequence=9,1,-1 do
+        local index=9-sequence
+        local b=Kit.Button(self.Scroll,"Seq "..sequence,function()
+            if not self:CanChange() then return end
+            self.Sequence=sequence;self.Dirty=true;self:Selection()
+        end)
+        cell(b,index%D.Columns,y+math.floor(index/D.Columns)*(D.Row+D.Gap))
+        self.SequenceButtons[sequence]=b;table.insert(self.Buttons,b)
+    end
+    y+=math.ceil(9/D.Columns)*(D.Row+D.Gap)
+    self.Apply=Kit.Button(self.Scroll,"Apply pathway & sequence",function()
+        if not self:CanChange() then return end
+        self.Waiting=true;self:Selection()
+        send("AdminSet",{PathwayId=self.Pathway,Sequence=self.Sequence})
+    end)
+    self.Apply.Position=UDim2.fromOffset(D.Pad,y);self.Apply.Size=UDim2.new(1,-D.Pad*2,0,D.Row);y+=D.Row+D.Gap
     if testRoom then
-        self.TestButton=Kit.Button(self.Scroll,"Studio VFX test room",function()
-            if self.Allowed then testRoom() end
-        end)
-        self.TestButton.Position=UDim2.fromOffset(T.Layout.Developer.Pad,T.Layout.Developer.Row*5+T.Layout.Developer.Gap*3)
-        self.TestButton.Size=UDim2.new(1,-T.Layout.Developer.Pad*2,0,T.Layout.Developer.Row)
-        self.Scroll.CanvasSize=UDim2.fromOffset(0,T.Layout.Developer.Row*6+T.Layout.Developer.Gap*4)
+        self.TestButton=Kit.Button(self.Scroll,"Studio VFX test room",function() if self.Allowed then testRoom() end end)
+        self.TestButton.Position=UDim2.fromOffset(D.Pad,y);self.TestButton.Size=UDim2.new(1,-D.Pad*2,0,D.Row);y+=D.Row+D.Gap
     end
-    return setmetatable(self,{__index=Developer})
+    self.Scroll.CanvasSize=UDim2.fromOffset(0,y)
+    self:Selection()
+    return self
+end
+function Developer.CanChange(self: any): boolean
+    return self.Allowed and self.State~=nil and self.State.Ready==true and not self.State.Dead and not self.Waiting
+end
+function Developer.Selection(self: any)
+    local sequence=Data.Pathways[self.Pathway].Sequences[self.Sequence]
+    self.Selected.Text="Sequence "..self.Sequence.." · "..sequence.Name
+    local enabled=self:CanChange()
+    for id,b in pairs(self.PathButtons) do
+        b.Interactable=enabled;b.BackgroundColor3=if id==self.Pathway then T.Colors.Gold else T.Colors.Slate
+        b.TextColor3=if id==self.Pathway then T.Colors.Ink else T.Colors.Text
+    end
+    for number,b in pairs(self.SequenceButtons) do
+        b.Interactable=enabled;b.BackgroundColor3=if number==self.Sequence then T.Colors.Gold else T.Colors.Slate
+        b.TextColor3=if number==self.Sequence then T.Colors.Ink else T.Colors.Text
+    end
+    self.Apply.Interactable=enabled;self.Apply.Text=if self.Waiting then "Applying…" else "Apply pathway & sequence"
 end
 function Developer.Resize(self: any,layout: any)
-    local width=math.min(T.Layout.Developer.Width,layout.Width-layout.Profile.Margin*2)
-    self.Root.Size=UDim2.fromOffset(width,math.min(T.Layout.Developer.Height,layout.Height-layout.Profile.Margin*2))
-    self.Root.Position=UDim2.fromOffset(layout.Width-layout.Profile.Margin-width,math.min(T.Layout.Developer.Top,layout.Profile.Margin))
+    local D=T.Layout.Developer
+    local width=math.min(D.Width,layout.Width-layout.Profile.Margin*2)
+    local buttonY=layout.Journal.Y+layout.Journal.H+D.ButtonGap
+    local buttonX=layout.Width-layout.Profile.Margin-D.ButtonWidth
+    if buttonX<layout.Resources.X+layout.Resources.W+D.ButtonGap and buttonY<layout.Resources.Y+layout.Resources.H+D.ButtonGap then
+        buttonY=layout.Resources.Y+layout.Resources.H+D.ButtonGap
+    end
+    local panelY=buttonY+D.ButtonHeight+D.ButtonGap
+    self.Root.Size=UDim2.fromOffset(width,math.min(D.Height,math.max(D.Row,layout.Height-panelY-layout.Profile.Margin)))
+    self.Root.Position=UDim2.fromOffset(layout.Width-layout.Profile.Margin-width,panelY)
+    self.ToggleButton.Size=UDim2.fromOffset(D.ButtonWidth,D.ButtonHeight)
+    self.ToggleButton.Position=UDim2.fromOffset(buttonX,buttonY)
 end
 function Developer.Update(self: any,state: any)
-    self.State=state;self.Allowed=state and state.Developer==true
-    if not self.Allowed then self.Root.Visible=false;return end
+    self.State=state;self.Allowed=state~=nil and state.Developer==true
+    self.ToggleButton.Visible=self.Allowed and not self.Suppressed
+    if not self.Allowed then self.Root.Visible=false;self.Waiting=false;self:Selection();return end
     local info=state.DeveloperInfo
-    self.Info.Text=if info then (if info.SessionOnly then "Studio session · not saved" else "DataStore session").."\nMode: "..info.Mode.."\nReady: "..tostring(info.Ready) else "Loading developer diagnostics…"
-    for _,b in ipairs(self.Buttons) do b.Interactable=info~=nil and info.SessionOnly==true and state.Ready end
+    self.Info.Text=if info then (if info.SessionOnly then "Studio · changes last this session" else "Live · changes save to your profile")..
+        "\nCurrent: "..(state.PathwayId or "Uninitiated").." · "..(if state.Sequence then "Seq "..state.Sequence else "No sequence") else "Loading admin controls…"
+    if state.Ready then
+        if not self.Initialized or not self.Dirty then
+            self.Pathway=state.PathwayId or "Seer";self.Sequence=state.Sequence or 9;self.Initialized=true
+        end
+        if self.Waiting and state.PathwayId==self.Pathway and state.Sequence==self.Sequence then self.Dirty=false end
+        self.Waiting=false
+    end
+    self:Selection()
 end
 function Developer.Toggle(self: any)
-    if self.Allowed then self.Root.Visible=not self.Root.Visible end
+    if self.Allowed and not self.Suppressed then self.Root.Visible=not self.Root.Visible end
+end
+function Developer.SetSuppressed(self: any,suppressed: boolean)
+    self.Suppressed=suppressed;self.ToggleButton.Visible=self.Allowed and not suppressed
+    if suppressed then self.Root.Visible=false end
 end
 return Developer
 ```

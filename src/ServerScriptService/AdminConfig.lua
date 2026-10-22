@@ -1,3 +1,5 @@
 --!strict
--- Server-only allowlist: enter Roblox numeric user IDs here. Group membership is not authorization.
-return table.freeze({AdminUserIds=table.freeze({})})
+-- Server-only allowlist. Roblox resolves these configured usernames to numeric IDs.
+-- Add numeric IDs for stable access after a username change. Never accept client names.
+return table.freeze({AdminUserIds=table.freeze({}),AdminUsernames=table.freeze({"johnskie816"}),
+    LookupAttempts=3,LookupRetrySeconds=2})

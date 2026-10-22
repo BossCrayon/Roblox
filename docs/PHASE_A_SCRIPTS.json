@@ -20,6 +20,21 @@
     "explorer_path": "ReplicatedStorage/Shared/VisualBudget"
   },
   {
+    "file": "src/ServerScriptService/AdminConfig.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ServerScriptService/AdminConfig"
+  },
+  {
+    "file": "src/ServerScriptService/Domain/AdminProgression.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ServerScriptService/Domain/AdminProgression"
+  },
+  {
+    "file": "src/ServerScriptService/Bootstrap.server.lua",
+    "script_class": "Script",
+    "explorer_path": "ServerScriptService/Bootstrap"
+  },
+  {
     "file": "src/ServerScriptService/Services/WorldService.lua",
     "script_class": "ModuleScript",
     "explorer_path": "ServerScriptService/Services/WorldService"

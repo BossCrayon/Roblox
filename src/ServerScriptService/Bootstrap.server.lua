@@ -8,10 +8,26 @@ local data=require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("GameDa
 local Theme=require(ReplicatedStorage.Shared.Theme)
 local Access=require(script.Parent.Domain.VisualAccess)
 local AdminConfig=require(script.Parent.AdminConfig)
+local adminIds=table.clone(AdminConfig.AdminUserIds)
+task.spawn(function()
+    for _,username in ipairs(AdminConfig.AdminUsernames) do
+        local resolved=false
+        for attempt=1,AdminConfig.LookupAttempts do
+            local ok,id=pcall(function() return Players:GetUserIdFromNameAsync(username) end)
+            if ok and type(id)=="number" and id>0 and id%1==0 then
+                if not table.find(adminIds,id) then table.insert(adminIds,id) end
+                resolved=true;break
+            end
+            if attempt<AdminConfig.LookupAttempts then task.wait(AdminConfig.LookupRetrySeconds) end
+        end
+        if not resolved then warn("Admin username could not be resolved: "..username..". Configure its numeric ID in AdminConfig.") end
+    end
+end)
 local function isDeveloper(player: Player): boolean
-    return Access.IsDeveloper(player.UserId,game.CreatorId,game.CreatorType==Enum.CreatorType.User,AdminConfig.AdminUserIds)
+    return Access.IsDeveloper(player.UserId,game.CreatorId,game.CreatorType==Enum.CreatorType.User,adminIds)
 end
 local Domain=require(script.Parent.Domain.PlayerDomain)
+local AdminProgression=require(script.Parent.Domain.AdminProgression)
 local Sessions=require(script.Parent.Domain.SessionStore)
 local RateLimiter=require(script.Parent.Domain.RateLimiter)
 local World=require(script.Parent.Services.WorldService)
@@ -197,6 +213,17 @@ intent.OnServerEvent:Connect(function(player: Player,action: any,payload: any)
         notify(player,message)
     elseif action=="CloseAltar" then
         s.AltarTicket=nil
+    elseif action=="AdminSet" then
+        local hum=world:Humanoid(player)
+        local authorized=isDeveloper(player)
+        local ok,message=false,"Wait until your character is alive and loaded"
+        if not authorized or (hum and hum.Health>0) then
+            ok,message=AdminProgression.Apply(domain,s,payload.PathwayId,payload.Sequence,now,authorized)
+        end
+        if ok then
+            effects:RemoveGates(player);world:Cleanup(player);applyStats(player,s,true)
+        end
+        notify(player,message)
     elseif action=="DevMastery" then
         if isDeveloper(player) and sessionOnly and RunService:IsStudio() and type(payload.PathwayId)=="string" and data.Pathways[payload.PathwayId] then
             local interact=world.OnInteraction

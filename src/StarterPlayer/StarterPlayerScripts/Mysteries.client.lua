@@ -39,6 +39,7 @@ local menus: any=nil
 local hud: any=nil
 local presentation: any=nil
 local testRoom: any=nil
+local developer: any=nil
 local promptUI=Prompts.new(safeRoot)
 local function send(action: string,payload: any) intent:FireServer(action,payload) end
 local function touchAim(): boolean
@@ -83,6 +84,7 @@ hud=Hud.new(safeRoot,data,{Cast=cast,Melee=melee,Touch=UserInputService.TouchEna
 end})
 local function updateModal()
     modal=menuModal or roomModal;promptUI:SetModal(modal);hud.Tooltip.Visible=false
+    if developer then developer:SetSuppressed(modal) end
 end
 local function visualSettings(reduced: boolean,low: boolean)
     feedback:SetReducedMotion(reduced)
@@ -99,7 +101,6 @@ end,ReducedMotion=function(reduced: boolean) visualSettings(reduced,menus.LowGra
     LowGraphics=function(low: boolean) visualSettings(menus.ReducedMotion,low) end})
 presentation=Presentation.new(gui,data,{Damage=function(event: any) feedback:Damage(event) end,
     ScreenEdgePulse=function() feedback:Flash() end})
-local developer: any=nil
 testRoom=VfxTestRoom.new(safeRoot,presentation,{Modal=function(open: boolean) roomModal=open;updateModal() end,
     ReducedMotion=function(reduced: boolean) menus.ReducedMotion=reduced;visualSettings(reduced,menus.LowGraphics) end,
     LowGraphics=function(low: boolean) menus.LowGraphics=low;visualSettings(menus.ReducedMotion,low) end,
