@@ -22,6 +22,7 @@ def literal(text):
 sources = {str(p.relative_to(shared).with_suffix('')): p.read_text()
            for p in sorted(shared.rglob('*.lua'))}
 sources.update({'Server/'+str(p.relative_to(root/'src/ServerScriptService').with_suffix('')): p.read_text() for p in sorted((root/'src/ServerScriptService').rglob('*.lua')) if not p.name.endswith('.server.lua')})
+sources.update({'Client/'+str(p.relative_to(root/'src/StarterPlayer/StarterPlayerScripts').with_suffix('')): p.read_text() for p in sorted((root/'src/StarterPlayer/StarterPlayerScripts/UI').rglob('*.lua'))})
 lines = ['local sources = {']
 lines += ['[' + json.dumps(k) + '] = ' + literal(v) + ',' for k, v in sources.items()]
 lines += ['}', '''
@@ -74,6 +75,12 @@ if '--stats' not in sys.argv and '--catalog' not in sys.argv:
                   cache[nodes["Server/Services/WorldService"]]=nil
                   return moduleRequire(nodes["Server/Services/WorldService"])
               end)''']
+    lines += ['local uiTests=assert(loadstring(' + literal((root/'tests/ui.luau').read_text()) + ', "ui"))()',
+              '''uiTests(data,function(path,environment)
+                  moduleOverrides[path]=environment
+                  cache[nodes[path]]=nil
+                  return moduleRequire(nodes[path])
+              end,nodes[""])''']
 with tempfile.TemporaryDirectory(prefix='lotm-tests-') as directory:
     runner = Path(directory)/'run.luau'
     runner.write_text('\n'.join(lines))

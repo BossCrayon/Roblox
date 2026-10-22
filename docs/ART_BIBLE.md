@@ -135,7 +135,7 @@ Zone tint targets, applied locally with a `1.2s` transition rather than a new gl
 - Main streets: **20 studs** clear carriageway plus **4-stud pavements** on each side; alleys: **8 studs** clear.
 - Storeys: **12 studs**; parapets/roofs: **28–44 studs**; clock tower: **64 studs**. Keep the first combat sightline free of decorative clutter below head height.
 - Hub Square: **96×96 studs**; service entrances spread around its edge rather than adjacent pillars. Connected combat spaces: lower arena **96×112**, middle **120×120**, upper **144×144** studs.
-- Future map should stay inside the existing playable bounds unless a separate gameplay change is authorized. Decorative towers beyond those bounds remain inaccessible scenery. Preserve valid combat volumes and verify portals against all new geometry.
+- **Updated authorization:** Phase 3 may enlarge and relayout the hub, zones and arenas to this scale; the current playable bounds are not a limit. Preserve working spawn points, portal validation, enemy statistics and server-authoritative systems. Verify portal destinations against the new geometry and bounds. No map changes occur in Phase 1.
 - Third-person exploration camera: FOV **70**, zoom range **9–26 studs**, default starting distance target **14 studs**. Combat FOV target **74**, transition **0.25s**. Do not resize the player's gameplay rig for a cinematic; scale the environment around the reference avatar.
 - Frame each service doorway with one light source and a recognizable silhouette. Visitors should recognize a library, chapel or workshop without a floating title.
 

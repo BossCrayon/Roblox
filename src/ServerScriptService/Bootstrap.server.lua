@@ -5,6 +5,12 @@ local DataStoreService=game:GetService("DataStoreService")
 local RunService=game:GetService("RunService")
 local HttpService=game:GetService("HttpService")
 local data=require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("GameData"))
+local Theme=require(ReplicatedStorage.Shared.Theme)
+local Access=require(script.Parent.Domain.VisualAccess)
+local AdminConfig=require(script.Parent.AdminConfig)
+local function isDeveloper(player: Player): boolean
+    return Access.IsDeveloper(player.UserId,game.CreatorId,game.CreatorType==Enum.CreatorType.User,AdminConfig.AdminUserIds)
+end
 local Domain=require(script.Parent.Domain.PlayerDomain)
 local Sessions=require(script.Parent.Domain.SessionStore)
 local RateLimiter=require(script.Parent.Domain.RateLimiter)
@@ -55,18 +61,19 @@ end
 local function sendState(player: Player)
     local s=states[player]
     if not s or not s.Ready then
-        stateEvent:FireClient(player,{Ready=false,Loading=not releasing[player],SessionOnly=sessionOnly});return
+        stateEvent:FireClient(player,{Ready=false,Loading=not releasing[player],Developer=isDeveloper(player)});return
     end
     local now=os.clock();local p=s.Profile;local cooldowns={};local statuses={}
     for id,expiry in pairs(s.Cooldowns) do if expiry>now then cooldowns[id]=expiry-now end end
     for id,st in pairs(s.Statuses) do if st.ExpiresAt>now then table.insert(statuses,id) end end
     table.sort(statuses)
-    stateEvent:FireClient(player,{Ready=true,SessionOnly=sessionOnly,PathwayId=p.PathwayId,Sequence=p.Sequence,
+    stateEvent:FireClient(player,{Ready=true,Developer=isDeveloper(player),
+        DeveloperInfo=if isDeveloper(player) then {SessionOnly=sessionOnly,Mode=s.Mode,Ready=s.Ready} else nil,PathwayId=p.PathwayId,Sequence=p.Sequence,
         Digestion=p.Digestion,ActingProgress=p.ActingProgress,Health=s.Health,MaxHealth=s.Stats.Health,
         Spirituality=s.Spirituality,MaxSpirituality=s.Stats.Spirituality,Sanity=s.Sanity,Mode=s.Mode,
         Gold=p.Gold,WishCredits=p.WishCredits,Inventory=Domain.Copy(p.Inventory),Loadout=Domain.Copy(p.AbilityLoadout),
         Cooldowns=cooldowns,Statuses=statuses,Dead=s.Dead,RecordedCharges=s.RecordedPower and s.RecordedPower.Charges or 0,
-        Casting=s.Pending and s.Pending.Id or false})
+        Casting=s.Pending and s.Pending.Id or false,CastRemaining=s.Pending and math.max(0,s.Pending.EndsAt-now) or 0})
 end
 local function bindCharacter(player: Player,character: Model)
     if bound[player]==character then return end
@@ -100,7 +107,13 @@ world.OnInteraction=function(player: Player,action: string)
     if not s or not s.Ready or s.Dead or s.Pending or not limiter:Allow(player,os.clock()) then return end
     local now=os.clock()
     local ok,message=false,"No response"
-    if action=="Buy" and s.Mode=="Normal" then ok,message=domain:BuyNextPotion(s)
+    if action=="Buy" and s.Mode=="Normal" then
+        local altar=world.Folder:FindFirstChild("Potion Altar")
+        local root=world:Root(player)
+        if not altar or not altar:IsA("BasePart") or not root or (root.Position-altar.Position).Magnitude>Theme.Interaction.ServerDistance then return end
+        s.AltarTicket={Position=altar.Position,ExpiresAt=now+Theme.Timing.AltarExpiry,PathwayId=s.Profile.PathwayId,Sequence=s.Profile.Sequence}
+        stateEvent:FireClient(player,{Menu="Altar",ExpiresIn=Theme.Timing.AltarExpiry})
+        return
     elseif action=="Recover" then
         ok,message=domain:Recover(s);s.FailureApplied=false
     elseif action=="Cipher" then
@@ -113,7 +126,7 @@ world.OnInteraction=function(player: Player,action: string)
         if s.Statuses.Disguised then ok=domain:Act(s,"DisguisedInfiltrationCompleted","infiltration:"..tostring(now),now) end
         if s.Statuses.Concealed then ok=domain:Act(s,"SecretProtected","secret:"..tostring(now),now) or ok end
         message=if ok then "Archive objective complete" else "Historical record read; a Scholar can invoke its echo"
-    elseif string.sub(action,1,7)=="Studio:" and sessionOnly and RunService:IsStudio() then
+    elseif string.sub(action,1,7)=="Studio:" and isDeveloper(player) and sessionOnly and RunService:IsStudio() then
         local path=string.sub(action,8)
         if data.Pathways[path] then
             local p=domain:Default();p.PathwayId=path;p.Sequence=1;p.Digestion=100;p.Gold=1000;p.WishCredits=100
@@ -121,21 +134,10 @@ world.OnInteraction=function(player: Player,action: string)
             local replacement=domain:NewState(p,now);domain:AutoEquip(replacement)
             states[player]=replacement;replacement.TeleportGraceUntil=now+3;replacement.FailureApplied=false
             effects:RemoveGates(player);world:Cleanup(player);applyStats(player,replacement,true)
-            ok=true;message="Session-only mastery: all "..path.." abilities unlocked"
+            ok=true;message="Attuned to "..path.." · Sequence 1"
         end
     end
     notify(player,message);sendState(player)
-end
-if sessionOnly then
-    for i,path in ipairs({"Seer","Marauder","Apprentice"}) do
-        local p=Instance.new("Part");p.Name="StudioMastery_"..path;p.Anchored=true;p.Size=Vector3.new(3,4,3);p.Position=Vector3.new(-12+(i-1)*12,2,28);p.Color=Color3.fromRGB(85,140,145);p.Parent=world.Folder
-        local prompt=Instance.new("ProximityPrompt");prompt.ActionText="SESSION TEST: "..path.." Seq 1";prompt.ObjectText="Studio only — not saved";prompt.HoldDuration=1;prompt.MaxActivationDistance=8;prompt.Parent=p
-        prompt.Triggered:Connect(function(player)
-            local root=world:Root(player)
-            local interact=world.OnInteraction
-            if root and interact and (root.Position-p.Position).Magnitude<10 then interact(player,"Studio:"..path) end
-        end)
-    end
 end
 local function loadPlayer(player: Player)
     if states[player] then return end
@@ -184,7 +186,23 @@ intent.OnServerEvent:Connect(function(player: Player,action: any,payload: any)
     local s=states[player]
     if not s or not s.Ready or s.Dead or type(payload)~="table" then return end
     local now=os.clock()
-    if action=="Drink" then
+    if action=="Buy" then
+        local root=world:Root(player)
+        local ticket=s.AltarTicket
+        s.AltarTicket=nil
+        local valid=root and ticket and Access.AltarValid(ticket,now,(root.Position-ticket.Position).Magnitude,s.Profile.PathwayId,s.Profile.Sequence,Theme.Interaction.ServerDistance)
+        local ok,message=false,"Return to the Potion Altar to confirm a purchase"
+        if valid and s.Mode=="Normal" and not s.Pending then ok,message=domain:BuyNextPotion(s) end
+        stateEvent:FireClient(player,{Purchase={Ok=ok,Message=message}})
+        notify(player,message)
+    elseif action=="CloseAltar" then
+        s.AltarTicket=nil
+    elseif action=="DevMastery" then
+        if isDeveloper(player) and sessionOnly and RunService:IsStudio() and type(payload.PathwayId)=="string" and data.Pathways[payload.PathwayId] then
+            local interact=world.OnInteraction
+            if interact then interact(player,"Studio:"..payload.PathwayId) end
+        end
+    elseif action=="Drink" then
         if type(payload.Id)~="string" or #payload.Id>80 then return end
         local ok,message=domain:Drink(s,payload.Id,now)
         if ok then applyStats(player,s,true);world:Cleanup(player);effects:RemoveGates(player) end

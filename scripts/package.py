@@ -5,11 +5,15 @@ import subprocess
 import zipfile
 import json
 import hashlib
+import shutil
 
 root=Path(__file__).resolve().parents[1]
 build=root/'build';build.mkdir(exist_ok=True)
 place=build/'Mysteries.rbxlx'
 if not place.is_file(): raise SystemExit('Run scripts/check.py to build/validate the place first')
+(root/'studio').mkdir(exist_ok=True)
+shutil.copyfile(place,root/'studio/Mysteries.rbxlx')
+subprocess.run(['python3','scripts/generate_ui_docs.py'],cwd=root,check=True)
 for flag,target in [('--stats','STATS.md'),('--catalog','ABILITY_GUIDE.md')]:
     result=subprocess.run(['python3','tests/run.py','/workspace/lotm-tools/luau/luau',flag],cwd=root,check=True,capture_output=True,text=True)
     (root/'docs'/target).write_text(result.stdout.rstrip()+'\n')

@@ -1,0 +1,82 @@
+[
+  {
+    "file": "src/ReplicatedStorage/Shared/Theme.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ReplicatedStorage/Shared/Theme"
+  },
+  {
+    "file": "src/ReplicatedStorage/Shared/VisualLayout.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ReplicatedStorage/Shared/VisualLayout"
+  },
+  {
+    "file": "src/ReplicatedStorage/Shared/VisualModel.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ReplicatedStorage/Shared/VisualModel"
+  },
+  {
+    "file": "src/ReplicatedStorage/Shared/RuntimeConfig.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ReplicatedStorage/Shared/RuntimeConfig"
+  },
+  {
+    "file": "src/ServerScriptService/AdminConfig.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ServerScriptService/AdminConfig"
+  },
+  {
+    "file": "src/ServerScriptService/Domain/VisualAccess.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ServerScriptService/Domain/VisualAccess"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/UI/Kit.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/UI/Kit"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/UI/Hud.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/UI/Hud"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/UI/Menus.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/UI/Menus"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/UI/Prompts.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/UI/Prompts"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/UI/Feedback.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/UI/Feedback"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/UI/Developer.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/UI/Developer"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/UI/Presentation.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/UI/Presentation"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Mysteries.client.lua",
+    "script_class": "LocalScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Mysteries"
+  },
+  {
+    "file": "src/ServerScriptService/Services/WorldService.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ServerScriptService/Services/WorldService"
+  },
+  {
+    "file": "src/ServerScriptService/Bootstrap.server.lua",
+    "script_class": "Script",
+    "explorer_path": "ServerScriptService/Bootstrap"
+  }
+]

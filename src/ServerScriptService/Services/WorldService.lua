@@ -39,6 +39,7 @@ function World.Build(self: World)
         local p=part(self.Folder,v.Name,Vector3.new(3,6,3),v.Pos,Color3.fromRGB(112,100,160))
         label(p,v.Name)
         local prompt=Instance.new("ProximityPrompt");prompt.ActionText=if v.Action=="Buy" then "Next potion · 100 gold" else v.Name
+        prompt:SetAttribute("InteractionId",v.Action)
         prompt.ObjectText=v.Name;prompt.MaxActivationDistance=10;prompt.HoldDuration=0.4;prompt.RequiresLineOfSight=true;prompt.Parent=p
         prompt.Triggered:Connect(function(player)
             local root=self:Root(player)
@@ -149,7 +150,9 @@ end
 function World.Damage(self: World, e: any,amount: number,owner: Player,now: number): boolean
     if e.Humanoid.Health<=0 or e.Owner~=nil or amount<=0 then return false end
     e.LastHit=owner;e.LastHitAt=now
+    local applied=math.min(e.Humanoid.Health,amount,100000)
     e.Humanoid:TakeDamage(math.min(amount,100000))
+    self.FX:FireAllClients({Kind="Damage",Position=e.Root.Position,Amount=applied,Owner=owner.UserId,Target=e.Model})
     return true
 end
 function World.DamagePlayer(self: World, player: Player,amount: number,source: any,now: number)

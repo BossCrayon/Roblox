@@ -14,7 +14,6 @@ return freeze({
     SummonDamagePerTier=12, SummonAttackInterval=1.5,
     ExposureRadius=30, WhisperInterval=10, NextPotionGoldCost=100,
     MaxOwnedSummons=2, MaxPortalsPerPlayer=2, MaxVFX=48,
-    AudioAssets={}, -- SFX hook -> original uploaded Roblox asset ID; no external/ripped audio.
     Disguises={
         Wanderer={DisplayName="Unknown Wanderer",Color={100,120,140},VoicePitch=0.85,
             Scales={BodyHeightScale=0.92,BodyWidthScale=1.1,BodyDepthScale=1.05,HeadScale=0.95}},
