@@ -1,0 +1,30 @@
+{
+  "luau_repository": "https://github.com/luau-lang/luau.git",
+  "luau_tag": "0.693",
+  "luau_commit": "0084576e6f8dc9865f27d296f0357794894bd38d",
+  "artifacts": [
+    {
+      "url": "https://github.com/rojo-rbx/rojo/releases/download/v7.5.1/rojo-7.5.1-linux-x86_64.zip",
+      "target": "rojo/rojo",
+      "download_sha256": "0d600df6c4c48a9d09c701d0c2a109c55c2db833cd9766fd7d1e6e2684843d53",
+      "file_sha256": "72664b9106121eea5f3fefade7d44e70ea01100ed432878af331efd22e31c0ca",
+      "executable": true,
+      "zip_member": "rojo"
+    },
+    {
+      "url": "https://github.com/JohnnyMorganz/luau-lsp/releases/download/1.70.1/luau-lsp-linux-x86_64.zip",
+      "target": "luau-lsp/luau-lsp",
+      "download_sha256": "1a2ea1ae4f98f8946cefd970a4b54853e11ab4775e6932faa7f60cf920346567",
+      "file_sha256": "949d94eccc8b84b486dc994002502bab0078d879bf571f29ad42ec90aa9f5004",
+      "executable": true,
+      "zip_member": "luau-lsp"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/JohnnyMorganz/luau-lsp/1.70.1/scripts/globalTypes.d.luau",
+      "target": "luau-lsp/roblox.d.luau",
+      "download_sha256": "2857efa8245485f8c25c19c018ee1ef9b46afab4efd2ea70fc3257cd3faf7080",
+      "file_sha256": "2857efa8245485f8c25c19c018ee1ef9b46afab4efd2ea70fc3257cd3faf7080",
+      "executable": false
+    }
+  ]
+}

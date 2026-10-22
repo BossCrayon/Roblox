@@ -1,0 +1,2202 @@
+# Full source — Mysteries Roblox foundation
+
+# Mysteries — playable Roblox foundation
+
+The six requested implementation phases are represented in this project: data, server progression/persistence, all 54 selected ability executors across Sequences 9–1, HUD/input, procedural NPCs/world, and a first balance pass. The roster remains **Seer/Fool, Marauder/Error, and Apprentice/Door only**, with no Sequence 0.
+
+This is a playable foundation with bounded gameplay interpretations of the powers, not an exhaustive recreation of every canonical technique. All lore claims remain `[UNVERIFIED]` because source access was blocked. Audio hooks await original sound assets; disguises use original face masks, color/identity changes and R15 body scaling rather than arbitrary species or live voice cloning. See `docs/LORE_REVIEW.md`.
+
+## Open and play
+
+1. Open the supplied **`build/Mysteries.rbxlx`** in desktop Roblox Studio and press **Play**. The server generates the sanctuary, potion altar, archives, practice doors, flame anchors, six arenas, and 18 procedural enemies. The client creates its HUD in PlayerGui.
+2. Open the **journal [B]**, drink one of the three starter potions, and aim at nearby enemies or ground when using abilities.
+3. Use **Q, E, R, F, Z, X** for the six equipped abilities. **Left click** is a basic strike. Touch users have hotbar, journal, and strike buttons; touch targeting uses the center of the camera.
+4. In the journal select a numbered slot, then select an unlocked ability to equip it. Earlier powers remain available as sequence numbers decrease.
+
+Studio defaults to **session-only storage**, clearly marked in the HUD. No Studio API access is required for that demo and progress does not survive the server closing. Published servers always use real DataStoreService; they never silently fall back to volatile storage.
+
+Three **Studio-only mastery stones** near the sanctuary grant Sequence 1 and unlock the selected pathway's 18 abilities for quick checks. These stones only exist when both Studio and session-only mode are active; they cannot overwrite a persistent save. They are not exposed as remote commands.
+
+## Progression loop
+
+Each successful current-sequence acting objective awards **5 digestion**, with a **30-second reward cooldown** and server event deduplication. Read the objective in the HUD. Normal advancement requires 100 digestion; unsafe attempts are rejected and drain sanity. Completing an objective also accumulates a wish credit for later miracles.
+
+Enemy kills award 25 gold. Exchange 100 gold at the sanctuary's **Potion Altar** for your next potion, then drink it in the journal. The transaction requires the correct pathway, exactly the next sequence, inventory ownership, a living normal-state character, adequate sanity and full digestion. It consumes one potion atomically without yielding and resets digestion/acting progress. Sequence 1 has no next potion.
+
+The **Stabilization** pillar restores sanity and ends madness/loss of control at a cost of 20 digestion. Zero sanity enters 10 seconds of madness, followed by death and loss of control. After respawning, use Stabilization before casting again. High-tier arenas cause mystical exposure and whispers; mental resistance reduces sanity damage. Spirituality regenerates on a fixed scheduler, more slowly in combat.
+
+Some acting objectives require interactions rather than simply pressing an ability:
+
+| Sequence | How to complete the objective |
+|---|---|
+| Seer 8 | Let an actual hostile strike land during Acrobatic Evasion's invulnerability window. |
+| Seer 7 | Flame-jump away from a nearby pursuing enemy using an orange anchor. |
+| Seer 6 | Use Disguise, then interact with the Hidden Archive. |
+| Seer 5 | Apply Spirit Body Threads three times to one eligible NPC before threads expire. |
+| Seer 4 | Exchange with your own marionette while another enemy threatens the original position. |
+| Seer 3 | Read the Hidden Archive, then invoke a historical echo. |
+| Seer 2 | Fulfill a real recovery need, spending an accumulated wish credit. |
+| Seer 1 | Graft an enemy, then let its actual attack reflect back to it. |
+| Marauder 7 | Cast Decipher, then interact with the Cipher Archive while Cipher Sight lasts. |
+| Apprentice 6 | Observe an eligible enemy casting, then Record its allowlisted power. |
+| Apprentice 4 | Use Concealment, then protect the Hidden Archive by interacting while concealed. |
+| Apprentice 2 | Equip retained Record and Replication; record a witnessed power, then release it. |
+
+Other objectives complete on the corresponding successful server-validated theft, deception, divination, hostile influence, travel, or gate creation. Divination can fail; Intuition improves its accuracy. Targets that are too strong resist longer control/debuff effects. Direct marionette control and parasitism reject stronger-sequence NPCs. There is no PvP or player mind control.
+
+## Studio persistence verification
+
+To test actual persistence, publish a development place you control, set `RuntimeConfig.StudioSessionOnly=false`, and enable **Game Settings → Security → Enable Studio Access to API Services**. Use a separate development DataStore name rather than a production save. Restart the test server and confirm saved state returns. These real Roblox API checks were **not run** in the Linux cloud environment.
+
+The store uses owner tokens and expiring leases acquired via UpdateAsync, bounded exponential backoff with jitter, owner-checked save/refresh/release, 45-second lease refresh/full saves, and PlayerRemoving/BindToClose handling. Failed loads never become default saves; malformed or future schemas are rejected. Schema version 1 is supported. Sanity, pathway, sequence, digestion, acting counts, computed stat snapshots, inventory, currency, credits and loadout are saved. Max stats are recomputed from data on load; health/spirituality refill on spawn. Runtime statuses, temporary copied powers and cooldowns are not persisted.
+
+## Project layout and Studio placement
+
+```text
+ReplicatedStorage/Shared                  ModuleScripts: immutable data/types/config
+  Pathways/{Seer,Marauder,Apprentice}      ModuleScripts: each pathway's 9 rows
+ServerScriptService
+  Bootstrap                              Script: Bootstrap.server.lua
+  Domain/{PlayerDomain,SessionStore,RateLimiter}  ModuleScripts: pure server rules
+  Services/{WorldService,EffectService}   ModuleScripts: Roblox engine adapters
+StarterPlayer/StarterPlayerScripts
+  Mysteries                              LocalScript: Mysteries.client.lua
+StarterGui                               Reserved; HUD is created in PlayerGui
+```
+
+For manual copy/paste, `docs/FULL_SOURCE.md` includes every production script, its exact Studio destination and class, and the Rojo configuration. Folders must match the hierarchy. Do not insert server modules under ReplicatedStorage. No extra toolbox assets, packages, remotes, or prebuilt GUIs are needed; the server creates its remotes.
+
+Rojo 7.5.1 can synchronize this layout using `default.project.json`. You can build the standalone place with:
+
+```sh
+cd /workspace/Roblox
+/workspace/lotm-tools/rojo/rojo build default.project.json -o build/Mysteries.rbxlx
+```
+
+Use the existing isolated checkout for cloud tasks; do not create a worktree unless explicitly requested.
+
+## Validation and reusable tooling
+
+The tools install outside the repository under `/workspace/lotm-tools`. The installer pins Luau 0.693 to its full Git commit, Rojo 7.5.1, luau-lsp 1.70.1, and the matching Roblox API definitions. Download and extracted-file hashes are checked using `scripts/tools.json`; these are reproducibility pins from the TLS-verified upstream downloads, not upstream signature claims. Existing modified Luau sources are preserved and rejected for builds.
+
+```sh
+cd /workspace/Roblox
+python3 scripts/setup_tools.py
+python3 scripts/check.py
+python3 scripts/package.py
+```
+
+Validation covers:
+
+- **1,306 data assertions:** roster, references, stats, jumps, bounds and immutability.
+- **2,163 domain assertions:** complete 9→1 advancement, acting deduplication, sanity, resources, cast reservations, lease contention/expiry, corrupt saves, retries and ambiguous committed responses.
+- **388 executor/target assertions:** all 54 abilities across 28 handlers, ownership/range/visibility checks, limited loot and recordings, safe teleport rejection, real adapter damage decisions, one-use substitutes, graft reflections, and high-tier resistance. Roblox engine dependencies are mocked.
+- Compilation of production and test Luau, strict Roblox API/type analysis, a real Rojo place build, and inspection that every script in the place exactly matches its source.
+
+The domain and adapter boundaries deliberately accept validated dynamic profile/config/entity tables (`any`); strict mode does not replace runtime checks. No errors are suppressed with `--!nocheck`.
+
+Roblox rendering, physics, live multiplayer remotes, actual DataStore access, and Studio import/play remain unverified here. `docs/STUDIO_TESTS.md` supplies the engine verification checklist. Neither Roblox publication nor cloud environment publication has been performed.
+
+## Data and extension points
+
+`GameData` provides deeply frozen registries. Each sequence exports base stats, absolute multipliers, two selected powers, passive descriptions and an acting objective. See `docs/STATS.md` for all 27 numeric rows. Digestion is separate progression state; sanity remains capped at 100. Perception is Spirit Vision range in studs; Resistance is a rating.
+
+Add a ModuleScript under `Shared/Pathways` returning the `Types.Pathway` schema or calling `PathwayFactory`. Discovery, potion generation and ability registries require no central roster edits. A factory module supplies nine rows ordered **9 → 1**, a source URL, and optional custom base stats as the fifth argument. Row structure:
+
+```lua
+{sequenceName, primaryName, actingLabel, serverSignal, primaryDescription,
+ passiveDescription, primaryTarget,
+ {secondaryName, secondaryTarget, secondaryDescription},
+ {Primary={Kind="Buff", Status="Shielded", Duration=10},
+  Secondary={Kind="Sense", Status="Vision", Duration=20}}}
+```
+
+Targets are `Self`, `NPC`, or `Position`. Existing operation kinds can be composed through data; a genuinely new mechanic requires a server handler. The current release's tests intentionally assert three pathways and 54 selected abilities and must be expanded with the roster. Reuse documented internal signals for event-based acting, never client-claimed completions. Keep stable IDs when persistence exists.
+
+Generic cooldown/cost/range/scaling lives in `AbilityData`/`StatData`; per-power operation options live in the pathway modules. NPC, exposure, purchase, hit and resource settings live in the shared configuration modules. Clients may read this public balance data but cannot authorize mutations. See `docs/SERVER_CONTRACTS.md` for the implementation boundaries.
+
+
+## src/ReplicatedStorage/Shared/AbilityData.lua
+
+**ModuleScript** at `ReplicatedStorage/Shared/AbilityData`. Create matching Folder parents.
+
+```lua
+--!strict
+local Pathways = require(script.Parent.PathwayData)
+local freeze = require(script.Parent.Freeze)
+local Types = require(script.Parent.Types)
+local byId: {[string]: Types.Ability} = {}
+for pathwayId, pathway in pairs(Pathways) do
+    for n, sequence in pairs(pathway.Sequences) do
+        local tier = sequence.StatMultipliers.Health
+        local sourceModule = script.Parent.Pathways:FindFirstChild(pathwayId)
+        assert(sourceModule, "Missing pathway module")
+        -- Authored ability metadata lives in each pathway's AbilityDefinitions.
+        for _, definition in ipairs(pathway.AbilityDefinitions) do
+            if definition.UnlockSequence ~= n then continue end
+            local ability: any = table.clone(definition)
+            ability.PathwayId = pathwayId
+            ability.Canon = sequence.Canon
+            ability.CooldownSeconds = 5 + (9-n)*2
+            ability.SpiritualityCost = math.round(12 * tier)
+            ability.CastTimeSeconds = if n <= 4 then 1.5 else 0.5
+            ability.RangeStuds = math.round(25 * math.sqrt(tier))
+            ability.RadiusStuds = if n <= 4 then math.round(6*math.sqrt(tier)) else 0
+            ability.MaxTargets = if n <= 4 then 4 else 1
+            -- Abstract effect budget, not unconditional damage. Executor interprets by ability.
+            ability.BasePower = math.round(10*tier)
+            ability.Hitbox = {Shape=if ability.Target == "NPC" then "SingleTarget" else "None", LineOfSight=true}
+            ability.StatusEffects = definition.StatusEffects or {}
+            ability.VFXHook = "Ability."..ability.Id..".VFX"
+            ability.SFXHook = "Ability."..ability.Id..".SFX"
+            local operation=ability.Operation
+            ability.Implemented = operation ~= nil
+            if operation then
+                ability.Target = operation.Target or ability.Target
+                ability.RangeStuds = operation.Range or ability.RangeStuds
+                ability.StatusEffects = if operation.Status then {operation.Status} else {}
+                ability.Hitbox.Shape = if ability.Target == "NPC" then "SingleTarget" else "None"
+            end
+            assert(byId[ability.Id] == nil, "Duplicate ability ID")
+            byId[ability.Id] = ability
+        end
+    end
+end
+return freeze(byId)
+```
+
+
+## src/ReplicatedStorage/Shared/Freeze.lua
+
+**ModuleScript** at `ReplicatedStorage/Shared/Freeze`. Create matching Folder parents.
+
+```lua
+--!strict
+-- Return deeply immutable configuration. Never put live player state in these tables.
+local function freeze(value: any): any
+    if type(value) == "table" and not table.isfrozen(value) then
+        for _, child in pairs(value) do
+            freeze(child)
+        end
+        table.freeze(value)
+    end
+    return value
+end
+return freeze
+```
+
+
+## src/ReplicatedStorage/Shared/GameData.lua
+
+**ModuleScript** at `ReplicatedStorage/Shared/GameData`. Create matching Folder parents.
+
+```lua
+--!strict
+-- Shared data only. The client may read it; only server services mutate player state.
+local freeze = require(script.Parent.Freeze)
+return freeze({
+    Runtime=require(script.Parent.RuntimeConfig),
+    Pathways=require(script.Parent.PathwayData),
+    Abilities=require(script.Parent.AbilityData),
+    Potions=require(script.Parent.PotionData),
+    Stats=require(script.Parent.StatData),
+    Progression=require(script.Parent.ProgressionConfig),
+    StatusEffects=require(script.Parent.StatusEffectData),
+})
+```
+
+
+## src/ReplicatedStorage/Shared/PathwayData.lua
+
+**ModuleScript** at `ReplicatedStorage/Shared/PathwayData`. Create matching Folder parents.
+
+```lua
+--!strict
+local freeze = require(script.Parent.Freeze)
+local Types = require(script.Parent.Types)
+local byId: {[string]: Types.Pathway} = {}
+-- Adding a pathway requires only a ModuleScript in Pathways with this schema.
+for _, module in ipairs(script.Parent.Pathways:GetChildren()) do
+    if module:IsA("ModuleScript") then
+        local pathway = require(module) :: Types.Pathway
+        assert(type(pathway.Id) == "string" and byId[pathway.Id] == nil, "Invalid or duplicate pathway ID")
+        assert(pathway.Sequences[0] == nil, "Sequence 0 is unavailable")
+        for n=1,9 do
+            assert(pathway.Sequences[n] and pathway.Sequences[n].Number == n, "Missing sequence")
+        end
+        byId[pathway.Id] = pathway
+    end
+end
+return freeze(byId)
+```
+
+
+## src/ReplicatedStorage/Shared/PathwayFactory.lua
+
+**ModuleScript** at `ReplicatedStorage/Shared/PathwayFactory`. Create matching Folder parents.
+
+```lua
+--!strict
+local Stats = require(script.Parent.StatData)
+local freeze = require(script.Parent.Freeze)
+-- Internal construction helper; no discovery, player state, or runtime systems.
+return function(id: string, alias: string, rows: {{any}}, source: string, customBaseStats: any?)
+    local base = customBaseStats or Stats.BaseStats[id]
+    assert(base, "New pathways must supply custom base stats")
+    assert(#rows == 9, "Exactly nine rows required, ordered Sequence 9 to 1")
+    local sequences = {}
+    local abilities = {}
+    for index, row in ipairs(rows) do
+        local n = 10-index
+        table.insert(abilities, {Id=id.."_"..tostring(n), UnlockSequence=n, Name=row[2],
+            Description=row[5], Target=row[7], StatusEffects={}, Operation=row[9] and row[9].Primary})
+        local ids = {id.."_"..tostring(n)}
+        local extra = row[8]
+        if extra then
+            local extraId = id.."_"..tostring(n).."_Secondary"
+            table.insert(ids, extraId)
+            table.insert(abilities, {Id=extraId, UnlockSequence=n, Name=extra[1],
+                Description=extra[3], Target=extra[2], StatusEffects={}, Operation=row[9] and row[9].Secondary})
+        end
+        sequences[n] = {
+            Number=n, Name=row[1],
+            Canon={status="[UNVERIFIED]", note="Name, power placement and passive require source review; wiki access blocked during authoring.", sources={source}},
+            StatMultipliers=Stats.GetMultipliers(n), BaseStats=Stats.Scale(base,n),
+            AbilityIds=ids, PassiveTraits={"[UNVERIFIED] "..row[6]},
+            ActingObjectives={{Id=id.."_"..tostring(n).."_acting", Label=row[3], ServerSignal=row[4],
+                RequiredCount=1, DigestionReward=5, ActingProgressReward=1, CooldownSeconds=30}},
+        }
+    end
+    return freeze({Id=id, Name=id, Alias=alias, BaseStats=base, Sequences=sequences, AbilityDefinitions=abilities})
+end
+```
+
+
+## src/ReplicatedStorage/Shared/Pathways/Apprentice.lua
+
+**ModuleScript** at `ReplicatedStorage/Shared/Pathways/Apprentice`. Create matching Folder parents.
+
+```lua
+--!strict
+local make = require(script.Parent.Parent.PathwayFactory)
+return make("Apprentice", "Door", {
+    {"Apprentice", "Door Opening", "Open a server-designated locked passage", "LockedPassageOpened", "Gameplay proposal for door opening; exact canon scope and restrictions require review.", "Sensitivity to passages", "Position", {"Passage Sense", "Self", "Proposed sense of tagged passages; exact canon scope unverified."}, {Primary={Kind="OpenDoor", Target="Position", Range=30, Signal="LockedPassageOpened"}, Secondary={Kind="SenseDoors", Target="Self", Status="Vision", Duration=20}}},
+    {"Trickmaster", "Spark Trick", "Distract an eligible hostile NPC using a trick", "HostileDistracted", "Gameplay proposal for spark trick; exact canon scope and restrictions require review.", "Minor magical tricks", "Position", {"Wind Trick", "Position", "Create a small wind effect for misdirection."}, {Primary={Kind="Debuff", Target="NPC", Status="Confused", Duration=4, Power=1, Signal="HostileDistracted"}, Secondary={Kind="Area", Target="Position", Status="TimeSlow", Duration=4, Power=0.5}}},
+    {"Astrologer", "Astrological Divination", "Resolve a star reading against a server-known outcome", "StarReadingResolved", "Gameplay proposal for astrological divination; exact canon scope and restrictions require review.", "Astrological intuition", "Self", {"Danger Reading", "Self", "Interpret a server-authored omen from an astrological reading."}, {Primary={Kind="Sense", Target="Self", Status="Vision", Duration=20, Signal="StarReadingResolved"}, Secondary={Kind="Buff", Target="Self", Status="Shielded", Duration=12}}},
+    {"Scribe", "Record", "Record an eligible observed power", "EligiblePowerRecorded", "Gameplay proposal for record; exact canon scope and restrictions require review.", "Recording of supernatural powers", "NPC", {"Release Recording", "NPC", "Release a previously recorded eligible power; borrowed power must pass server allowlists."}, {Primary={Kind="Record", Target="NPC", Signal="EligiblePowerRecorded"}, Secondary={Kind="Release", Target="NPC", Power=1.7}}},
+    {"Traveler", "Travel", "Reach a server-designated destination through travel", "TravelDestinationReached", "Gameplay proposal for travel; exact canon scope and restrictions require review.", "Spirit-world navigation", "Position", {"Spatial Door", "Position", "Connect two validated nearby points through a travel door."}, {Primary={Kind="Travel", Target="Position", Signal="TravelDestinationReached"}, Secondary={Kind="Portal", Target="Position", Duration=25}}},
+    {"Secrets Sorcerer", "Concealment", "Protect a scripted secret with spatial concealment", "SecretProtected", "Gameplay proposal for concealment; exact canon scope and restrictions require review.", "Concealment of space", "Position", {"Spatial Seal", "Position", "Proposed temporary seal around a bounded space."}, {Primary={Kind="Conceal", Target="Self", Status="Concealed", Duration=18, Signal="SecretProtected"}, Secondary={Kind="Area", Target="Position", Status="Stasis", Duration=5, Power=1}}},
+    {"Wanderer", "Wandering", "Reach a marked remote location through spatial wandering", "WanderingDestinationReached", "Gameplay proposal for wandering; exact canon scope and restrictions require review.", "Extended spatial travel", "Position", {"Spatial Concealment", "Self", "Conceal a traveler in a bounded encounter area."}, {Primary={Kind="Travel", Target="Position", Status="Concealed", Duration=15, Signal="WanderingDestinationReached"}, Secondary={Kind="Buff", Target="Self", Status="Concealed", Duration=15}}},
+    {"Planeswalker", "Replication", "Reproduce an eligible recorded phenomenon", "PhenomenonReplicated", "Gameplay proposal for replication; exact canon scope and restrictions require review.", "Knowledge of other planes", "Position", {"Planar Travel", "Position", "Travel between authored destinations rather than arbitrary universes."}, {Primary={Kind="Release", Target="NPC", Power=3, Signal="PhenomenonReplicated"}, Secondary={Kind="Travel", Target="Position", Status="Shielded", Duration=10}}},
+    {"Key of Stars", "Star Gate", "Connect two authorized locations with a stable gate", "AuthorizedGateConnected", "Gameplay proposal for star gate; exact canon scope and restrictions require review.", "Authority over space", "Position", {"Spatial Closure", "Position", "Close an eligible spatial connection under server ownership rules."}, {Primary={Kind="Portal", Target="Position", Duration=40, Signal="AuthorizedGateConnected"}, Secondary={Kind="CloseSpace", Target="Position", Status="Stasis", Duration=6, Power=2}}},
+}, "https://lordofthemysteries.fandom.com/wiki/Door_Pathway/Abilities")
+```
+
+
+## src/ReplicatedStorage/Shared/Pathways/Marauder.lua
+
+**ModuleScript** at `ReplicatedStorage/Shared/Pathways/Marauder`. Create matching Folder parents.
+
+```lua
+--!strict
+local make = require(script.Parent.Parent.PathwayFactory)
+return make("Marauder", "Error", {
+    {"Marauder", "Pickpocket", "Steal a marked item from an eligible hostile NPC", "HostileItemStolen", "Gameplay proposal for pickpocket; exact canon scope and restrictions require review.", "Dexterous hands", "NPC", {"Stealth", "Self", "Gameplay stealth aid; not supernatural invisibility."}, {Primary={Kind="Theft", Range=8, Signal="HostileItemStolen"}, Secondary={Kind="Buff", Status="Disguised", Duration=12}}},
+    {"Swindler", "Deception", "Complete a scripted deception against a hostile NPC", "HostileNPCDeceived", "Gameplay proposal for deception; exact canon scope and restrictions require review.", "Persuasive misdirection", "NPC", {"Misdirection", "NPC", "Distract an eligible hostile target through deception."}, {Primary={Kind="Debuff", Status="Confused", Duration=10, Signal="HostileNPCDeceived"}, Secondary={Kind="Debuff", Status="Confused", Duration=6}}},
+    {"Cryptologist", "Decipher", "Solve a server-generated cipher", "CipherSolved", "Gameplay proposal for decipher; exact canon scope and restrictions require review.", "Pattern interpretation", "Self", {"Information Interpretation", "Self", "Interpret a designated clue rather than freely reading player secrets."}, {Primary={Kind="Cipher", Target="Self", Status="CipherSight", Duration=30}, Secondary={Kind="Sense", Target="Self", Status="Vision", Duration=20}}},
+    {"Prometheus", "Ability Theft", "Steal a temporary power from an eligible hostile NPC", "HostileAbilityStolen", "Gameplay proposal for ability theft; exact canon scope and restrictions require review.", "Theft of supernatural powers", "NPC", {"Energy Theft", "NPC", "Proposed energy transfer; precise canon scope needs review."}, {Primary={Kind="StealPower", Status="Silenced", Duration=10, Signal="HostileAbilityStolen"}, Secondary={Kind="Siphon", Power=1.3}}},
+    {"Dream Stealer", "Thought Theft", "Remove an eligible thought during a scripted encounter", "HostileThoughtStolen", "Gameplay proposal for thought theft; exact canon scope and restrictions require review.", "Perception of thoughts", "NPC", {"Dream Intrusion", "NPC", "Proposed scripted dream encounter; availability at this sequence unverified."}, {Primary={Kind="Debuff", Status="Sleep", Duration=8, Signal="HostileThoughtStolen"}, Secondary={Kind="Debuff", Status="Burning", Duration=5, Power=0.8}}},
+    {"Parasite", "Parasitism", "Complete a controlled hostile-NPC parasitism encounter", "HostileParasitismCompleted", "Gameplay proposal for parasitism; exact canon scope and restrictions require review.", "Parasitic concealment", "NPC", {"Vitality Siphon", "NPC", "Proposed host-linked vitality transfer with hard duration and target limits."}, {Primary={Kind="Parasite", Status="Parasite", Duration=12, Signal="HostileParasitismCompleted"}, Secondary={Kind="Siphon", RequiresHost=true, Power=2}}},
+    {"Mentor of Deceit", "Spiritual Deception", "Misdirect an eligible hostile spiritual sense", "SpiritualSenseDeceived", "Gameplay proposal for spiritual deception; exact canon scope and restrictions require review.", "Deception of spiritual intuition", "NPC", {"Belief Misdirection", "NPC", "Proposed scripted deception of an NPC belief."}, {Primary={Kind="Debuff", Status="Deceived", Duration=14, Signal="SpiritualSenseDeceived"}, Secondary={Kind="Control", Duration=10}}},
+    {"Trojan Horse of Destiny", "Destiny Infiltration", "Complete a scripted infiltration of a marked destiny", "DestinyInfiltrationCompleted", "Gameplay proposal for destiny infiltration; exact canon scope and restrictions require review.", "Destiny concealment", "NPC", {"Hidden Destiny Payload", "NPC", "Proposed delayed destiny effect; exact canon mechanism unverified."}, {Primary={Kind="Infiltrate", Target="NPC", Status="Payload", Duration=12, Signal="DestinyInfiltrationCompleted"}, Secondary={Kind="Debuff", Status="Payload", Duration=10}}},
+    {"Worm of Time", "Time Theft", "Resolve a scripted time-theft encounter", "TimeTheftEncounterResolved", "Gameplay proposal for time theft; exact canon scope and restrictions require review.", "Temporal perception", "NPC", {"Temporal Delay", "NPC", "Proposed short bounded time distortion, never control of the server clock."}, {Primary={Kind="Debuff", Status="TimeSlow", Duration=10, Power=2, Signal="TimeTheftEncounterResolved"}, Secondary={Kind="Area", Target="Position", Status="Stasis", Duration=4, Power=2}}},
+}, "https://lordofthemysteries.fandom.com/wiki/Error_Pathway/Abilities")
+```
+
+
+## src/ReplicatedStorage/Shared/Pathways/Seer.lua
+
+**ModuleScript** at `ReplicatedStorage/Shared/Pathways/Seer`. Create matching Folder parents.
+
+```lua
+--!strict
+local make = require(script.Parent.Parent.PathwayFactory)
+return make("Seer", "Fool", {
+    {"Seer", "Divination", "Resolve a divination against a server-known outcome", "DivinationResolved", "Gameplay proposal for divination; exact canon scope and restrictions require review.", "Spiritual sensitivity", "Self", {"Spirit Vision", "Self", "Perceive nearby spiritual traces; server filters revealed information."}, {Primary={Kind="Sense", Signal="DivinationResolved"}, Secondary={Kind="Sense", Status="Vision", Duration=20}}},
+    {"Clown", "Acrobatic Evasion", "Evade a hostile strike during a server-validated dodge", "HostileStrikeEvaded", "Gameplay proposal for acrobatic evasion; exact canon scope and restrictions require review.", "Balance and bodily control", "Self", {"Composure", "Self", "Maintain bodily and emotional control under pressure."}, {Primary={Kind="Dodge", Status="Invulnerable", Duration=2}, Secondary={Kind="Buff", Status="Composed", Duration=20}}},
+    {"Magician", "Flame Jump", "Escape pursuit using a valid flame anchor", "PursuitEscaped", "Gameplay proposal for flame jump; exact canon scope and restrictions require review.", "Sleight of hand", "Position", {"Paper Figurine Substitute", "Self", "Prepare a substitute against one eligible attack; no unconditional immortality."}, {Primary={Kind="FlameJump", Target="Position", Range=36, Signal="PursuitEscaped"}, Secondary={Kind="Buff", Status="Substitute", Duration=45}}},
+    {"Faceless", "Disguise", "Complete an infiltration while maintaining a disguise", "DisguisedInfiltrationCompleted", "Gameplay proposal for disguise; exact canon scope and restrictions require review.", "Control of appearance", "Self", {"Voice Mimicry", "Self", "Adopt a permitted disguise voice profile using original audio."}, {Primary={Kind="Disguise", Profile="Wanderer", Status="Disguised", Duration=40}, Secondary={Kind="Disguise", Profile="Archivist", Status="Disguised", Duration=25}}},
+    {"Marionettist", "Spirit Body Threads", "Complete control of an eligible hostile NPC", "MarionetteControlCompleted", "Gameplay proposal for spirit body threads; exact canon scope and restrictions require review.", "Spirit Body Thread perception", "NPC", {"Marionette Command", "NPC", "Issue bounded orders to a server-owned marionette."}, {Primary={Kind="Control", RequiredHits=3, Duration=20, Signal="MarionetteControlCompleted"}, Secondary={Kind="Command", Power=2}}},
+    {"Bizarro Sorcerer", "Marionette Exchange", "Survive an encounter using a marionette exchange", "MarionetteEscapeCompleted", "Gameplay proposal for marionette exchange; exact canon scope and restrictions require review.", "Expanded marionette command", "NPC", {"Bizarre Illusion", "Position", "Create a limited deceptive scene; exact canon form needs review."}, {Primary={Kind="Exchange", Target="NPC", Signal="MarionetteEscapeCompleted"}, Secondary={Kind="Area", Status="Confused", Duration=8, Power=1.5}}},
+    {"Scholar of Yore", "Historical Projection", "Resolve a historical clue using an authenticated record", "HistoricalClueResolved", "Gameplay proposal for historical projection; exact canon scope and restrictions require review.", "Historical knowledge", "Position", {"Historical Recall", "Self", "Recall an authenticated historical record under explicit limits."}, {Primary={Kind="Echo", Target="Position", Duration=20, Signal="HistoricalClueResolved"}, Secondary={Kind="Recall", Target="Self", Power=0.25}}},
+    {"Miracle Invoker", "Wish Fulfillment", "Fulfill a server-assigned wish within its constraints", "WishFulfilled", "Gameplay proposal for wish fulfillment; exact canon scope and restrictions require review.", "Miracle accumulation", "Position", {"Miracle of Recovery", "NPC", "Proposed limited recovery wish with accumulated-wish costs."}, {Primary={Kind="Wish", Target="Self", Signal="WishFulfilled"}, Secondary={Kind="Wish", Target="Self", Power=0.6}}},
+    {"Attendant of Mysteries", "Grafting", "Resolve a scripted encounter using a valid graft", "GraftEncounterResolved", "Gameplay proposal for grafting; exact canon scope and restrictions require review.", "Authority over mysteries", "Position", {"Realm of Mysteries", "Position", "Proposed bounded mysterious domain; exact mechanics unverified."}, {Primary={Kind="Graft", Target="Position", Duration=12, Signal="GraftEncounterResolved"}, Secondary={Kind="Area", Target="Position", Status="Stasis", Duration=4, Power=3}}},
+}, "https://lordofthemysteries.fandom.com/wiki/Fool_Pathway/Abilities")
+```
+
+
+## src/ReplicatedStorage/Shared/PotionData.lua
+
+**ModuleScript** at `ReplicatedStorage/Shared/PotionData`. Create matching Folder parents.
+
+```lua
+--!strict
+local Pathways = require(script.Parent.PathwayData)
+local freeze = require(script.Parent.Freeze)
+local potions = {}
+for pathwayId, pathway in pairs(Pathways) do
+    for n, sequence in pairs(pathway.Sequences) do
+        local id = pathwayId.."_Potion_"..tostring(n)
+        potions[id] = {
+            Id=id, Name=sequence.Name.." Potion", PathwayId=pathwayId, TargetSequence=n,
+            RequiredSequence=if n == 9 then nil else n+1,
+            RequiredDigestion=if n == 9 then 0 else 100,
+            RequiresUninitiated=n == 9, ConsumedOnSuccess=true,
+            InitialDigestion=0, InitialActingProgress=0,
+            -- Ingredients and rituals intentionally unavailable pending design/canon review.
+            Ingredients={}, RitualId=nil, CraftingEnabled=false,
+        }
+    end
+end
+return freeze({ById=potions, Rules={
+    StartingSequence=9, HighestSequence=1, AllowPathwaySwitch=false,
+    AllowSequenceSkipping=false, AllowEarlyAdvancement=false,
+    RequireLivingCharacter=true, RequireInventoryOwnership=true,
+    RequireServerTransaction=true, ResetDigestionOnAdvance=true,
+    -- If early advancement is enabled later, this penalty must run on the server.
+    Risk={BaseChance=0.01, MissingDigestionWeight=0.65, MissingSanityWeight=0.30,
+        MinChance=0, MaxChance=0.95, FailureSanityDamage=30},
+}})
+```
+
+
+## src/ReplicatedStorage/Shared/ProgressionConfig.lua
+
+**ModuleScript** at `ReplicatedStorage/Shared/ProgressionConfig`. Create matching Folder parents.
+
+```lua
+--!strict
+local freeze = require(script.Parent.Freeze)
+return freeze({
+    Digestion={Min=0, Max=100, Default=0, RequireServerVerifiedObjectives=true,
+        RewardOnlyCurrentSequence=true, RewardOnlyCurrentPathway=true,
+        DeduplicateServerEventIds=true, MaxRewardPerEvent=5},
+    Acting={Default=0, Min=0, ObjectiveProgressResetsOnAdvance=true,
+        AllowClientReportedCompletion=false, RejectFriendlyTheft=true},
+    Sanity={Min=0, Max=100, Default=100, MadnessThreshold=20, FailureThreshold=0,
+        MadnessDurationSeconds=10, RecoveryPerSecond=0.2,
+        ExposureDrainPerSecond=1, WhisperDrain=3, FailedRitualDrain=15,
+        UnsafeRitualDrain=35, RecoveryDigestionPenalty=20,
+        LossOfControlState="LostControl", BlockCastingAtZero=true,
+        EnterMadnessAtZero=true, TransitionToLostControlAfterMadness=true,
+        BlockAdvancementAtOrBelow=20},
+    Spirituality={RegenIntervalSeconds=0.5, CombatRegenMultiplier=0.5,
+        RegenDelayAfterCastSeconds=2, ClampToMax=true},
+    Abilities={RetainEarlierSequenceAbilities=true, MaxEquipped=6,
+        ValidateTargetsOnServer=true, ValidateRangeOnServer=true,
+        ValidateLineOfSightOnServer=true, RejectUnimplementedAbilities=true,
+        InterruptOnDeath=true, GlobalCooldownSeconds=0.2},
+    Persistence={SchemaVersion=1, DataStoreName="Mysteries_Player_v1",
+        KeyPrefix="Player_", AutosaveSeconds=60, LockLeaseSeconds=180,
+        LockRefreshSeconds=45, RetryCount=5, BackoffBaseSeconds=1,
+        BackoffMaxSeconds=16, BackoffJitterFraction=0.2,
+        UseUpdateAsync=true, RejectSessionLockConflict=true,
+        NeverOverwriteOnLoadFailure=true},
+    DefaultPlayer={SchemaVersion=1, PathwayId=false, Sequence=false,
+        Digestion=0, ActingProgress=0, ObjectiveProgress={},
+        Inventory={}, Stats={}, AbilityLoadout={}, StatusEffects={}},
+})
+```
+
+
+## src/ReplicatedStorage/Shared/RuntimeConfig.lua
+
+**ModuleScript** at `ReplicatedStorage/Shared/RuntimeConfig`. Create matching Folder parents.
+
+```lua
+--!strict
+local freeze=require(script.Parent.Freeze)
+return freeze({
+    -- Only honored in Studio. Published servers always use DataStoreService.
+    StudioSessionOnly=true, GenerateDemoWorld=true,
+    TickSeconds=0.25, StateIntervalSeconds=0.5, MaxEnemies=18,
+    IntentRate=8, IntentBurst=12, MaxMessageLength=180,
+    MeleeRange=11, MeleeCooldown=0.55, MeleePowerMultiplier=1.6,
+    NPCNoticeRange=65, NPCAttackRange=6, NPCAttackInterval=1.5,
+    NPCRespawnSeconds=12, NPCGoldReward=25,
+    NPCHealthPerTier=60, NPCMeleeDamagePerTier=6, NPCSpellDamagePerTier=4,
+    NPCSpeed=10, NPCSpellRange=28, NPCSpellCooldown=6,
+    NPCMentalResistancePerTier=12, MinStatusDurationMultiplier=0.15,
+    SummonDamagePerTier=12, SummonAttackInterval=1.5,
+    ExposureRadius=30, WhisperInterval=10, NextPotionGoldCost=100,
+    MaxOwnedSummons=2, MaxPortalsPerPlayer=2, MaxVFX=48,
+    AudioAssets={}, -- SFX hook -> original uploaded Roblox asset ID; no external/ripped audio.
+    Disguises={
+        Wanderer={DisplayName="Unknown Wanderer",Color={100,120,140},VoicePitch=0.85,
+            Scales={BodyHeightScale=0.92,BodyWidthScale=1.1,BodyDepthScale=1.05,HeadScale=0.95}},
+        Archivist={DisplayName="Archive Custodian",Color={155,125,105},VoicePitch=1.1,
+            Scales={BodyHeightScale=1.05,BodyWidthScale=0.9,BodyDepthScale=0.95,HeadScale=1.0}},
+    },
+    DivinationAccuracy={Base=0.55,Bonus=0.4,IntuitionScale=40},
+    CopyableNPCPowers={ArcBolt={Power=1.7,Status="Burning",Duration=3}},
+    EnemyTiers={9,7,5,4,2,1},
+    SanctuaryRadius=25, WorldRadius=380,
+})
+```
+
+
+## src/ReplicatedStorage/Shared/StatData.lua
+
+**ModuleScript** at `ReplicatedStorage/Shared/StatData`. Create matching Folder parents.
+
+```lua
+--!strict
+local freeze = require(script.Parent.Freeze)
+local Types = require(script.Parent.Types)
+type Stats = Types.Stats
+-- Game balance values, not novel claims. Perception is Spirit Vision range in studs;
+-- regen is spirituality/second. Resistance is a rating, not percent immunity.
+local bases: {[string]: Stats} = {
+    Seer = {Health=100, Spirituality=140, Sanity=100, Strength=10, Agility=12, Perception=45, Intuition=20, Resistance=12, SpiritualityRegen=2.4},
+    Marauder = {Health=110, Spirituality=110, Sanity=100, Strength=12, Agility=18, Perception=30, Intuition=14, Resistance=10, SpiritualityRegen=2.0},
+    Apprentice = {Health=100, Spirituality=130, Sanity=100, Strength=10, Agility=14, Perception=40, Intuition=16, Resistance=11, SpiritualityRegen=2.2},
+}
+-- Absolute multipliers relative to Sequence 9; never compound on a player's stats.
+local tiers = {[9]=1, [8]=1.25, [7]=1.85, [6]=2.4, [5]=3.5, [4]=7, [3]=10, [2]=18, [1]=28}
+local function multipliers(sequence: number): Stats
+    local t = assert(tiers[sequence], "Sequence must be an integer from 1 through 9")
+    return {
+        Health=t, Spirituality=t*math.sqrt(t), Sanity=1,
+        Strength=t, Agility=math.sqrt(t), Perception=math.sqrt(t),
+        Intuition=t, Resistance=t, SpiritualityRegen=t,
+    }
+end
+local function scale(base: Stats, sequence: number): Stats
+    local m: any = multipliers(sequence)
+    local result: any = {}
+    for key, value in pairs(base :: any) do
+        result[key] = math.round(value * m[key] * 100) / 100
+    end
+    return result :: Stats
+end
+local function calculate(pathwayId: string, sequence: number): Stats
+    return scale(assert(bases[pathwayId], "Unknown pathway"), sequence)
+end
+return freeze({BaseStats=bases, TierMultipliers=tiers, GetMultipliers=multipliers, Calculate=calculate, Scale=scale,
+    Digestion={Min=0, Max=100, StartingValue=0}, Sanity={Min=0, Max=100}})
+```
+
+
+## src/ReplicatedStorage/Shared/StatusEffectData.lua
+
+**ModuleScript** at `ReplicatedStorage/Shared/StatusEffectData`. Create matching Folder parents.
+
+```lua
+--!strict
+local freeze=require(script.Parent.Freeze)
+return freeze({Madness={Id="Madness", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, BlocksCasting=true, BlocksAdvancement=true}, LostControl={Id="LostControl", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, BlocksCasting=true, BlocksAdvancement=true}, Invulnerable={Id="Invulnerable", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, PreventsDamage=true}, Substitute={Id="Substitute", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, PreventsOneLethalHit=true}, Disguised={Id="Disguised", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, AggroMultiplier=0.2}, Concealed={Id="Concealed", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, AggroMultiplier=0}, Vision={Id="Vision", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, Reveal=true}, CipherSight={Id="CipherSight", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, Decode=true}, Composed={Id="Composed", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, MentalDamageMultiplier=0.5}, Shielded={Id="Shielded", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, DamageMultiplier=0.35}, Threaded={Id="Threaded", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, MoveMultiplier=0.4}, Controlled={Id="Controlled", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, Ally=true}, Confused={Id="Confused", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, BlocksAttacks=true}, Silenced={Id="Silenced", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, BlocksAbilities=true}, Sleep={Id="Sleep", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, BlocksAttacks=true, MoveMultiplier=0}, Parasite={Id="Parasite", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, DamageOverTime=true}, Deceived={Id="Deceived", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, BlocksAttacks=true}, Payload={Id="Payload", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, TriggeredOnAttack=true}, TimeSlow={Id="TimeSlow", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, MoveMultiplier=0.25}, Stasis={Id="Stasis", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, BlocksAttacks=true, MoveMultiplier=0}, Burning={Id="Burning", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, DamageOverTime=true}, Grafted={Id="Grafted", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, ReflectsDamage=true}})
+```
+
+
+## src/ReplicatedStorage/Shared/Types.lua
+
+**ModuleScript** at `ReplicatedStorage/Shared/Types`. Create matching Folder parents.
+
+```lua
+--!strict
+-- Luau has no numeric singleton types; validate integer bounds at runtime.
+export type Sequence = number
+export type Stats = {
+    Health: number, Spirituality: number, Sanity: number,
+    Strength: number, Agility: number, Perception: number,
+    Intuition: number, Resistance: number, SpiritualityRegen: number,
+}
+export type Canon = { status: string, note: string, sources: {string} }
+export type Objective = {
+    Id: string, Label: string, ServerSignal: string, RequiredCount: number,
+    DigestionReward: number, ActingProgressReward: number, CooldownSeconds: number,
+}
+export type SequenceData = {
+    Number: number, Name: string, Canon: Canon, StatMultipliers: Stats,
+    BaseStats: Stats, AbilityIds: {string}, PassiveTraits: {string},
+    ActingObjectives: {Objective},
+}
+export type Pathway = {
+    Id: string, Name: string, Alias: string, BaseStats: Stats,
+    Sequences: {[number]: SequenceData}, AbilityDefinitions: {any},
+}
+export type Ability = {
+    Id: string, PathwayId: string, UnlockSequence: number, Name: string,
+    Description: string, Canon: Canon, CooldownSeconds: number,
+    SpiritualityCost: number, CastTimeSeconds: number, Target: string,
+    RangeStuds: number, RadiusStuds: number, MaxTargets: number,
+    BasePower: number, Hitbox: {Shape: string, LineOfSight: boolean},
+    StatusEffects: {string}, VFXHook: string, SFXHook: string,
+    Implemented: boolean, Operation: any?,
+}
+return table.freeze({})
+```
+
+
+## src/ServerScriptService/Bootstrap.server.lua
+
+**Script** at `ServerScriptService/Bootstrap`. Create matching Folder parents.
+
+```lua
+--!strict
+local Players=game:GetService("Players")
+local ReplicatedStorage=game:GetService("ReplicatedStorage")
+local DataStoreService=game:GetService("DataStoreService")
+local RunService=game:GetService("RunService")
+local HttpService=game:GetService("HttpService")
+local data=require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("GameData"))
+local Domain=require(script.Parent.Domain.PlayerDomain)
+local Sessions=require(script.Parent.Domain.SessionStore)
+local RateLimiter=require(script.Parent.Domain.RateLimiter)
+local World=require(script.Parent.Services.WorldService)
+local Effects=require(script.Parent.Services.EffectService)
+local domain=Domain.new(data)
+local states: {[Player]: any}={}
+local sessions: {[Player]: any}={}
+local releasing: {[Player]: boolean}={}
+local bound: {[Player]: Model}={}
+local connections: {[Player]: RBXScriptConnection}={}
+local closing=false
+local releaseCount=0
+local remotes=Instance.new("Folder");remotes.Name="MysteriesRemotes";remotes.Parent=ReplicatedStorage
+local function remote(name: string): RemoteEvent
+    local r=Instance.new("RemoteEvent");r.Name=name;r.Parent=remotes;return r
+end
+local intent,stateEvent,fx=remote("Intent"),remote("State"),remote("Effect")
+local limiter=RateLimiter.new(data.Runtime.IntentRate,data.Runtime.IntentBurst)
+local sessionOnly=RunService:IsStudio() and data.Runtime.StudioSessionOnly
+local store: any
+if sessionOnly then
+    warn("Mysteries: STUDIO SESSION ONLY — progress is not saved between servers")
+    local memory={}
+    store={UpdateAsync=function(_self: any,key: string,transform: any)
+        local value=transform(Domain.Copy(memory[key]))
+        if value~=nil then memory[key]=Domain.Copy(value) end
+        return Domain.Copy(value)
+    end}
+else
+    store=DataStoreService:GetDataStore(data.Progression.Persistence.DataStoreName)
+end
+local persistence=Sessions.new(store,domain,data.Progression.Persistence,os.time,task.wait)
+local function notify(player: Player,text: string)
+    if player.Parent then stateEvent:FireClient(player,{Message=string.sub(text,1,data.Runtime.MaxMessageLength)}) end
+end
+local world=World.new(data,domain,states,fx)
+local effects=Effects.new(world,domain,notify)
+world:Build()
+local function applyStats(player: Player,s: any,refill: boolean)
+    local hum=world:Humanoid(player)
+    if not hum then return end
+    hum.MaxHealth=s.Stats.Health
+    if refill then hum.Health=s.Stats.Health else hum.Health=math.min(hum.Health,hum.MaxHealth) end
+    hum.WalkSpeed=math.clamp(16+s.Stats.Agility*0.25,16,42)
+    s.Health=hum.Health
+end
+local function sendState(player: Player)
+    local s=states[player]
+    if not s or not s.Ready then
+        stateEvent:FireClient(player,{Ready=false,Loading=not releasing[player],SessionOnly=sessionOnly});return
+    end
+    local now=os.clock();local p=s.Profile;local cooldowns={};local statuses={}
+    for id,expiry in pairs(s.Cooldowns) do if expiry>now then cooldowns[id]=expiry-now end end
+    for id,st in pairs(s.Statuses) do if st.ExpiresAt>now then table.insert(statuses,id) end end
+    table.sort(statuses)
+    stateEvent:FireClient(player,{Ready=true,SessionOnly=sessionOnly,PathwayId=p.PathwayId,Sequence=p.Sequence,
+        Digestion=p.Digestion,ActingProgress=p.ActingProgress,Health=s.Health,MaxHealth=s.Stats.Health,
+        Spirituality=s.Spirituality,MaxSpirituality=s.Stats.Spirituality,Sanity=s.Sanity,Mode=s.Mode,
+        Gold=p.Gold,WishCredits=p.WishCredits,Inventory=Domain.Copy(p.Inventory),Loadout=Domain.Copy(p.AbilityLoadout),
+        Cooldowns=cooldowns,Statuses=statuses,Dead=s.Dead,RecordedCharges=s.RecordedPower and s.RecordedPower.Charges or 0,
+        Casting=s.Pending and s.Pending.Id or false})
+end
+local function bindCharacter(player: Player,character: Model)
+    if bound[player]==character then return end
+    bound[player]=character
+    task.spawn(function()
+        local hum=character:WaitForChild("Humanoid",15)
+        local root=character:WaitForChild("HumanoidRootPart",15)
+        if not hum or not hum:IsA("Humanoid") or not root or not root:IsA("BasePart") then return end
+        while player.Parent and character==player.Character and states[player] and not states[player].Ready do task.wait(0.1) end
+        local s=states[player]
+        if not s or not s.Ready or player.Character~=character then return end
+        s.Dead=false;s.Pending=nil;s.Statuses={};s.RecordedPower=nil;s.StolenPower=nil;s.DisguiseUntil=nil;s.OriginalDisplayName=nil
+        s.Health=s.Stats.Health;s.Spirituality=s.Stats.Spirituality
+        s.LastPosition=root.Position;s.LastPositionAt=os.clock();s.TeleportGraceUntil=os.clock()+3
+        applyStats(player,s,true)
+        hum.HealthChanged:Connect(function(health)
+            local current=states[player]
+            if current and player.Character==character then current.Health=health end
+        end)
+        hum.Died:Connect(function()
+            local current=states[player]
+            if current and player.Character==character then
+                current.Dead=true;domain:CancelCast(current,false);current.Statuses={}
+                effects:RemoveGates(player);world:Cleanup(player)
+            end
+        end)
+    end)
+end
+world.OnInteraction=function(player: Player,action: string)
+    local s=states[player]
+    if not s or not s.Ready or s.Dead or s.Pending or not limiter:Allow(player,os.clock()) then return end
+    local now=os.clock()
+    local ok,message=false,"No response"
+    if action=="Buy" and s.Mode=="Normal" then ok,message=domain:BuyNextPotion(s)
+    elseif action=="Recover" then
+        ok,message=domain:Recover(s);s.FailureApplied=false
+    elseif action=="Cipher" then
+        if s.Mode=="Normal" and s.Statuses.CipherSight and s.Statuses.CipherSight.ExpiresAt>now then
+            ok=domain:Act(s,"CipherSolved","archive:"..tostring(now),now)
+            message=if ok then "Cipher interpreted" else "Acting objective is not ready"
+        else message="Use Cryptologist's Decipher ability first" end
+    elseif action=="Archive" and s.Mode=="Normal" then
+        s.ArchiveRead=true
+        if s.Statuses.Disguised then ok=domain:Act(s,"DisguisedInfiltrationCompleted","infiltration:"..tostring(now),now) end
+        if s.Statuses.Concealed then ok=domain:Act(s,"SecretProtected","secret:"..tostring(now),now) or ok end
+        message=if ok then "Archive objective complete" else "Historical record read; a Scholar can invoke its echo"
+    elseif string.sub(action,1,7)=="Studio:" and sessionOnly and RunService:IsStudio() then
+        local path=string.sub(action,8)
+        if data.Pathways[path] then
+            local p=domain:Default();p.PathwayId=path;p.Sequence=1;p.Digestion=100;p.Gold=1000;p.WishCredits=100
+            for id in pairs(data.Potions.ById) do p.Inventory[id]=1 end
+            local replacement=domain:NewState(p,now);domain:AutoEquip(replacement)
+            states[player]=replacement;replacement.TeleportGraceUntil=now+3;replacement.FailureApplied=false
+            effects:RemoveGates(player);world:Cleanup(player);applyStats(player,replacement,true)
+            ok=true;message="Session-only mastery: all "..path.." abilities unlocked"
+        end
+    end
+    notify(player,message);sendState(player)
+end
+if sessionOnly then
+    for i,path in ipairs({"Seer","Marauder","Apprentice"}) do
+        local p=Instance.new("Part");p.Name="StudioMastery_"..path;p.Anchored=true;p.Size=Vector3.new(3,4,3);p.Position=Vector3.new(-12+(i-1)*12,2,28);p.Color=Color3.fromRGB(85,140,145);p.Parent=world.Folder
+        local prompt=Instance.new("ProximityPrompt");prompt.ActionText="SESSION TEST: "..path.." Seq 1";prompt.ObjectText="Studio only — not saved";prompt.HoldDuration=1;prompt.MaxActivationDistance=8;prompt.Parent=p
+        prompt.Triggered:Connect(function(player)
+            local root=world:Root(player)
+            local interact=world.OnInteraction
+            if root and interact and (root.Position-p.Position).Magnitude<10 then interact(player,"Studio:"..path) end
+        end)
+    end
+end
+local function loadPlayer(player: Player)
+    if states[player] then return end
+    states[player]={Ready=false,Loading=true}
+    connections[player]=player.CharacterAdded:Connect(function(c) bindCharacter(player,c) end)
+    if player.Character then bindCharacter(player,player.Character) end
+    task.spawn(function()
+        local owner=game.JobId..":"..HttpService:GenerateGUID(false)
+        local handle,err=persistence:Acquire(player.UserId,owner)
+        if not handle then
+            if player.Parent then notify(player,err or "Load failed");player:Kick("Save could not be safely loaded. "..(err or "Please rejoin.")) end
+            return
+        end
+        if not player.Parent or closing then persistence:Save(handle,handle.Data,true);return end
+        sessions[player]=handle
+        local s=domain:NewState(handle.Data,os.clock())
+        if next(s.Profile.AbilityLoadout)==nil then domain:AutoEquip(s) end
+        s.NextSave=os.clock()+data.Progression.Persistence.LockRefreshSeconds
+        states[player]=s
+        if player.Character and bound[player]~=player.Character then bindCharacter(player,player.Character) end
+        sendState(player)
+    end)
+end
+local function releasePlayer(player: Player)
+    if releasing[player] then return end
+    releasing[player]=true;releaseCount+=1
+    local s=states[player];local handle=sessions[player]
+    if s then s.Ready=false;s.Pending=nil end
+    effects:RemoveGates(player);world:Cleanup(player)
+    if handle and s then
+        local deadline=os.clock()+18
+        while handle.Busy and os.clock()<deadline do task.wait(0.05) end
+        local ok,err=persistence:Save(handle,domain:Snapshot(s),true)
+        if not ok then warn("Mysteries final save failed for "..player.UserId..": "..tostring(err)) end
+    end
+    if connections[player] then connections[player]:Disconnect();connections[player]=nil end
+    limiter:Remove(player);states[player]=nil;sessions[player]=nil;bound[player]=nil
+    releaseCount-=1;releasing[player]=nil
+end
+Players.PlayerAdded:Connect(loadPlayer)
+Players.PlayerRemoving:Connect(releasePlayer)
+for _,player in ipairs(Players:GetPlayers()) do loadPlayer(player) end
+intent.OnServerEvent:Connect(function(player: Player,action: any,payload: any)
+    if closing or type(action)~="string" or #action>12 or not limiter:Allow(player,os.clock()) then return end
+    if action=="Sync" then sendState(player);return end
+    local s=states[player]
+    if not s or not s.Ready or s.Dead or type(payload)~="table" then return end
+    local now=os.clock()
+    if action=="Drink" then
+        if type(payload.Id)~="string" or #payload.Id>80 then return end
+        local ok,message=domain:Drink(s,payload.Id,now)
+        if ok then applyStats(player,s,true);world:Cleanup(player);effects:RemoveGates(player) end
+        notify(player,message)
+    elseif action=="Equip" then
+        if type(payload.Id)~="string" or #payload.Id>80 then return end
+        local _,message=domain:Equip(s,payload.Slot,payload.Id);notify(player,message)
+    elseif action=="Cast" then
+        if type(payload.Id)~="string" or #payload.Id>80 then return end
+        local a=data.Abilities[payload.Id]
+        if not a then return end
+        local input={Position=payload.Position,Target=payload.Target}
+        local context,err=effects:Validate(player,s,a,input)
+        if not context then notify(player,err or "Invalid target");return end
+        local pending,reason=domain:BeginCast(s,payload.Id,now)
+        if not pending then notify(player,reason or "Cannot cast");return end
+        pending.Input=input
+    elseif action=="Melee" then
+        local root=world:Root(player)
+        if not root or not world:FiniteVector(root.Position) or s.Mode~="Normal" or s.Pending or now-s.LastMelee<data.Runtime.MeleeCooldown then return end
+        s.LastMelee=now;s.LastCombat=now
+        local direction=root.CFrame.LookVector
+        if world:FiniteVector(payload.Position) and (payload.Position-root.Position).Magnitude>0.1 then direction=(payload.Position-root.Position).Unit end
+        for _,e in ipairs(world:Targets(root.Position,data.Runtime.MeleeRange,8,player)) do
+            local delta=e.Root.Position-root.Position
+            if delta.Magnitude<0.1 or delta.Unit:Dot(direction)>0.25 then
+                if world:LineOfSight(root.Position,e.Root.Position,player.Character,e.Model) then
+                    world:Damage(e,s.Stats.Strength*data.Runtime.MeleePowerMultiplier,player,now);break
+                end
+            end
+        end
+        world:Effect(root.Position+direction*3,"Melee",player)
+    end
+    sendState(player)
+end)
+task.spawn(function()
+    local previous=os.clock();local nextState=0
+    while not closing do
+        task.wait(data.Runtime.TickSeconds)
+        local now=os.clock();local dt=now-previous;previous=now
+        for player,s in pairs(states) do
+            if not s.Ready then continue end
+            domain:Tick(s,dt,now)
+            local root=world:Root(player);local hum=world:Humanoid(player)
+            if root and hum and hum.Health>0 then
+                -- Horizontal movement guard; server-authorized travel has an explicit grace window.
+                if s.LastPosition and now>(s.TeleportGraceUntil or 0) then
+                    local horizontal=Vector3.new(root.Position.X-s.LastPosition.X,0,root.Position.Z-s.LastPosition.Z).Magnitude
+                    if horizontal>hum.WalkSpeed*math.min(dt,2)*2+8 then
+                        root.CFrame=CFrame.new(s.LastPosition);domain:CancelCast(s,false)
+                    end
+                end
+                s.LastPosition=root.Position
+                s.Health=hum.Health
+            end
+            if s.Mode=="LostControl" and not s.FailureApplied then
+                s.FailureApplied=true
+                if hum then hum.Health=0 end
+                notify(player,"Loss of control. Return to Stabilization after respawning.")
+            end
+            local pending=s.Pending
+            if pending and now>=pending.EndsAt then
+                local a=data.Abilities[pending.Id]
+                local context,err=effects:Validate(player,s,a,pending.Input)
+                if not context then domain:CancelCast(s,true);notify(player,err or "Cast interrupted")
+                else
+                    local success,ok,message=pcall(function() return effects:Execute(context,now) end)
+                    if not success then
+                        domain:CancelCast(s,true);warn("Mysteries executor error: "..tostring(ok));notify(player,"Cast interrupted")
+                    else domain:CancelCast(s,not ok);notify(player,message) end
+                end
+            end
+            local handle=sessions[player]
+            if handle and not handle.Busy and now>=(s.NextSave or math.huge) then
+                s.NextSave=now+data.Progression.Persistence.LockRefreshSeconds
+                local snapshot=domain:Snapshot(s)
+                task.spawn(function()
+                    local ok,err=persistence:Save(handle,snapshot,false)
+                    if not ok and player.Parent and not releasing[player] then
+                        warn("Mysteries save/lease failure for "..player.UserId..": "..tostring(err))
+                        if handle.Closed or os.time()+15>=handle.ExpiresAt then
+                            s.Ready=false;player:Kick("Save session ownership could not be maintained. Please rejoin.")
+                        else s.NextSave=os.clock()+5;notify(player,"Saving delayed; retrying safely") end
+                    end
+                end)
+            end
+        end
+        world:Step(math.min(dt,1),now);effects:Step(now)
+        if now>=nextState then
+            nextState=now+data.Runtime.StateIntervalSeconds
+            for player in pairs(states) do if player.Parent then sendState(player) end end
+        end
+    end
+end)
+game:BindToClose(function()
+    closing=true
+    local waiting=0
+    for player in pairs(states) do
+        waiting+=1
+        task.spawn(function() releasePlayer(player);waiting-=1 end)
+    end
+    local deadline=os.clock()+25
+    while (waiting>0 or releaseCount>0) and os.clock()<deadline do task.wait(0.05) end
+end)
+```
+
+
+## src/ServerScriptService/Domain/PlayerDomain.lua
+
+**ModuleScript** at `ServerScriptService/Domain/PlayerDomain`. Create matching Folder parents.
+
+```lua
+--!strict
+-- Pure server-owned rules; no Roblox services, yielding, remotes or client decisions.
+local Domain = {}
+Domain.__index = Domain
+type Fields = {Data: any, Random: () -> number}
+type Domain = typeof(setmetatable({} :: Fields, Domain))
+
+local function finite(n: any): boolean
+    return type(n)=="number" and n==n and math.abs(n)<math.huge
+end
+local function copy(value: any): any
+    if type(value)~="table" then return value end
+    local out={}
+    for k,v in pairs(value) do out[k]=copy(v) end
+    return out
+end
+local function bounded(n: any, lo: number, hi: number): boolean
+    return finite(n) and n>=lo and n<=hi
+end
+function Domain.new(data: any, random: (() -> number)?): Domain
+    return setmetatable({Data=data, Random=random or math.random} :: Fields, Domain)
+end
+function Domain.Default(self: Domain): any
+    local p=copy(self.Data.Progression.DefaultPlayer)
+    p.Sanity=100; p.Gold=0; p.WishCredits=0
+    for id,potion in pairs(self.Data.Potions.ById) do
+        if potion.TargetSequence==9 then p.Inventory[id]=1 end
+    end
+    return p
+end
+function Domain.Stats(self: Domain, profile: any): any
+    if profile.PathwayId then
+        return copy(self.Data.Pathways[profile.PathwayId].Sequences[profile.Sequence].BaseStats)
+    end
+    return {Health=100,Spirituality=50,Sanity=100,Strength=8,Agility=10,Perception=20,Intuition=8,Resistance=8,SpiritualityRegen=2}
+end
+function Domain.Unlocked(self: Domain, p: any, id: any): boolean
+    local a=self.Data.Abilities[id]
+    return a~=nil and p.PathwayId==a.PathwayId and type(p.Sequence)=="number" and p.Sequence<=a.UnlockSequence
+end
+function Domain.Validate(self: Domain, raw: any): (any?, string?)
+    if type(raw)~="table" or raw.SchemaVersion~=1 then return nil,"Unsupported profile schema" end
+    local p=copy(self.Data.Progression.DefaultPlayer)
+    if raw.PathwayId~=false then
+        local path=self.Data.Pathways[raw.PathwayId]
+        if not path or not finite(raw.Sequence) or raw.Sequence%1~=0 or not path.Sequences[raw.Sequence] then
+            return nil,"Invalid pathway or sequence"
+        end
+        p.PathwayId=raw.PathwayId; p.Sequence=raw.Sequence
+    elseif raw.Sequence~=false then return nil,"Uninitiated profile has a sequence" end
+    for _,key in ipairs({"Digestion","ActingProgress","Sanity","Gold","WishCredits"}) do
+        local max=if key=="ActingProgress" or key=="Gold" then 10000000 else 100
+        local value=raw[key]
+        if value==nil and (key=="Gold" or key=="WishCredits") then value=0 end
+        if value==nil and key=="Sanity" then value=100 end
+        if not bounded(value,0,max) then return nil,"Invalid "..key end
+        p[key]=value
+    end
+    if type(raw.Inventory)~="table" then return nil,"Invalid inventory" end
+    local entries=0
+    for id,n in pairs(raw.Inventory) do
+        entries+=1
+        if entries>100 or not self.Data.Potions.ById[id] or not bounded(n,0,99) or n%1~=0 then return nil,"Invalid inventory item" end
+        p.Inventory[id]=n
+    end
+    if type(raw.ObjectiveProgress)~="table" or type(raw.AbilityLoadout)~="table" then return nil,"Invalid progress/loadout" end
+    if p.PathwayId then
+        for _,o in ipairs(self.Data.Pathways[p.PathwayId].Sequences[p.Sequence].ActingObjectives) do
+            local n=raw.ObjectiveProgress[o.Id] or 0
+            if not bounded(n,0,o.RequiredCount) or n%1~=0 then return nil,"Invalid objective count" end
+            p.ObjectiveProgress[o.Id]=n
+        end
+    end
+    local seen={}
+    for slot=1,6 do
+        local id=raw.AbilityLoadout[slot]
+        if id~=nil then
+            if type(id)~="string" or not self:Unlocked(p,id) or seen[id] then return nil,"Invalid ability loadout" end
+            p.AbilityLoadout[slot]=id; seen[id]=true
+        end
+    end
+    -- Never trust persisted maxima: rebalance/migration derives these from the sequence.
+    p.Stats=self:Stats(p)
+    return p,nil
+end
+function Domain.NewState(self: Domain, profile: any, now: number): any
+    local p,err=self:Validate(profile)
+    assert(p,err)
+    return {Profile=p,Stats=self:Stats(p),Health=p.Stats.Health,Spirituality=p.Stats.Spirituality,
+        Sanity=p.Sanity,Mode=if p.Sanity==0 then "Madness" else "Normal",MadnessUntil=now+10,
+        Cooldowns={},GlobalUntil=0,LastCast=-100,LastCombat=-100,Pending=nil,CastSerial=0,
+        ObjectiveLast={},SeenEvents={},SeenOrder={},Statuses={},Dead=false,Ready=true,
+        RecordedPower=nil,StolenPower=nil,LastMelee=-100,LastRitual=-100}
+end
+function Domain.Snapshot(self: Domain, s: any): any
+    local p=copy(s.Profile)
+    p.Stats=copy(s.Stats); p.Sanity=s.Sanity
+    return p
+end
+function Domain.AutoEquip(self: Domain, s: any)
+    local ids={}
+    for id,a in pairs(self.Data.Abilities) do
+        if self:Unlocked(s.Profile,id) then table.insert(ids,id) end
+    end
+    table.sort(ids,function(a,b)
+        local aa,bb=self.Data.Abilities[a],self.Data.Abilities[b]
+        return if aa.UnlockSequence==bb.UnlockSequence then a<b else aa.UnlockSequence<bb.UnlockSequence
+    end)
+    s.Profile.AbilityLoadout={}
+    for i=1,math.min(6,#ids) do s.Profile.AbilityLoadout[i]=ids[i] end
+end
+function Domain.Equip(self: Domain, s: any, slot: any, id: any): (boolean,string)
+    if not finite(slot) or slot%1~=0 or slot<1 or slot>6 or type(id)~="string" or not self:Unlocked(s.Profile,id) then return false,"Invalid ability slot" end
+    if s.Pending then return false,"Finish casting first" end
+    for i,other in pairs(s.Profile.AbilityLoadout) do
+        if other==id then s.Profile.AbilityLoadout[i]=nil end
+    end
+    s.Profile.AbilityLoadout[slot]=id
+    return true,"Ability equipped"
+end
+function Domain.DrainSanity(self: Domain, s: any, amount: number, now: number)
+    if amount<=0 or s.Mode=="LostControl" then return end
+    local guard=s.Statuses.Composed
+    local mitigation=if guard and guard.ExpiresAt>now then 0.5 else 1
+    local resistance=100/(100+s.Stats.Resistance)
+    s.Sanity=math.max(0,s.Sanity-amount*resistance*mitigation)
+    if s.Sanity==0 and s.Mode=="Normal" then
+        s.Mode="Madness"; s.MadnessUntil=now+self.Data.Progression.Sanity.MadnessDurationSeconds
+        self:CancelCast(s,false)
+    end
+end
+function Domain.Drink(self: Domain, s: any, id: any, now: number): (boolean,string)
+    local potion=self.Data.Potions.ById[id]
+    if not potion or not s.Ready or s.Dead or s.Mode~="Normal" or s.Pending then return false,"Cannot drink now" end
+    if now-s.LastRitual<2 then return false,"Wait before another ritual" end
+    local p=s.Profile
+    if (p.Inventory[id] or 0)<1 then return false,"You do not own that potion" end
+    if potion.TargetSequence==9 then
+        if p.PathwayId~=false then return false,"Your pathway is already chosen" end
+    elseif p.PathwayId~=potion.PathwayId or p.Sequence~=potion.RequiredSequence then
+        return false,"Potions must follow your pathway, one sequence at a time"
+    end
+    s.LastRitual=now
+    if p.Digestion<potion.RequiredDigestion or s.Sanity<=self.Data.Progression.Sanity.BlockAdvancementAtOrBelow then
+        local risk=self.Data.Potions.Rules.Risk
+        local chance=math.clamp(risk.BaseChance+risk.MissingDigestionWeight*(1-p.Digestion/100)+risk.MissingSanityWeight*(1-s.Sanity/100),risk.MinChance,risk.MaxChance)
+        self:DrainSanity(s,if self.Random()<chance then self.Data.Progression.Sanity.UnsafeRitualDrain else self.Data.Progression.Sanity.FailedRitualDrain,now)
+        return false,"Unsafe ritual rejected; your sanity suffered"
+    end
+    p.Inventory[id]-=1; p.PathwayId=potion.PathwayId; p.Sequence=potion.TargetSequence
+    p.Digestion=0; p.ActingProgress=0; p.ObjectiveProgress={}
+    s.Stats=self:Stats(p); p.Stats=copy(s.Stats)
+    s.Health=s.Stats.Health; s.Spirituality=s.Stats.Spirituality
+    s.ObjectiveLast={}; s.SeenEvents={}; s.SeenOrder={}; s.Statuses={}
+    self:AutoEquip(s)
+    return true,"Advanced to "..self.Data.Pathways[p.PathwayId].Sequences[p.Sequence].Name
+end
+function Domain.Act(self: Domain, s: any, signal: string, eventId: string, now: number): boolean
+    local p=s.Profile
+    if not s.Ready or s.Dead or s.Mode~="Normal" or not p.PathwayId or s.SeenEvents[eventId] then return false end
+    local objectives=self.Data.Pathways[p.PathwayId].Sequences[p.Sequence].ActingObjectives
+    for _,o in ipairs(objectives) do
+        if o.ServerSignal==signal and now-(s.ObjectiveLast[o.Id] or -1000)>=o.CooldownSeconds then
+            s.SeenEvents[eventId]=true; table.insert(s.SeenOrder,eventId)
+            if #s.SeenOrder>256 then s.SeenEvents[table.remove(s.SeenOrder,1)]=nil end
+            local n=(p.ObjectiveProgress[o.Id] or 0)+1
+            p.ObjectiveProgress[o.Id]=n
+            if n>=o.RequiredCount then
+                p.ObjectiveProgress[o.Id]=0; s.ObjectiveLast[o.Id]=now
+                p.Digestion=math.min(100,p.Digestion+o.DigestionReward)
+                p.ActingProgress=math.min(10000000,p.ActingProgress+o.ActingProgressReward)
+                p.WishCredits=math.min(100,p.WishCredits+1)
+            end
+            return true
+        end
+    end
+    return false
+end
+function Domain.BeginCast(self: Domain, s: any, id: any, now: number): (any?,string?)
+    local a=self.Data.Abilities[id]
+    if not a or not a.Implemented or not self:Unlocked(s.Profile,id) then return nil,"Ability is unavailable" end
+    local equipped=false
+    for _,v in pairs(s.Profile.AbilityLoadout) do if v==id then equipped=true end end
+    if not equipped then return nil,"Equip this ability first" end
+    if not s.Ready or s.Dead or s.Mode~="Normal" or s.Pending then return nil,"Cannot cast now" end
+    if now<s.GlobalUntil or now<(s.Cooldowns[id] or 0) then return nil,"Ability is cooling down" end
+    if s.Spirituality<a.SpiritualityCost then return nil,"Not enough spirituality" end
+    s.Spirituality-=a.SpiritualityCost; s.LastCast=now; s.CastSerial+=1
+    local pending={Id=id,Token=s.CastSerial,EndsAt=now+a.CastTimeSeconds,Cost=a.SpiritualityCost}
+    s.Pending=pending; s.GlobalUntil=now+self.Data.Progression.Abilities.GlobalCooldownSeconds
+    s.Cooldowns[id]=now+a.CooldownSeconds
+    return pending,nil
+end
+function Domain.CancelCast(self: Domain, s: any, refund: boolean)
+    if s.Pending and refund then s.Spirituality=math.min(s.Stats.Spirituality,s.Spirituality+s.Pending.Cost) end
+    s.Pending=nil
+end
+function Domain.Tick(self: Domain, s: any, dt: number, now: number)
+    if not s.Ready then return end
+    dt=math.clamp(dt,0,2)
+    for key,status in pairs(s.Statuses) do if status.ExpiresAt<=now then s.Statuses[key]=nil end end
+    if s.Mode=="Madness" and now>=s.MadnessUntil then s.Mode="LostControl"; s.Health=0 end
+    if not s.Dead and s.Mode=="Normal" then
+        if now-s.LastCast>=2 then
+            local combat=if now-s.LastCombat<5 then self.Data.Progression.Spirituality.CombatRegenMultiplier else 1
+            s.Spirituality=math.min(s.Stats.Spirituality,s.Spirituality+s.Stats.SpiritualityRegen*dt*combat)
+        end
+        s.Sanity=math.min(100,s.Sanity+self.Data.Progression.Sanity.RecoveryPerSecond*dt)
+    end
+end
+function Domain.Recover(self: Domain, s: any): (boolean,string)
+    if s.Mode=="Normal" and s.Sanity>=100 then return false,"You are already well" end
+    s.Mode="Normal"; s.Sanity=100; s.Statuses={}; s.Pending=nil
+    s.Profile.Digestion=math.max(0,s.Profile.Digestion-self.Data.Progression.Sanity.RecoveryDigestionPenalty)
+    return true,"Stabilized; 20 digestion sacrificed"
+end
+function Domain.BuyNextPotion(self: Domain, s: any): (boolean,string)
+    local p=s.Profile
+    if not p.PathwayId or p.Sequence<=1 then return false,"No next potion" end
+    local id=p.PathwayId.."_Potion_"..tostring(p.Sequence-1)
+    if (p.Inventory[id] or 0)>0 then return false,"You already have your next potion" end
+    if p.Gold<self.Data.Runtime.NextPotionGoldCost then return false,"Requires 100 gold from enemies" end
+    p.Gold-=self.Data.Runtime.NextPotionGoldCost; p.Inventory[id]=1
+    return true,"Next potion acquired"
+end
+Domain.Copy=copy
+Domain.Finite=finite
+return Domain
+```
+
+
+## src/ServerScriptService/Domain/RateLimiter.lua
+
+**ModuleScript** at `ServerScriptService/Domain/RateLimiter`. Create matching Folder parents.
+
+```lua
+--!strict
+local RateLimiter={}
+RateLimiter.__index=RateLimiter
+function RateLimiter.new(rate: number, burst: number)
+    return setmetatable({Rate=rate,Burst=burst,Buckets={}},RateLimiter)
+end
+function RateLimiter:Allow(key: any, now: number, cost: number?): boolean
+    local amount=cost or 1
+    local b=self.Buckets[key] or {Tokens=self.Burst,Time=now}
+    b.Tokens=math.min(self.Burst,b.Tokens+math.max(0,now-b.Time)*self.Rate); b.Time=now
+    self.Buckets[key]=b
+    if b.Tokens<amount then return false end
+    b.Tokens-=amount
+    return true
+end
+function RateLimiter:Remove(key: any) self.Buckets[key]=nil end
+return RateLimiter
+```
+
+
+## src/ServerScriptService/Domain/SessionStore.lua
+
+**ModuleScript** at `ServerScriptService/Domain/SessionStore`. Create matching Folder parents.
+
+```lua
+--!strict
+-- DataStore adapter is injected; UpdateAsync callbacks are pure and never yield.
+local SessionStore={}
+SessionStore.__index=SessionStore
+type Fields = {Store: any, Domain: any, Config: any, Clock: () -> number, Sleep: (number) -> (), Random: () -> number}
+type SessionStore = typeof(setmetatable({} :: Fields, SessionStore))
+
+function SessionStore.new(store: any, domain: any, config: any, clock: () -> number, sleep: (number)->(), random: (() -> number)?): SessionStore
+    return setmetatable({Store=store,Domain=domain,Config=config,Clock=clock,Sleep=sleep,Random=random or math.random} :: Fields, SessionStore)
+end
+function SessionStore.Update(self: SessionStore, key: string, transform: (any)->any): (boolean,any)
+    local last=nil
+    for attempt=1,self.Config.RetryCount do
+        local ok,result=pcall(function() return self.Store:UpdateAsync(key,transform) end)
+        if ok then return true,result end
+        last=result
+        if attempt<self.Config.RetryCount then
+            local backoff=math.min(self.Config.BackoffMaxSeconds,self.Config.BackoffBaseSeconds*2^(attempt-1))
+            self.Sleep(backoff*(1+self.Random()*self.Config.BackoffJitterFraction))
+        end
+    end
+    return false,tostring(last)
+end
+function SessionStore.Acquire(self: SessionStore, userId: number, owner: string): (any?,string?)
+    local key=self.Config.KeyPrefix..tostring(userId)
+    local reason="Session is locked on another server"
+    local ok,result=self:Update(key,function(old)
+        local now=self.Clock()
+        if old~=nil then
+            if type(old)~="table" or old.Version~=1 or not self.Domain.Finite(old.ExpiresAt) or old.ExpiresAt<0 or (old.Owner~=nil and type(old.Owner)~="string") then
+                reason="Unsupported or corrupt save envelope"; return nil
+            end
+            if old.Owner~=nil and old.Owner~=owner and old.ExpiresAt>now then return nil end
+        end
+        local data,err=self.Domain:Validate(if old==nil then self.Domain:Default() else old.Data)
+        if not data then reason=err or "Invalid save"; return nil end
+        return {Version=1,Owner=owner,ExpiresAt=now+self.Config.LockLeaseSeconds,Data=data}
+    end)
+    if not ok then return nil,"DataStore unavailable: "..tostring(result) end
+    if not result or result.Owner~=owner then return nil,reason end
+    return {Key=key,Owner=owner,Data=result.Data,ExpiresAt=result.ExpiresAt,Busy=false,Closed=false},nil
+end
+function SessionStore.Save(self: SessionStore, handle: any, profile: any, release: boolean): (boolean,string?)
+    if handle.Closed then return false,"Session is closed" end
+    if handle.Busy then return false,"Session is busy" end
+    -- A stale server must never revive its own expired lease or save without ownership.
+    if handle.ExpiresAt<=self.Clock() then handle.Closed=true; return false,"Session lease expired" end
+    local clean,err=self.Domain:Validate(profile)
+    if not clean then return false,err end
+    handle.Busy=true
+    handle.SaveSerial=(handle.SaveSerial or 0)+1
+    local operation=handle.Owner.."#"..tostring(handle.SaveSerial)
+    local ok,result=self:Update(handle.Key,function(old)
+        local now=self.Clock()
+        if type(old)~="table" or old.Version~=1 then return nil end
+        -- A release may have committed before its HTTP response was lost.
+        if release and old.Owner==nil and old.LastOperation==operation then return old end
+        if old.Owner~=handle.Owner or not self.Domain.Finite(old.ExpiresAt) or old.ExpiresAt<=now then return nil end
+        return {Version=1,Owner=if release then nil else handle.Owner,
+            ExpiresAt=if release then 0 else now+self.Config.LockLeaseSeconds,Data=clean,LastOperation=operation}
+    end)
+    handle.Busy=false
+    if not ok then return false,"Save unavailable: "..tostring(result) end
+    if not result then handle.Closed=true; return false,"Session ownership lost" end
+    handle.Data=clean; handle.ExpiresAt=result.ExpiresAt
+    if release then handle.Closed=true end
+    return true,nil
+end
+return SessionStore
+```
+
+
+## src/ServerScriptService/Services/EffectService.lua
+
+**ModuleScript** at `ServerScriptService/Services/EffectService`. Create matching Folder parents.
+
+```lua
+--!strict
+-- Data-driven ability executors. Only trusted server definitions select these handlers.
+local CollectionService=game:GetService("CollectionService")
+local Effects={}
+Effects.__index=Effects
+type Fields = {
+    World: any, Domain: any, Notify: (Player, string) -> (),
+    Gates: {[Player]: any}, OpenDoors: {[BasePart]: number},
+}
+type Effects = typeof(setmetatable({} :: Fields, Effects))
+
+local handlers={}
+function Effects.new(world: any,domain: any,notify: any): Effects
+    return setmetatable({World=world,Domain=domain,Notify=notify,Gates={},OpenDoors={}} :: Fields, Effects)
+end
+function Effects.Validate(self: Effects, player: Player,s: any,a: any,input: any): (any?,string?)
+    local world=self.World;local root=world:Root(player);local hum=world:Humanoid(player)
+    if not root or not world:FiniteVector(root.Position) or not hum or hum.Health<=0 or not s.Ready or s.Dead or s.Mode~="Normal" then return nil,"Your character is unavailable" end
+    local context={Player=player,State=s,Ability=a,Root=root,Position=root.Position,Entity=nil}
+    if a.Target=="NPC" then
+        local entity=world:Entity(input.Target)
+        if not entity then return nil,"Aim at a living enemy" end
+        local owned=a.Operation.Kind=="Command" or a.Operation.Kind=="Exchange"
+        if owned then
+            if entity.Owner~=player then return nil,"Target your own marionette" end
+        elseif entity.Owner~=nil then return nil,"Target a hostile enemy" end
+        context.Entity=entity;context.Position=entity.Root.Position
+    elseif a.Target=="Position" then
+        if not world:FiniteVector(input.Position) then return nil,"Aim at a location" end
+        context.Position=input.Position
+    end
+    if (context.Position-root.Position).Magnitude>a.RangeStuds+1 then return nil,"Target is out of range" end
+    if a.Target~="Self" and a.Hitbox.LineOfSight and not world:LineOfSight(root.Position,context.Position,player.Character,context.Entity and context.Entity.Model) then return nil,"Your target is obstructed" end
+    return context,nil
+end
+function Effects.Execute(self: Effects, context: any,now: number): (boolean,string)
+    local a=context.Ability;local op=a.Operation
+    local handler=op and handlers[op.Kind]
+    if not handler then return false,"No executor exists for this ability" end
+    local ok,message,evidence=handler(self,context,op,now)
+    if ok then
+        local world=self.World
+        world:Effect(context.Position,a.Id,context.Player,context.Entity and context.Entity.Model)
+        if op.Signal and evidence~=false then
+            self.Domain:Act(context.State,op.Signal,"cast:"..tostring(context.State.CastSerial),now)
+        end
+    end
+    return ok,message
+end
+local function buff(self: any,c: any,op: any,now: number)
+    if op.Status then self.World:Buff(c.State,op.Status,op.Duration or 10,now) end
+end
+local function power(c: any,op: any): number return c.Ability.BasePower*(op.Power or 1) end
+local function teleport(self: any,c: any,position: Vector3): boolean
+    local safe=self.World:SafeDestination(c.Player,position)
+    if not safe or not c.Player.Character then return false end
+    local state=self.World.States[c.Player]
+    if state then state.TeleportGraceUntil=os.clock()+1;state.LastPosition=safe end
+    c.Player.Character:PivotTo(CFrame.new(safe)*c.Root.CFrame.Rotation)
+    c.Root.AssemblyLinearVelocity=Vector3.zero
+    return true
+end
+handlers.Buff=function(self: any,c: any,op: any,now: number)
+    buff(self,c,op,now);return true,"Effect prepared"
+end
+handlers.Sense=function(self: any,c: any,op: any,now: number)
+    local enemies=self.World:Targets(c.Root.Position,c.State.Stats.Perception,16,c.Player)
+    if #enemies==0 and op.Signal then return false,"No spiritual trace is close enough" end
+    if op.Signal then
+        local accuracy=self.World.Data.Runtime.DivinationAccuracy
+        local intuition=c.State.Stats.Intuition
+        local chance=accuracy.Base+accuracy.Bonus*intuition/(intuition+accuracy.IntuitionScale)
+        local random=self.World.Random or math.random
+        if random()>chance then
+            self.Domain:DrainSanity(c.State,2,now)
+            return true,"The omen is obscured; no acting progress earned",false
+        end
+    end
+    buff(self,c,op,now)
+    for _,e in ipairs(enemies) do self.World.FX:FireClient(c.Player,{Kind="Reveal",Position=e.Root.Position,Target=e.Model}) end
+    if enemies[1] then
+        local e=enemies[1]
+        self.Notify(c.Player,"Reading: omen "..tostring(e.Model:GetAttribute("Omen")).." · target HP "..tostring(math.ceil(e.Humanoid.Health)))
+    end
+    return true,"Spiritual traces revealed"
+end
+handlers.SenseDoors=function(self: any,c: any,op: any,now: number)
+    buff(self,c,op,now)
+    for _,door in ipairs(CollectionService:GetTagged("MysticDoor")) do
+        if door:IsA("BasePart") and (door.Position-c.Root.Position).Magnitude<=c.State.Stats.Perception then
+            self.World.FX:FireClient(c.Player,{Kind="Reveal",Position=door.Position,Target=door})
+        end
+    end
+    return true,"Passages revealed"
+end
+handlers.Dodge=function(self: any,c: any,op: any,now: number)
+    buff(self,c,op,now)
+    local destination=c.Root.Position-c.Root.CFrame.LookVector*8
+    teleport(self,c,destination)
+    return true,"Evade an incoming strike",false
+end
+handlers.FlameJump=function(self: any,c: any,op: any,now: number)
+    local anchor=nil;local distance=12
+    for _,p in ipairs(CollectionService:GetTagged("FlameAnchor")) do
+        if p:IsA("BasePart") and (p.Position-c.Position).Magnitude<distance then anchor=p;distance=(p.Position-c.Position).Magnitude end
+    end
+    if not anchor then return false,"Aim near an orange flame anchor" end
+    local threats=self.World:Targets(c.Root.Position,20,1,c.Player)
+    local origin=c.Root.Position
+    if not teleport(self,c,anchor.Position+Vector3.new(3,0,0)) then return false,"The landing is obstructed" end
+    local escaped=#threats>0 and (origin-c.Root.Position).Magnitude>=15
+    return true,"Flame jump",escaped
+end
+handlers.Disguise=function(self: any,c: any,op: any,now: number)
+    local profile=self.World.Data.Runtime.Disguises[op.Profile or "Wanderer"]
+    if not profile then return false,"Unknown disguise profile" end
+    buff(self,c,op,now)
+    c.State.DisguiseUntil=now+(op.Duration or 30)
+    local hum=self.World:Humanoid(c.Player)
+    if hum then
+        if not c.State.OriginalDisplayName then c.State.OriginalDisplayName=hum.DisplayName end
+        hum.DisplayName=profile.DisplayName
+        for name,value in pairs(profile.Scales) do
+            local scale=hum:FindFirstChild(name)
+            if scale and scale:IsA("NumberValue") then
+                if scale:GetAttribute("MysteriesOriginalScale")==nil then scale:SetAttribute("MysteriesOriginalScale",scale.Value) end
+                scale.Value=value
+            end
+        end
+    end
+    local character=c.Player.Character
+    if character then
+        local oldMask=character:FindFirstChild("MysteriesDisguise")
+        if oldMask then oldMask:Destroy() end
+        for _,p in ipairs(character:GetDescendants()) do
+            if p:IsA("BasePart") and p.Name~="HumanoidRootPart" then
+                if p:GetAttribute("OriginalColor")==nil then p:SetAttribute("OriginalColor",p.Color) end
+                p.Color=Color3.fromRGB(table.unpack(profile.Color))
+            end
+        end
+        local head=character:FindFirstChild("Head")
+        if head and head:IsA("BasePart") then
+            -- An original mask replaces the visible face; no marketplace face assets.
+            local mask=Instance.new("Part");mask.Name="MysteriesDisguise";mask.Size=head.Size*1.03;mask.CFrame=head.CFrame
+            mask.CanCollide=false;mask.CanTouch=false;mask.CanQuery=false;mask.Massless=true
+            mask.Color=Color3.fromRGB(table.unpack(profile.Color));mask.Parent=character
+            local weld=Instance.new("WeldConstraint");weld.Part0=head;weld.Part1=mask;weld.Parent=mask
+        end
+    end
+    self.World.FX:FireClient(c.Player,{Kind="VoiceProfile",Position=c.Root.Position,Hook=c.Ability.SFXHook,Pitch=profile.VoicePitch})
+    return true,"Identity changed: "..profile.DisplayName.."; infiltrate the Hidden Archive"
+end
+handlers.Control=function(self: any,c: any,op: any,now: number)
+    local e=c.Entity
+    if e.Tier<c.State.Profile.Sequence then return false,"This enemy is too powerful to control" end
+    local owned=0
+    for _,other in pairs(self.World.Entities) do if other.Owner==c.Player then owned+=1 end end
+    if owned>=self.World.Data.Runtime.MaxOwnedSummons then return false,"Your summon limit is reached" end
+    e.Threads+=1
+    self.World:Status(e,"Threaded",math.max(20,c.Ability.CooldownSeconds+3),now,c.Player)
+    local required=op.RequiredHits or 1
+    if e.Threads<required then return true,"Threads "..tostring(e.Threads).." / "..tostring(required),false end
+    e.Threads=0;e.Owner=c.Player;e.Statuses.Threaded=nil
+    self.World:Status(e,"Controlled",op.Duration or 15,now,c.Player)
+    return true,"Marionette secured"
+end
+handlers.Command=function(self: any,c: any,op: any,now: number)
+    local foes=self.World:Targets(c.Entity.Root.Position,45,1,c.Player)
+    if not foes[1] then return false,"No hostile target near the marionette" end
+    self.World:Damage(foes[1],power(c,op),c.Player,now)
+    return true,"Marionette strike"
+end
+handlers.Exchange=function(self: any,c: any,op: any,now: number)
+    local original=c.Root.Position;local other=c.Entity.Root.Position
+    local threatened=#self.World:Targets(original,25,1,c.Player)>0
+    if not teleport(self,c,other+Vector3.new(4,0,0)) then return false,"Exchange destination is blocked" end
+    c.Entity.Model:PivotTo(CFrame.new(original))
+    self.World:Buff(c.State,"Invulnerable",2,now)
+    return true,"Marionette exchange",threatened
+end
+handlers.Area=function(self: any,c: any,op: any,now: number)
+    local radius=math.max(10,c.Ability.RadiusStuds)
+    local enemies=self.World:Targets(c.Position,radius,c.Ability.MaxTargets,c.Player)
+    if #enemies==0 then return false,"No enemies in the area" end
+    for _,e in ipairs(enemies) do
+        if self.World:LineOfSight(c.Position,e.Root.Position,c.Player.Character,e.Model) then
+            self.World:Damage(e,power(c,op),c.Player,now)
+            if op.Status then self.World:Status(e,op.Status,op.Duration or 5,now,c.Player,power(c,op)*0.15) end
+        end
+    end
+    return true,"Area effect released"
+end
+handlers.Echo=function(self: any,c: any,op: any,now: number)
+    if not c.State.ArchiveRead then return false,"Read the Hidden Archive before invoking a past echo" end
+    local count=0
+    for _,e in pairs(self.World.Entities) do if e.Owner==c.Player then count+=1 end end
+    if count>=self.World.Data.Runtime.MaxOwnedSummons then return false,"Your summon limit is reached" end
+    local safe=self.World:SafeDestination(c.Player,c.Position)
+    if not safe then return false,"Cannot summon here" end
+    local e=self.World:Spawn(safe,c.State.Profile.Sequence,c.Player,now+(op.Duration or 20))
+    e.IsEcho=true;c.State.ArchiveRead=false
+    return true,"Past echo summoned"
+end
+handlers.Recall=function(self: any,c: any,op: any,now: number)
+    local hum=self.World:Humanoid(c.Player)
+    if not hum then return false,"Character missing" end
+    local fraction=op.Power or 0.25
+    if hum.Health>=hum.MaxHealth and c.State.Spirituality>=c.State.Stats.Spirituality-c.Ability.SpiritualityCost then return false,"Nothing needs recovery" end
+    hum.Health=math.min(hum.MaxHealth,hum.Health+hum.MaxHealth*fraction)
+    c.State.Spirituality=math.min(c.State.Stats.Spirituality,c.State.Spirituality+c.State.Stats.Spirituality*fraction)
+    return true,"A measure of past vitality recalled"
+end
+handlers.Wish=function(self: any,c: any,op: any,now: number)
+    local hum=self.World:Humanoid(c.Player);local p=c.State.Profile
+    if not hum or (hum.Health>=hum.MaxHealth and c.State.Sanity>=100) then return false,"No recovery wish can be fulfilled here" end
+    if p.WishCredits<1 then return false,"Earn a wish credit by completing acting objectives" end
+    p.WishCredits-=1
+    hum.Health=math.min(hum.MaxHealth,hum.Health+hum.MaxHealth*(op.Power or 1))
+    c.State.Sanity=math.min(100,c.State.Sanity+30)
+    self.World:Buff(c.State,"Shielded",8,now)
+    return true,"Recovery wish fulfilled"
+end
+handlers.Graft=function(self: any,c: any,op: any,now: number)
+    local enemies=self.World:Targets(c.Position,math.max(15,c.Ability.RadiusStuds),c.Ability.MaxTargets,c.Player)
+    if #enemies==0 then return false,"No hostile attacks to graft" end
+    for _,e in ipairs(enemies) do self.World:Status(e,"Grafted",op.Duration or 10,now,c.Player) end
+    return true,"Hostile attacks grafted back to their source",false
+end
+handlers.Theft=function(self: any,c: any,op: any,now: number)
+    if c.Entity.Stolen then return false,"This enemy has already been pickpocketed" end
+    c.Entity.Stolen=true;c.State.Profile.Gold=math.min(10000000,c.State.Profile.Gold+5)
+    self.World:Status(c.Entity,"Confused",2,now,c.Player)
+    return true,"Stole 5 gold"
+end
+handlers.Debuff=function(self: any,c: any,op: any,now: number)
+    if op.Power then self.World:Damage(c.Entity,power(c,op),c.Player,now) end
+    if op.Status then self.World:Status(c.Entity,op.Status,op.Duration or 5,now,c.Player,power(c,op)*0.2) end
+    if op.Status=="TimeSlow" then c.State.Spirituality=math.min(c.State.Stats.Spirituality,c.State.Spirituality+c.Ability.SpiritualityCost*0.25) end
+    return true,"Hostile influence applied"
+end
+handlers.Cipher=function(self: any,c: any,op: any,now: number)
+    buff(self,c,op,now)
+    return true,"Cipher sight: use the Cipher Archive while this effect lasts"
+end
+handlers.StealPower=function(self: any,c: any,op: any,now: number)
+    local powerId=c.Entity.Model:GetAttribute("AbilityId")
+    if not self.World.Data.Runtime.CopyableNPCPowers[powerId] then return false,"This power cannot be stolen" end
+    if c.State.StolenPower then
+        local spec=self.World.Data.Runtime.CopyableNPCPowers[c.State.StolenPower]
+        c.State.StolenPower=nil
+        self.World:Damage(c.Entity,c.Ability.BasePower*spec.Power,c.Player,now)
+        self.World:Status(c.Entity,spec.Status,spec.Duration,now,c.Player,c.Ability.BasePower*0.2)
+        return true,"Stolen power released",false
+    end
+    c.State.StolenPower=powerId
+    self.World:Status(c.Entity,"Silenced",op.Duration or 10,now,c.Player)
+    return true,"Power stolen; cast again to release it"
+end
+handlers.Siphon=function(self: any,c: any,op: any,now: number)
+    local host=c.Entity.Statuses.Parasite
+    if op.RequiresHost and (not host or host.Owner~=c.Player or host.ExpiresAt<=now) then return false,"Target your parasitized host" end
+    local before=c.Entity.Humanoid.Health
+    self.World:Damage(c.Entity,power(c,op),c.Player,now)
+    local removed=math.min(before,power(c,op))
+    local hum=self.World:Humanoid(c.Player)
+    if hum then hum.Health=math.min(hum.MaxHealth,hum.Health+removed*0.5) end
+    c.State.Spirituality=math.min(c.State.Stats.Spirituality,c.State.Spirituality+removed*0.3)
+    return true,"Vitality and spirituality siphoned"
+end
+handlers.Parasite=function(self: any,c: any,op: any,now: number)
+    if c.Entity.Tier<c.State.Profile.Sequence then return false,"This host is too powerful" end
+    for _,e in pairs(self.World.Entities) do
+        local st=e.Statuses.Parasite
+        if st and st.Owner==c.Player and e~=c.Entity then e.Statuses.Parasite=nil end
+    end
+    self.World:Status(c.Entity,"Parasite",op.Duration or 12,now,c.Player,power(c,op)*0.15)
+    self.World:Buff(c.State,"Shielded",op.Duration or 12,now)
+    return true,"Host parasitized"
+end
+handlers.Infiltrate=function(self: any,c: any,op: any,now: number)
+    local e=c.Entity
+    if not teleport(self,c,e.Root.Position-e.Root.CFrame.LookVector*7) then return false,"No safe infiltration point" end
+    self.World:Status(e,"Payload",op.Duration or 10,now,c.Player,power(c,op)*2)
+    self.World:Buff(c.State,"Invulnerable",1,now)
+    return true,"A hidden payload entered the target's destiny"
+end
+handlers.Record=function(self: any,c: any,op: any,now: number)
+    local id=c.Entity.Model:GetAttribute("AbilityId")
+    if not self.World.Data.Runtime.CopyableNPCPowers[id] then return false,"This power cannot be recorded" end
+    if not c.Entity.LastSpell or now-c.Entity.LastSpell>15 then return false,"Observe an enemy casting its power before recording it" end
+    c.State.RecordedPower={Id=id,Charges=3}
+    return true,"Power recorded: 3 releases available"
+end
+handlers.Release=function(self: any,c: any,op: any,now: number)
+    local record=c.State.RecordedPower
+    if not record or record.Charges<=0 then return false,"Record a permitted enemy power first" end
+    local spec=self.World.Data.Runtime.CopyableNPCPowers[record.Id]
+    if not spec then return false,"The recording is invalid" end
+    record.Charges-=1
+    self.World:Damage(c.Entity,power(c,op)*spec.Power,c.Player,now)
+    self.World:Status(c.Entity,spec.Status,spec.Duration,now,c.Player,power(c,op)*0.2)
+    return true,"Recorded phenomenon released"
+end
+handlers.OpenDoor=function(self: any,c: any,op: any,now: number)
+    local nearest=nil;local distance=10
+    for _,door in ipairs(CollectionService:GetTagged("MysticDoor")) do
+        if door:IsA("BasePart") and (door.Position-c.Position).Magnitude<distance then nearest=door;distance=(door.Position-c.Position).Magnitude end
+    end
+    if not nearest or self.OpenDoors[nearest] then return false,"Aim at a closed practice door" end
+    nearest.CanCollide=false;nearest.Transparency=0.75;self.OpenDoors[nearest]=now+20
+    return true,"Locked passage opened"
+end
+handlers.Travel=function(self: any,c: any,op: any,now: number)
+    if (c.Position-c.Root.Position).Magnitude<10 then return false,"Choose a destination at least 10 studs away" end
+    if not teleport(self,c,c.Position) then return false,"The destination is unsafe" end
+    buff(self,c,op,now)
+    return true,"Travel completed"
+end
+handlers.Conceal=function(self: any,c: any,op: any,now: number)
+    buff(self,c,op,now)
+    c.State.SecretUntil=now+(op.Duration or 18)
+    return true,"Concealed: protect the Hidden Archive",false
+end
+handlers.Portal=function(self: any,c: any,op: any,now: number)
+    local destination=self.World:SafeDestination(c.Player,c.Position)
+    local origin=self.World:SafeDestination(c.Player,c.Root.Position)
+    if not destination or not origin or (destination-origin).Magnitude<10 then return false,"Choose a safe, more distant gateway destination" end
+    self:RemoveGates(c.Player)
+    local gate={Owner=c.Player,EndsAt=now+(op.Duration or 25),Parts={},LastUse=-100}
+    for _,pair in ipairs({{origin,destination},{destination,origin}}) do
+        local p=Instance.new("Part");p.Name="SpatialGate";p.Size=Vector3.new(6,8,0.6);p.CFrame=CFrame.new(pair[1]);p.Anchored=true;p.CanCollide=false;p.Material=Enum.Material.Neon;p.Color=Color3.fromRGB(100,150,255);p.Transparency=0.4;p.Parent=self.World.Transient
+        local prompt=Instance.new("ProximityPrompt");prompt.ActionText="Enter your gate";prompt.MaxActivationDistance=8;prompt.RequiresLineOfSight=true;prompt.Parent=p
+        prompt.Triggered:Connect(function(player)
+            local root=self.World:Root(player);local s=self.World.States[player]
+            local t=os.clock()
+            if player~=c.Player or t>=gate.EndsAt or t-gate.LastUse<1 or not root or not s or not s.Ready or s.Dead or s.Mode~="Normal" or (root.Position-p.Position).Magnitude>10 then return end
+            gate.LastUse=t
+            local result=teleport(self,{Player=player,Root=root},pair[2]+Vector3.new(4,0,0))
+            if result then self.Domain:Act(s,"TravelDestinationReached","gate:"..tostring(t),t) end
+        end)
+        table.insert(gate.Parts,p)
+    end
+    self.Gates[c.Player]=gate
+    return true,"Linked spatial gates created"
+end
+handlers.CloseSpace=function(self: any,c: any,op: any,now: number)
+    local hadGate=self.Gates[c.Player]~=nil
+    self:RemoveGates(c.Player)
+    local ok,message=handlers.Area(self,c,op,now)
+    return hadGate or ok,if hadGate then "Spatial gates closed and area sealed" else message
+end
+function Effects.RemoveGates(self: Effects, player: Player)
+    local gate=self.Gates[player]
+    if gate then for _,p in ipairs(gate.Parts) do p:Destroy() end end
+    self.Gates[player]=nil
+end
+function Effects.Step(self: Effects, now: number)
+    for player,gate in pairs(self.Gates) do if now>=gate.EndsAt then self:RemoveGates(player) end end
+    for door,expires in pairs(self.OpenDoors) do
+        if not door.Parent then self.OpenDoors[door]=nil
+        elseif now>=expires then
+            local occupied=false
+            for player in pairs(self.World.States) do
+                local root=self.World:Root(player)
+                if root and (root.Position-door.Position).Magnitude<6 then occupied=true;break end
+            end
+            if not occupied then door.CanCollide=true;door.Transparency=0;self.OpenDoors[door]=nil end
+        end
+    end
+    for player,s in pairs(self.World.States) do
+        if s.DisguiseUntil and (now>=s.DisguiseUntil or not s.Statuses.Disguised) then
+            s.DisguiseUntil=nil
+            local hum=self.World:Humanoid(player)
+            if hum then
+                hum.DisplayName=s.OriginalDisplayName or player.DisplayName
+                for _,scale in ipairs(hum:GetChildren()) do
+                    if scale:IsA("NumberValue") then
+                        local original=scale:GetAttribute("MysteriesOriginalScale")
+                        if type(original)=="number" then scale.Value=original;scale:SetAttribute("MysteriesOriginalScale",nil) end
+                    end
+                end
+            end
+            s.OriginalDisplayName=nil
+            if player.Character then
+                local mask=player.Character:FindFirstChild("MysteriesDisguise")
+                if mask then mask:Destroy() end
+                for _,p in ipairs(player.Character:GetDescendants()) do
+                    if p:IsA("BasePart") then
+                        local color=p:GetAttribute("OriginalColor")
+                        if typeof(color)=="Color3" then p.Color=color;p:SetAttribute("OriginalColor",nil) end
+                    end
+                end
+            end
+        end
+    end
+end
+-- Exposed names allow schema coverage tests without loading Roblox services.
+Effects.Handlers=handlers
+return Effects
+```
+
+
+## src/ServerScriptService/Services/WorldService.lua
+
+**ModuleScript** at `ServerScriptService/Services/WorldService`. Create matching Folder parents.
+
+```lua
+--!strict
+local CollectionService=game:GetService("CollectionService")
+local Debris=game:GetService("Debris")
+local World={}
+World.__index=World
+type Fields = {
+    Data: any, Domain: any, States: {[Player]: any}, FX: RemoteEvent,
+    Folder: Folder, NPCFolder: Folder, Transient: Folder, Entities: {[Model]: any},
+    Spawns: {any}, Clock: number, OnInteraction: ((Player, string) -> ())?,
+}
+type World = typeof(setmetatable({} :: Fields, World))
+
+local function part(parent: Instance,name: string,size: Vector3,position: Vector3,color: Color3): Part
+    local p=Instance.new("Part")
+    p.Name=name; p.Size=size; p.Position=position; p.Color=color; p.Anchored=true
+    p.TopSurface=Enum.SurfaceType.Smooth; p.BottomSurface=Enum.SurfaceType.Smooth; p.Parent=parent
+    return p
+end
+local function label(p: BasePart,text: string)
+    local gui=Instance.new("BillboardGui");gui.Size=UDim2.fromOffset(260,70);gui.StudsOffset=Vector3.new(0,4,0);gui.AlwaysOnTop=false;gui.Parent=p
+    local t=Instance.new("TextLabel");t.Size=UDim2.fromScale(1,1);t.BackgroundTransparency=1;t.Text=text;t.TextColor3=Color3.new(1,1,1);t.TextStrokeTransparency=0.3;t.TextScaled=true;t.Font=Enum.Font.GothamMedium;t.Parent=gui
+end
+function World.new(data: any,domain: any,states: any,effects: RemoteEvent): World
+    local folder=Instance.new("Folder");folder.Name="MysteriesWorld";folder.Parent=workspace
+    local npcs=Instance.new("Folder");npcs.Name="Enemies";npcs.Parent=folder
+    local transient=Instance.new("Folder");transient.Name="Transient";transient.Parent=folder
+    return setmetatable({Data=data,Domain=domain,States=states,FX=effects,Folder=folder,NPCFolder=npcs,Transient=transient,
+        Entities={},Spawns={},Clock=0,OnInteraction=nil} :: Fields, World)
+end
+function World.Build(self: World)
+    if not self.Data.Runtime.GenerateDemoWorld then return end
+    part(self.Folder,"TrainingGround",Vector3.new(800,4,800),Vector3.new(0,-2,0),Color3.fromRGB(35,41,49))
+    local spawn=Instance.new("SpawnLocation");spawn.Name="SanctuarySpawn";spawn.Size=Vector3.new(12,1,12);spawn.Position=Vector3.new(0,0.5,0);spawn.Neutral=true;spawn.Duration=0;spawn.Color=Color3.fromRGB(95,153,170);spawn.Parent=self.Folder
+    label(spawn,"SANCTUARY\nChoose a potion in your journal")
+    for _,v in ipairs({{Name="Potion Altar",Action="Buy",Pos=Vector3.new(-12,3,0)},
+        {Name="Stabilization",Action="Recover",Pos=Vector3.new(12,3,0)},
+        {Name="Cipher Archive",Action="Cipher",Pos=Vector3.new(0,3,-16)},
+        {Name="Hidden Archive",Action="Archive",Pos=Vector3.new(0,3,16)}}) do
+        local p=part(self.Folder,v.Name,Vector3.new(3,6,3),v.Pos,Color3.fromRGB(112,100,160))
+        label(p,v.Name)
+        local prompt=Instance.new("ProximityPrompt");prompt.ActionText=if v.Action=="Buy" then "Next potion · 100 gold" else v.Name
+        prompt.ObjectText=v.Name;prompt.MaxActivationDistance=10;prompt.HoldDuration=0.4;prompt.RequiresLineOfSight=true;prompt.Parent=p
+        prompt.Triggered:Connect(function(player)
+            local root=self:Root(player)
+            if root and (root.Position-p.Position).Magnitude<=12 and self.OnInteraction then self.OnInteraction(player,v.Action) end
+        end)
+    end
+    for i=1,4 do
+        local door=part(self.Folder,"PracticeDoor",Vector3.new(7,9,1),Vector3.new(-35+i*14,4.5,-34),Color3.fromRGB(123,92,62))
+        CollectionService:AddTag(door,"MysticDoor");label(door,"LOCKED PASSAGE")
+    end
+    for x=-168,168,28 do
+        for z=-168,168,28 do
+            if Vector3.new(x,0,z).Magnitude>35 then
+                local p=part(self.Folder,"FlameAnchor",Vector3.new(0.7,2,0.7),Vector3.new(x,1,z),Color3.fromRGB(255,150,70))
+                p.CanCollide=false;p.Material=Enum.Material.Neon;CollectionService:AddTag(p,"FlameAnchor")
+            end
+        end
+    end
+    for index,tier in ipairs(self.Data.Runtime.EnemyTiers) do
+        local angle=(index-1)*math.pi/3
+        local center=Vector3.new(math.cos(angle)*130,0,math.sin(angle)*130)
+        local marker=part(self.Folder,"Arena"..tier,Vector3.new(8,0.3,8),center,Color3.fromRGB(75,65,100))
+        label(marker,"SEQUENCE "..tier.." ENEMIES")
+        if tier<=4 then
+            local zone=part(self.Folder,"WhisperZone",Vector3.new(50,12,50),center+Vector3.new(0,6,0),Color3.fromRGB(90,70,120))
+            zone.Transparency=1;zone.CanCollide=false;zone.CanTouch=false;zone.CanQuery=false
+            zone:SetAttribute("Radius",self.Data.Runtime.ExposureRadius);CollectionService:AddTag(zone,"MysticalExposure")
+        end
+        for offset=1,3 do
+            table.insert(self.Spawns,{Position=center+Vector3.new((offset-2)*12,4,8),Tier=tier,Entity=nil,NextSpawn=0})
+        end
+    end
+end
+function World.Root(self: World, player: Player): BasePart?
+    local c=player.Character
+    local root=c and c:FindFirstChild("HumanoidRootPart")
+    return if root and root:IsA("BasePart") then root else nil
+end
+function World.Humanoid(self: World, player: Player): Humanoid?
+    return if player.Character then player.Character:FindFirstChildOfClass("Humanoid") else nil
+end
+function World.Entity(self: World, model: any): any
+    if typeof(model)~="Instance" or not model:IsA("Model") then return nil end
+    local e=self.Entities[model]
+    if not e or not model:IsDescendantOf(self.NPCFolder) or not CollectionService:HasTag(model,"Enemy") or e.Humanoid.Health<=0 then return nil end
+    return e
+end
+function World.Has(self: World, e: any,id: string,now: number): boolean
+    local st=e.Statuses[id]
+    return st~=nil and st.ExpiresAt>now
+end
+function World.Status(self: World, e: any,id: string,duration: number,now: number,owner: Player?,power: number?)
+    assert(self.Data.StatusEffects[id],"Unknown status")
+    if owner and id~="Controlled" then
+        local s=self.States[owner]
+        if s then
+            local rating=self.Data.Runtime.NPCMentalResistancePerTier*e.Power
+            duration*=math.clamp(s.Stats.Resistance/rating,self.Data.Runtime.MinStatusDurationMultiplier,1)
+        end
+    end
+    e.Statuses[id]={ExpiresAt=now+duration,Owner=owner,Power=power or 0,NextTick=now+1}
+end
+function World.Buff(self: World, s: any,id: string,duration: number,now: number)
+    assert(self.Data.StatusEffects[id],"Unknown buff")
+    s.Statuses[id]={ExpiresAt=now+duration}
+end
+function World.LineOfSight(self: World, from: Vector3,to: Vector3,ignore: Instance?,target: Instance?): boolean
+    local delta=to-from
+    if delta.Magnitude<0.1 then return true end
+    local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Exclude
+    local exclusions: {Instance}={self.Transient}
+    if ignore then table.insert(exclusions,ignore) end
+    params.FilterDescendantsInstances=exclusions;params.IgnoreWater=true
+    local hit=workspace:Raycast(from,delta,params)
+    return not hit or (hit.Position-to).Magnitude<1 or (target~=nil and hit.Instance:IsDescendantOf(target))
+end
+function World.FiniteVector(self: World, v: any): boolean
+    return typeof(v)=="Vector3" and self.Domain.Finite(v.X) and self.Domain.Finite(v.Y) and self.Domain.Finite(v.Z)
+end
+function World.SafeDestination(self: World, player: Player,position: Vector3): Vector3?
+    if not self:FiniteVector(position) or math.abs(position.Y)>500 or Vector3.new(position.X,0,position.Z).Magnitude>self.Data.Runtime.WorldRadius then return nil end
+    local ignore: {Instance}={self.NPCFolder,self.Transient}
+    if player.Character then table.insert(ignore,player.Character) end
+    local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Exclude;params.FilterDescendantsInstances=ignore
+    local hit=workspace:Raycast(position+Vector3.new(0,30,0),Vector3.new(0,-100,0),params)
+    if not hit or hit.Normal.Y<0.7 or not hit.Instance.CanCollide then return nil end
+    if not hit.Instance.Anchored and not hit.Instance:IsA("Terrain") then return nil end
+    local destination=Vector3.new(position.X,hit.Position.Y+3.5,position.Z)
+    local overlap=OverlapParams.new();overlap.FilterType=Enum.RaycastFilterType.Exclude;overlap.FilterDescendantsInstances=ignore
+    for _,p in ipairs(workspace:GetPartBoundsInBox(CFrame.new(destination),Vector3.new(4,5,4),overlap)) do
+        if p.CanCollide then return nil end
+    end
+    return destination
+end
+function World.Targets(self: World, position: Vector3,radius: number,maximum: number,owner: Player): {any}
+    local found={}
+    for _,e in pairs(self.Entities) do
+        if e.Humanoid.Health>0 and e.Owner==nil and (e.Root.Position-position).Magnitude<=radius then table.insert(found,e) end
+    end
+    table.sort(found,function(a,b) return (a.Root.Position-position).Magnitude<(b.Root.Position-position).Magnitude end)
+    while #found>maximum do table.remove(found) end
+    return found
+end
+function World.Effect(self: World, position: Vector3,kind: string,owner: Player?,target: Instance?)
+    -- Server supplies bounded positions/identities; clients render pooled cosmetics only.
+    self.FX:FireAllClients({Position=position,Kind=kind,Owner=owner and owner.UserId,Target=target})
+end
+function World.Damage(self: World, e: any,amount: number,owner: Player,now: number): boolean
+    if e.Humanoid.Health<=0 or e.Owner~=nil or amount<=0 then return false end
+    e.LastHit=owner;e.LastHitAt=now
+    e.Humanoid:TakeDamage(math.min(amount,100000))
+    return true
+end
+function World.DamagePlayer(self: World, player: Player,amount: number,source: any,now: number)
+    local s=self.States[player];local hum=self:Humanoid(player)
+    if not s or not s.Ready or s.Dead or not hum or hum.Health<=0 then return end
+    s.LastCombat=now
+    if s.Statuses.Invulnerable then
+        self.Domain:Act(s,"HostileStrikeEvaded","dodge:"..tostring(source.Serial)..":"..tostring(math.floor(now)),now)
+        return
+    end
+    if s.Statuses.Shielded then amount*=0.35 end
+    if source.Statuses.Grafted and source.Statuses.Grafted.Owner==player then
+        if self:Damage(source,amount,player,now) then
+            self.Domain:Act(s,"GraftEncounterResolved","graft:"..source.Serial..":"..tostring(math.floor(now)),now)
+        end
+        return
+    end
+    if s.Statuses.Substitute and hum.Health<=amount then
+        s.Statuses.Substitute=nil;hum.Health=math.max(1,hum.MaxHealth*0.2)
+        self:Buff(s,"Invulnerable",2,now);self:Effect(hum.RootPart and hum.RootPart.Position or Vector3.zero,"Substitute",player)
+        return
+    end
+    hum:TakeDamage(amount);s.Health=hum.Health
+end
+function World.Spawn(self: World, position: Vector3,tier: number,owner: Player?,expiresAt: number?): any
+    local model=Instance.new("Model");model.Name=if owner then "Past Echo" else "Sealed Remnant · "..tostring(tier)
+    local root=part(model,"HumanoidRootPart",Vector3.new(2,2,1),position,Color3.new(0,0,0));root.Transparency=1;root.CanCollide=false
+    local torso=part(model,"Torso",Vector3.new(3,3,1.5),position,if owner then Color3.fromRGB(110,190,205) else Color3.fromRGB(120,75,145));torso.CanCollide=false
+    local head=part(model,"Head",Vector3.new(1.8,1.8,1.8),position+Vector3.new(0,2.3,0),Color3.fromRGB(190,170,190));head.Shape=Enum.PartType.Ball;head.CanCollide=false
+    local hum=Instance.new("Humanoid");hum.RequiresNeck=false;hum.BreakJointsOnDeath=false
+    local t=self.Data.Stats.TierMultipliers[tier];hum.MaxHealth=self.Data.Runtime.NPCHealthPerTier*t;hum.Health=hum.MaxHealth;hum.WalkSpeed=0;hum.Parent=model
+    model.PrimaryPart=root;model.Parent=self.NPCFolder
+    CollectionService:AddTag(model,"Enemy");model:SetAttribute("AbilityId","ArcBolt");model:SetAttribute("Omen",math.random(1,4))
+    self.Clock+=1
+    local e: any={Model=model,Root=root,Humanoid=hum,Tier=tier,Power=t,Home=position,Owner=owner,ExpiresAt=expiresAt,
+        Statuses={},LastAttack=0,LastHit=nil,LastHitAt=0,Serial=self.Clock,Threads=0,Stolen=false}
+    self.Entities[model]=e
+    hum.Died:Connect(function()
+        if e.Rewarded then return end;e.Rewarded=true
+        local killer=e.LastHit;local state=killer and self.States[killer]
+        if state and state.Ready and os.clock()-e.LastHitAt<=20 and e.Owner==nil then
+            state.Profile.Gold=math.min(10000000,state.Profile.Gold+self.Data.Runtime.NPCGoldReward)
+        end
+        self:Effect(root.Position,"Defeat",killer)
+        Debris:AddItem(model,2)
+    end)
+    return e
+end
+function World.Step(self: World, dt: number,now: number)
+    for player,s in pairs(self.States) do
+        local root=self:Root(player)
+        if not s.Ready or s.Dead or not root then continue end
+        for _,zone in ipairs(CollectionService:GetTagged("MysticalExposure")) do
+            if zone:IsA("BasePart") and (root.Position-zone.Position).Magnitude<self.Data.Runtime.ExposureRadius then
+                self.Domain:DrainSanity(s,self.Data.Progression.Sanity.ExposureDrainPerSecond*dt,now)
+                if now>=(s.NextWhisper or 0) then
+                    s.NextWhisper=now+self.Data.Runtime.WhisperInterval
+                    self.Domain:DrainSanity(s,self.Data.Progression.Sanity.WhisperDrain,now)
+                    self.FX:FireClient(player,{Position=root.Position,Kind="Whisper"})
+                end
+                break
+            end
+        end
+    end
+    for _,spawn in ipairs(self.Spawns) do
+        if spawn.Entity and (not spawn.Entity.Model.Parent or spawn.Entity.Humanoid.Health<=0) then
+            spawn.Entity=nil;spawn.NextSpawn=now+self.Data.Runtime.NPCRespawnSeconds
+        end
+        if not spawn.Entity and now>=spawn.NextSpawn and table.find(self.Spawns,spawn)<=self.Data.Runtime.MaxEnemies then spawn.Entity=self:Spawn(spawn.Position,spawn.Tier,nil,nil) end
+    end
+    for model,e in pairs(self.Entities) do
+        if not model.Parent then self.Entities[model]=nil;continue end
+        if e.Humanoid.Health<=0 then continue end
+        if e.ExpiresAt and now>=e.ExpiresAt then model:Destroy();self.Entities[model]=nil;continue end
+        if e.Owner and not self.States[e.Owner] then
+            if e.IsEcho then model:Destroy();self.Entities[model]=nil;continue end
+            e.Owner=nil;e.Statuses={}
+        end
+        for id,st in pairs(e.Statuses) do
+            if st.ExpiresAt<=now then
+                e.Statuses[id]=nil
+                if id=="Controlled" then e.Owner=nil end
+                if id=="Threaded" then e.Threads=0 end
+            elseif (id=="Burning" or id=="Parasite") and now>=st.NextTick then
+                st.NextTick=now+1
+                if st.Owner and self.States[st.Owner] then
+                    self:Damage(e,st.Power,st.Owner,now)
+                    if id=="Parasite" then
+                        local h=self:Humanoid(st.Owner);if h then h.Health=math.min(h.MaxHealth,h.Health+st.Power*0.5) end
+                    end
+                end
+            end
+        end
+        local blocked=false;local speed=self.Data.Runtime.NPCSpeed
+        for id in pairs(e.Statuses) do
+            local def=self.Data.StatusEffects[id]
+            if def.BlocksAttacks then blocked=true end
+            if def.MoveMultiplier then speed*=def.MoveMultiplier end
+        end
+        if e.Owner then
+            local foes=self:Targets(e.Root.Position,55,1,e.Owner)
+            local foe=foes[1]
+            if foe then
+                local delta=foe.Root.Position-e.Root.Position
+                if delta.Magnitude>5 then model:PivotTo(model:GetPivot()+delta.Unit*math.min(delta.Magnitude-4,speed*dt))
+                elseif now-e.LastAttack>=self.Data.Runtime.SummonAttackInterval then e.LastAttack=now;self:Damage(foe,self.Data.Runtime.SummonDamagePerTier*e.Power,e.Owner,now) end
+            end
+            continue
+        end
+        local nearest=nil;local distance=self.Data.Runtime.NPCNoticeRange
+        for player,s in pairs(self.States) do
+            local root=self:Root(player);local hum=self:Humanoid(player)
+            if root and hum and hum.Health>0 and s.Ready and not s.Dead and root.Position.Magnitude>self.Data.Runtime.SanctuaryRadius then
+                local range=if s.Statuses.Concealed then 0 elseif s.Statuses.Disguised then 12 else distance
+                local d=(root.Position-e.Root.Position).Magnitude
+                if d<distance and d<range then nearest=player;distance=d end
+            end
+        end
+        if nearest and not blocked then
+            local root=self:Root(nearest)
+            if root and e.Tier<=6 and distance<self.Data.Runtime.NPCSpellRange and now-(e.LastSpell or -100)>self.Data.Runtime.NPCSpellCooldown and not self:Has(e,"Silenced",now) and self:LineOfSight(e.Root.Position,root.Position,model,nearest.Character) then
+                e.LastSpell=now
+                self:DamagePlayer(nearest,self.Data.Runtime.NPCSpellDamagePerTier*e.Power,e,now)
+                self.Domain:DrainSanity(self.States[nearest],2,now)
+                self:Effect(root.Position,"ArcBolt",nil)
+            end
+            if root then
+                local delta=root.Position-e.Root.Position
+                if delta.Magnitude>self.Data.Runtime.NPCAttackRange then
+                    local step=delta.Unit*math.min(delta.Magnitude-4,speed*dt)
+                    if (e.Root.Position+step-e.Home).Magnitude<75 then model:PivotTo(model:GetPivot()+Vector3.new(step.X,0,step.Z)) end
+                elseif now-e.LastAttack>=self.Data.Runtime.NPCAttackInterval and self:LineOfSight(e.Root.Position,root.Position,model,nearest.Character) then
+                    e.LastAttack=now
+                    local payload=e.Statuses.Payload
+                    if payload and payload.Owner then
+                        e.Statuses.Payload=nil;self:Damage(e,payload.Power,payload.Owner,now)
+                    end
+                    self:DamagePlayer(nearest,self.Data.Runtime.NPCMeleeDamagePerTier*e.Power,e,now)
+                    if e.Tier<=4 and not self:Has(e,"Silenced",now) then self.Domain:DrainSanity(self.States[nearest],3,now) end
+                    self:Effect(e.Root.Position,"Strike",nil)
+                end
+            end
+        elseif not nearest and (e.Root.Position-e.Home).Magnitude>2 and speed>0 then
+            local delta=e.Home-e.Root.Position
+            model:PivotTo(model:GetPivot()+delta.Unit*math.min(delta.Magnitude,dt*speed))
+        end
+    end
+end
+function World.Cleanup(self: World, player: Player)
+    for model,e in pairs(self.Entities) do
+        if e.Owner==player then
+            if e.IsEcho then model:Destroy();self.Entities[model]=nil else e.Owner=nil;e.Statuses={} end
+        end
+        for id,st in pairs(e.Statuses) do if st.Owner==player then e.Statuses[id]=nil end end
+    end
+end
+return World
+```
+
+
+## src/StarterPlayer/StarterPlayerScripts/Mysteries.client.lua
+
+**LocalScript** at `StarterPlayer/StarterPlayerScripts/Mysteries`. Create matching Folder parents.
+
+```lua
+--!strict
+local Players=game:GetService("Players")
+local ReplicatedStorage=game:GetService("ReplicatedStorage")
+local UserInputService=game:GetService("UserInputService")
+local TweenService=game:GetService("TweenService")
+local Lighting=game:GetService("Lighting")
+local player=Players.LocalPlayer
+local data=require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("GameData"))
+local remotes=ReplicatedStorage:WaitForChild("MysteriesRemotes")
+local intent=remotes:WaitForChild("Intent") :: RemoteEvent
+local stateEvent=remotes:WaitForChild("State") :: RemoteEvent
+local effectEvent=remotes:WaitForChild("Effect") :: RemoteEvent
+player.CameraMode=Enum.CameraMode.Classic
+player.CameraMinZoomDistance=8;player.CameraMaxZoomDistance=32
+local gui=Instance.new("ScreenGui");gui.Name="MysteriesHUD";gui.ResetOnSpawn=false;gui.IgnoreGuiInset=false;gui.ZIndexBehavior=Enum.ZIndexBehavior.Sibling;gui.Parent=player:WaitForChild("PlayerGui")
+local canvas=Instance.new("Frame");canvas.Name="Canvas";canvas.Size=UDim2.fromScale(1,1);canvas.BackgroundTransparency=1;canvas.Parent=gui
+local textColor=Color3.fromRGB(232,232,242)
+local background=Color3.fromRGB(22,24,36)
+local accent=Color3.fromRGB(153,137,210)
+local function corner(parent: Instance,radius: number?)
+    local c=Instance.new("UICorner");c.CornerRadius=UDim.new(0,radius or 8);c.Parent=parent
+end
+local function frame(parent: Instance,size: UDim2,position: UDim2): Frame
+    local f=Instance.new("Frame");f.Size=size;f.Position=position;f.BackgroundColor3=background;f.BackgroundTransparency=0.12;f.BorderSizePixel=0;f.Parent=parent;corner(f);return f
+end
+local function label(parent: Instance,text: string,size: UDim2,pos: UDim2,fontSize: number?): TextLabel
+    local t=Instance.new("TextLabel");t.Size=size;t.Position=pos;t.BackgroundTransparency=1;t.TextColor3=textColor;t.Text=text;t.Font=Enum.Font.Gotham;t.TextSize=fontSize or 14;t.TextXAlignment=Enum.TextXAlignment.Left;t.TextWrapped=true;t.Parent=parent;return t
+end
+local function button(parent: Instance,text: string,size: UDim2,pos: UDim2,callback: () -> ()): TextButton
+    local b=Instance.new("TextButton");b.Size=size;b.Position=pos;b.Text=text;b.BackgroundColor3=Color3.fromRGB(60,53,88);b.BorderSizePixel=0;b.TextColor3=textColor;b.Font=Enum.Font.GothamMedium;b.TextSize=13;b.TextWrapped=true;b.AutoButtonColor=true;b.Parent=parent;corner(b,6);b.Activated:Connect(callback);return b
+end
+local state: any=nil
+local receivedAt=0
+local selectedSlot=1
+local lastPageKey=""
+local noticeSerial=0
+local hud=frame(canvas,UDim2.fromOffset(300,192),UDim2.fromOffset(12,12))
+label(hud,"MYSTERIES",UDim2.new(1,-20,0,25),UDim2.fromOffset(10,6),19)
+local modeLabel=label(hud,"Loading your session…",UDim2.new(1,-20,0,20),UDim2.fromOffset(10,31),12)
+local bars={}
+for i,spec in ipairs({{Key="Health",Name="HP",Color=Color3.fromRGB(199,83,104)},
+    {Key="Spirituality",Name="Spirituality",Color=Color3.fromRGB(91,159,207)},
+    {Key="Sanity",Name="Sanity",Color=Color3.fromRGB(164,142,211)}}) do
+    local base=frame(hud,UDim2.new(1,-20,0,24),UDim2.fromOffset(10,56+(i-1)*30));base.BackgroundColor3=Color3.fromRGB(41,42,58)
+    local fill=Instance.new("Frame");fill.Size=UDim2.fromScale(1,1);fill.BackgroundColor3=spec.Color;fill.BorderSizePixel=0;fill.Parent=base;corner(fill,6)
+    local text=label(base,spec.Name,UDim2.fromScale(1,1),UDim2.fromOffset(6,0),12)
+    bars[spec.Key]={Fill=fill,Label=text,Name=spec.Name}
+end
+local gold=label(hud,"Gold 0  ·  Wishes 0",UDim2.new(1,-20,0,22),UDim2.fromOffset(10,150),12)
+local statuses=label(hud,"",UDim2.new(1,-20,0,20),UDim2.fromOffset(10,171),11)
+local progress=frame(canvas,UDim2.fromOffset(300,142),UDim2.fromOffset(12,212))
+local sequenceLabel=label(progress,"Uninitiated",UDim2.new(1,-20,0,24),UDim2.fromOffset(10,5),16)
+local digestionLabel=label(progress,"Digestion 0%",UDim2.new(1,-20,0,20),UDim2.fromOffset(10,31),13)
+local objective=label(progress,"Open the journal to choose your starting potion.",UDim2.new(1,-20,0,68),UDim2.fromOffset(10,55),12)
+local journal=frame(canvas,UDim2.fromOffset(390,430),UDim2.new(1,-402,0,12));journal.Visible=false
+label(journal,"BEYONDER JOURNAL",UDim2.new(1,-60,0,30),UDim2.fromOffset(12,6),17)
+button(journal,"×",UDim2.fromOffset(28,28),UDim2.new(1,-36,0,5),function() journal.Visible=false end)
+local inventoryText=label(journal,"Potion inventory",UDim2.new(1,-20,0,46),UDim2.fromOffset(10,40),12)
+local potionButtons={}
+for index,path in ipairs({"Seer","Marauder","Apprentice"}) do
+    potionButtons[path]=button(journal,"Drink "..path,UDim2.fromOffset(118,38),UDim2.fromOffset(10+(index-1)*126,90),function()
+        if not state or not state.Ready then return end
+        intent:FireServer("Drink",{Id=path.."_Potion_9"})
+    end)
+end
+local drinkNext=button(journal,"Drink next potion",UDim2.new(1,-20,0,34),UDim2.fromOffset(10,136),function()
+    if state and state.PathwayId and state.Sequence>1 then
+        intent:FireServer("Drink",{Id=state.PathwayId.."_Potion_"..tostring(state.Sequence-1)})
+    end
+end)
+local slotLabel=label(journal,"Select a hotbar slot, then equip an ability:",UDim2.new(1,-20,0,30),UDim2.fromOffset(10,178),12)
+local selectors={}
+for i=1,6 do
+    selectors[i]=button(journal,tostring(i),UDim2.fromOffset(48,26),UDim2.fromOffset(10+(i-1)*62,210),function() selectedSlot=i end)
+end
+local list=Instance.new("ScrollingFrame");list.Name="AbilityLibrary";list.Size=UDim2.new(1,-20,0,150);list.Position=UDim2.fromOffset(10,246);list.BackgroundTransparency=1;list.BorderSizePixel=0;list.ScrollBarThickness=5;list.AutomaticCanvasSize=Enum.AutomaticSize.Y;list.CanvasSize=UDim2.new();list.Parent=journal
+local layout=Instance.new("UIListLayout");layout.Padding=UDim.new(0,5);layout.Parent=list
+label(journal,"Lore review pending · original gameplay adaptations",UDim2.new(1,-20,0,24),UDim2.fromOffset(10,401),10)
+button(canvas,"Journal [B]",UDim2.fromOffset(150,34),UDim2.new(1,-162,1,-128),function() journal.Visible=not journal.Visible end)
+local meleeButton=button(canvas,"Strike [click]",UDim2.fromOffset(150,34),UDim2.new(1,-162,1,-88),function() end)
+local hotbar=frame(canvas,UDim2.fromOffset(620,78),UDim2.new(0.5,-310,1,-86))
+local keys={Enum.KeyCode.Q,Enum.KeyCode.E,Enum.KeyCode.R,Enum.KeyCode.F,Enum.KeyCode.Z,Enum.KeyCode.X}
+local keyNames={"Q","E","R","F","Z","X"}
+local hotButtons={}
+local function aim(): any
+    local camera=workspace.CurrentCamera
+    if not camera then return {} end
+    local point=UserInputService:GetMouseLocation()
+    if UserInputService.TouchEnabled and not UserInputService.MouseEnabled then point=camera.ViewportSize/2 end
+    local ray=camera:ScreenPointToRay(point.X,point.Y)
+    local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Exclude
+    if player.Character then params.FilterDescendantsInstances={player.Character} end
+    local hit=workspace:Raycast(ray.Origin,ray.Direction*500,params)
+    local target=nil
+    if hit then
+        local ancestor: Instance?=hit.Instance
+        while ancestor and ancestor~=workspace do
+            if ancestor:IsA("Model") and ancestor:FindFirstChildOfClass("Humanoid") then target=ancestor;break end
+            ancestor=ancestor.Parent
+        end
+    end
+    return {Position=if hit then hit.Position else ray.Origin+ray.Direction*50,Target=target}
+end
+local function cast(slot: number)
+    if not state or not state.Ready or state.Dead then return end
+    local id=state.Loadout[slot]
+    if not id then return end
+    local input=aim();input.Id=id
+    intent:FireServer("Cast",input)
+end
+local function melee()
+    if state and state.Ready then intent:FireServer("Melee",aim()) end
+end
+meleeButton.Activated:Connect(melee)
+for i=1,6 do
+    hotButtons[i]=button(hotbar,keyNames[i].."\n—",UDim2.fromOffset(94,62),UDim2.fromOffset(10+(i-1)*102,8),function() cast(i) end)
+end
+local notice=label(canvas,"Welcome. Open the journal [B] to choose a potion.",UDim2.fromOffset(590,52),UDim2.new(0.5,-295,1,-146),14)
+notice.TextXAlignment=Enum.TextXAlignment.Center;notice.TextStrokeTransparency=0.3
+local function tell(text: string)
+    noticeSerial+=1;local serial=noticeSerial;notice.Text=text
+    task.delay(6,function() if serial==noticeSerial then notice.Text="" end end)
+end
+local function rebuildLibrary()
+    for _,child in ipairs(list:GetChildren()) do if child:IsA("TextButton") then child:Destroy() end end
+    if not state or not state.PathwayId then return end
+    local ids={}
+    for id,a in pairs(data.Abilities) do
+        if a.PathwayId==state.PathwayId and state.Sequence<=a.UnlockSequence then table.insert(ids,id) end
+    end
+    table.sort(ids,function(a,b)
+        local aa,bb=data.Abilities[a],data.Abilities[b]
+        return if aa.UnlockSequence==bb.UnlockSequence then a<b else aa.UnlockSequence<bb.UnlockSequence
+    end)
+    for _,id in ipairs(ids) do
+        local a=data.Abilities[id]
+        local b=button(list,"Seq "..a.UnlockSequence.." · "..a.Name.."   ["..a.SpiritualityCost.."]",UDim2.new(1,-8,0,32),UDim2.new(),function()
+            intent:FireServer("Equip",{Id=id,Slot=selectedSlot})
+        end)
+        b.LayoutOrder=(a.UnlockSequence*100)+#list:GetChildren()
+    end
+end
+local madness=Instance.new("ColorCorrectionEffect");madness.Name="MysteriesSanity";madness.Enabled=false;madness.Parent=Lighting
+stateEvent.OnClientEvent:Connect(function(update)
+    if type(update)~="table" then return end
+    if update.Message then tell(update.Message);return end
+    state=update;receivedAt=os.clock()
+    if not update.Ready then modeLabel.Text="Loading save safely…";return end
+    modeLabel.Text=(if update.SessionOnly then "STUDIO SESSION · not saved" else "Persistent session").." · "..update.Mode
+    gold.Text="Gold "..tostring(update.Gold).."  ·  Wishes "..tostring(update.WishCredits).."  ·  Recordings "..tostring(update.RecordedCharges)
+    statuses.Text=table.concat(update.Statuses,", ")
+    madness.Enabled=update.Mode~="Normal" or update.Sanity<20
+    madness.TintColor=if update.Mode=="LostControl" then Color3.fromRGB(170,130,180) else Color3.fromRGB(240,180,195)
+    madness.Saturation=if update.Mode=="Normal" then -0.25 else -0.65
+    if update.PathwayId then
+        local path=data.Pathways[update.PathwayId];local seq=path.Sequences[update.Sequence]
+        sequenceLabel.Text=path.Alias.." · Seq "..update.Sequence.." "..seq.Name
+        objective.Text="Acting: "..seq.ActingObjectives[1].Label.."\nProgress "..tostring(update.ActingProgress).." · next potion at 100%"
+        digestionLabel.Text=string.format("Digestion %.1f%%",update.Digestion)
+        inventoryText.Text="Buy the next potion at the sanctuary altar (100 gold). Stabilization costs 20 digestion."
+        local nextId=update.PathwayId.."_Potion_"..tostring(update.Sequence-1)
+        drinkNext.Text=if update.Sequence==1 then "Highest available sequence reached" else "Drink next potion · owned "..tostring(update.Inventory[nextId] or 0)
+    else
+        sequenceLabel.Text="Uninitiated · choose your pathway"
+        objective.Text="Drink one starting potion in the journal. Your chosen pathway is permanent."
+        inventoryText.Text="Choose ONE starting potion below. All later potions must follow that pathway."
+    end
+    for path,b in pairs(potionButtons) do b.Visible=update.PathwayId==false;b.Text="Drink "..path.." ("..tostring(update.Inventory[path.."_Potion_9"] or 0)..")" end
+    local pageKey=tostring(update.PathwayId)..":"..tostring(update.Sequence)
+    if pageKey~=lastPageKey then lastPageKey=pageKey;rebuildLibrary() end
+    for key,bar in pairs(bars) do
+        local max=if key=="Sanity" then 100 else update["Max"..key]
+        local value=update[key]
+        bar.Label.Text=bar.Name.." "..math.ceil(value).." / "..math.ceil(max)
+        TweenService:Create(bar.Fill,TweenInfo.new(0.2),{Size=UDim2.fromScale(math.clamp(value/max,0,1),1)}):Play()
+    end
+end)
+UserInputService.InputBegan:Connect(function(input,processed)
+    if processed or UserInputService:GetFocusedTextBox() then return end
+    if input.KeyCode==Enum.KeyCode.B then journal.Visible=not journal.Visible;return end
+    if input.UserInputType==Enum.UserInputType.MouseButton1 then melee();return end
+    for i,key in ipairs(keys) do if input.KeyCode==key then cast(i);return end end
+end)
+-- Fixed-rate text refresh, not a RenderStepped world scan.
+task.spawn(function()
+    while gui.Parent do
+        task.wait(0.1)
+        for i,b in ipairs(hotButtons) do
+            local id=state and state.Ready and state.Loadout[i]
+            local a=id and data.Abilities[id]
+            local remaining=if id and state.Cooldowns[id] then math.max(0,state.Cooldowns[id]-(os.clock()-receivedAt)) else 0
+            b.Text=keyNames[i].." · "..(a and a.Name or "Empty")..(if remaining>0 then string.format("\n%.1fs",remaining) else "")
+            b.BackgroundColor3=if remaining>0 then Color3.fromRGB(42,43,54) else Color3.fromRGB(60,53,88)
+            selectors[i].BackgroundColor3=if selectedSlot==i then accent else Color3.fromRGB(60,53,88)
+        end
+        slotLabel.Text="Equip an ability in hotbar slot "..selectedSlot..":"
+    end
+end)
+-- Pooled original neon pulses and highlights. No downloaded VFX/audio assets.
+local pool={};local active=0
+local fxFolder=Instance.new("Folder");fxFolder.Name="LocalMysteriesFX";fxFolder.Parent=workspace
+local function pulse(position: Vector3,kind: string)
+    if active>=data.Runtime.MaxVFX then return end
+    local p: Part=table.remove(pool) or Instance.new("Part")
+    p.Shape=Enum.PartType.Ball;p.Material=Enum.Material.Neon;p.Anchored=true;p.CanCollide=false;p.CanTouch=false;p.CanQuery=false
+    active+=1;p.Size=Vector3.one;p.CFrame=CFrame.new(position);p.Color=if string.find(kind,"Marauder") then Color3.fromRGB(230,178,85) elseif string.find(kind,"Apprentice") then Color3.fromRGB(110,167,240) else Color3.fromRGB(170,130,225)
+    p.Transparency=0.25;p.Parent=fxFolder
+    local tween=TweenService:Create(p,TweenInfo.new(0.5),{Size=Vector3.new(7,7,7),Transparency=1})
+    tween:Play()
+    tween.Completed:Once(function() active-=1;p.Parent=nil;table.insert(pool,p) end)
+end
+local highlights={}
+local highlightCount=0
+local highlightPool={}
+local soundActive=0
+local function audio(hook: string,pitch: number?)
+    local id=data.Runtime.AudioAssets[hook]
+    if type(id)~="number" or id<=0 or soundActive>=8 then return end
+    soundActive+=1
+    local sound=Instance.new("Sound");sound.SoundId="rbxassetid://"..tostring(math.floor(id));sound.Volume=0.4;sound.PlaybackSpeed=math.clamp(pitch or 1,0.5,2);sound.Parent=gui
+    sound:Play()
+    task.delay(8,function() sound:Destroy();soundActive-=1 end)
+end
+effectEvent.OnClientEvent:Connect(function(event)
+    if type(event)~="table" or typeof(event.Position)~="Vector3" or type(event.Kind)~="string" then return end
+    if event.Kind=="VoiceProfile" then
+        audio(event.Hook,event.Pitch);return
+    end
+    local ability=data.Abilities[event.Kind]
+    if ability then audio(ability.SFXHook) end
+    if event.Kind=="Reveal" and typeof(event.Target)=="Instance" then
+        if highlights[event.Target] or highlightCount>=data.Runtime.MaxVFX then return end
+        local h=table.remove(highlightPool) or Instance.new("Highlight")
+        h.Adornee=event.Target;h.FillColor=Color3.fromRGB(150,130,230);h.FillTransparency=0.6;h.Parent=fxFolder;h.Enabled=true
+        highlights[event.Target]=h;highlightCount+=1
+        task.delay(5,function()
+            highlights[event.Target]=nil;highlightCount-=1;h.Enabled=false;h.Adornee=nil;h.Parent=nil;table.insert(highlightPool,h)
+        end)
+    else pulse(event.Position,event.Kind) end
+end)
+local function resize()
+    local camera=workspace.CurrentCamera
+    if not camera then return end
+    local size=camera.ViewportSize
+    local scale=math.clamp(size.X/1050,0.5,1)
+    for _,f in ipairs({hud,progress,journal,hotbar}) do
+        local ui=f:FindFirstChildOfClass("UIScale") or Instance.new("UIScale")
+        ui.Scale=scale;ui.Parent=f
+    end
+    hotbar.AnchorPoint=Vector2.new(0.5,1);hotbar.Position=UDim2.new(0.5,0,1,-8)
+    journal.AnchorPoint=Vector2.new(1,0);journal.Position=UDim2.new(1,-12,0,12)
+    progress.Position=UDim2.fromOffset(12,12+200*scale)
+end
+local viewportConnection: RBXScriptConnection?=nil
+local function bindCamera()
+    if viewportConnection then viewportConnection:Disconnect() end
+    local camera=workspace.CurrentCamera
+    if camera then viewportConnection=camera:GetPropertyChangedSignal("ViewportSize"):Connect(resize) end
+    resize()
+end
+workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(bindCamera);bindCamera()
+intent:FireServer("Sync",{})
+```
+
+
+## default.project.json
+
+```json
+{
+  "name": "MysteriesFoundation",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "Shared": {
+        "$path": "src/ReplicatedStorage/Shared"
+      }
+    },
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "$path": "src/ServerScriptService"
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "$path": "src/StarterPlayer/StarterPlayerScripts"
+      }
+    },
+    "StarterGui": {
+      "$className": "StarterGui",
+      "$path": "src/StarterGui"
+    }
+  }
+}
+```
