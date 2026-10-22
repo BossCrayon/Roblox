@@ -1,0 +1,68 @@
+--!strict
+-- Original procedural visuals. Empty texture/sound IDs need no uploaded assets.
+local freeze=require(script.Parent.Freeze)
+local T=require(script.Parent.Theme)
+return freeze({
+    Palettes={
+        Seer={Primary=T.Colors.Fog,Secondary=T.Colors.DeepPurple,Accent=T.Colors.Gold},
+        Marauder={Primary=T.Colors.Crimson,Secondary=T.Colors.Black,Accent=T.Colors.Bronze},
+        Apprentice={Primary=T.Colors.Teal,Secondary=T.Colors.Silver,Accent=T.Colors.Starlight},
+    },
+    TierSequences={Low=7,Middle=4},
+    Tier={
+        {Scale=1,Emission=0.7}, -- Sequence 9-7
+        {Scale=1.35,Emission=1}, -- Sequence 6-4
+        {Scale=1.7,Emission=1.2}, -- Sequence 3-1; no full-screen geometry
+    },
+    Quality={LowLevel=3,MediumLevel=6,AutoLevel=5,Low=0.35,Medium=0.65,High=1,
+        Near=30,Middle=70,MaximumDistance=120,FarScale=0.5,MiddleScale=0.75,
+        LowEffects=4,MediumEffects=8,HighEffects=16,MobileEffects=8},
+    Pools={
+        Desktop={Part=160,Attachment=192,Beam=96,Trail=16,ParticleEmitter=24,PointLight=4,Highlight=8},
+        Mobile={Part=96,Attachment=112,Beam=56,Trail=8,ParticleEmitter=12,PointLight=2,Highlight=4},
+    },
+    Lifetime={Default=0.8,Maximum=8,MaxStep=0.1},
+    DefaultCosts={Part=1,Attachment=8,Beam=4},
+    Safety={MinimumPulseInterval=1/3,MaximumLightsPerEffect=1,PositionLimit=1000000},
+    Part={Size=Vector3.new(0.05,0.05,0.05),Color=T.Colors.Fog,Transparency=1,
+        Material=Enum.Material.Neon,Shape=Enum.PartType.Block},
+    Attachment={CFrame=CFrame.identity},
+    -- Rate stays zero: explicit bounded bursts only; no texture means geometric fallback.
+    Particle={Texture="",Rate=0,Lifetime=NumberRange.new(0.35,0.65),Speed=NumberRange.new(0.5,1.5),
+        SpreadAngle=Vector2.new(18,18),Size=NumberSequence.new({NumberSequenceKeypoint.new(0,0.10),NumberSequenceKeypoint.new(1,0)}),
+        Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,0.35),NumberSequenceKeypoint.new(1,1)}),
+        Color=ColorSequence.new(T.Colors.Fog,T.Colors.Gold),LightEmission=0.15,LightInfluence=0.8,
+        Drag=1.5,Acceleration=Vector3.new(0,0.7,0),Rotation=NumberRange.new(0,180),RotSpeed=NumberRange.new(-15,15),
+        VelocityInheritance=0,LockedToPart=false,Orientation=Enum.ParticleOrientation.FacingCamera,
+        EmissionDirection=Enum.NormalId.Top,ZOffset=0,TimeScale=1},
+    Beam={Texture="",TextureLength=1,TextureSpeed=0,TextureMode=Enum.TextureMode.Stretch,
+        Width0=0.055,Width1=0.055,Segments=12,CurveSize0=0,CurveSize1=0,FaceCamera=true,
+        Transparency=NumberSequence.new(0.25),Color=ColorSequence.new(T.Colors.Gold),
+        LightEmission=0.1,LightInfluence=0.9,ZOffset=0},
+    Trail={Texture="",TextureLength=1,TextureMode=Enum.TextureMode.Stretch,Lifetime=0.22,MinLength=0.03,MaxLength=8,
+        WidthScale=NumberSequence.new({NumberSequenceKeypoint.new(0,1),NumberSequenceKeypoint.new(1,0)}),
+        Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,0.4),NumberSequenceKeypoint.new(1,1)}),
+        Color=ColorSequence.new(T.Colors.Fog,T.Colors.Gold),LightEmission=0.1,LightInfluence=0.9,FaceCamera=true},
+    Light={Enabled=false,Brightness=0,Range=0,Shadows=false,Color=T.Colors.Gold},
+    Highlight={FillTransparency=0.65,OutlineTransparency=1,FillColor=T.Colors.Hit,OutlineColor=T.Colors.Fog,
+        DepthMode=Enum.HighlightDepthMode.Occluded},
+    Hit={Life=0.26,HighlightFill=0.65,Outline=1,KnockbackDistance=0.35,KnockbackLife=0.18,
+        DeathLife=0.8,DeathMotes=6,Priority=5,RevealPriority=2,RevealLife=T.Timing.Reveal,
+        Costs={Highlight=1,Part=1},DeathCosts={},MinimumHealth=0,MaxParts=12,DeathHold=2.1,
+        GhostAlpha=0.65,MinFlashGap=0.34},
+    Blocks={
+        Common={HostSize=0.05,Width=0.055,Alpha=0.25,Segments=12,MinSegments=4,FadeStart=0.18,
+            HeightOffset=0.10,ParticleCount=8,ParticleEmitScale=1,MoteThickness=0.06,MinimumLength=0.01,TangentVertical=0.95},
+        RingBurst={Duration=0.7,Priority=2,Radius=3,Start=0.35,Gap=0.25},
+        RisingMotes={Duration=1.2,Priority=1,Count=6,Height=3,Radius=1.8,Size=0.10,Orbit=0.3},
+        ThreadBeam={Duration=0.85,Priority=3,Length=7,Height=2,Width=0.045,Segments=16,Taper=0.55},
+        DoorFrame={Duration=1.1,Priority=3,Width=3,Height=5,Nested=2,Inset=0.3,Base=0.1},
+        StarBurst={Duration=0.65,Priority=2,Radius=2.4,Inner=0.3,Points=4,Start=0.35},
+        GlitchFlicker={Duration=1.1,Priority=2,Width=3,Height=3,Shift=0.3,Transitions=2,Split=0.2},
+        GroundRune={Duration=1.2,Priority=2,Radius=3,Inner=0.65,Spokes=4},
+        ImpactFlash={Duration=0.32,Priority=4,Radius=0.9,Inner=0.35,Alpha=0.42},
+        ScreenEdgePulse={Duration=0.5,Priority=4},
+        ShockwaveRing={Duration=0.8,Priority=2,Radius=4,Start=0.4},
+        AfterimageTrail={Duration=1,Priority=2,Length=5,Height=2,Width=0.12,Head=0.18},
+    },
+})

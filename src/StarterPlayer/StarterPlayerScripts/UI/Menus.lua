@@ -5,7 +5,7 @@ local Model=require(Shared.VisualModel)
 local Kit=require(script.Parent.Kit)
 local Menus={}
 function Menus.new(parent: Instance,data: any,callbacks: any): any
-    local self: any={Data=data,Callbacks=callbacks,State=nil,Tab="Journal",SelectedSlot=1,View="Page",PreviewId=nil,Purchase=false,Waiting=false,Rows={},LastKey="",ReducedMotion=false}
+    local self: any={Data=data,Callbacks=callbacks,State=nil,Tab="Journal",SelectedSlot=1,View="Page",PreviewId=nil,Purchase=false,Waiting=false,Rows={},LastKey="",ReducedMotion=false,LowGraphics=false}
     self.Root=Kit.New("Frame",parent,{Name="Menus",Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Visible=false,ZIndex=T.Layers.Modal})
     self.Dim=Kit.New("TextButton",self.Root,{Name="Backdrop",Size=UDim2.fromScale(1,1),Text="",AutoButtonColor=false,BackgroundColor3=T.Colors.Ink,BackgroundTransparency=T.Style.ModalDim,BorderSizePixel=0})
     self.Dim.Activated:Connect(function() self:Close() end)
@@ -136,6 +136,11 @@ function Menus.Render(self: any)
         end
         self:ActionRow("Reduced motion: "..(if self.ReducedMotion then "on" else "off"),function()
             self.ReducedMotion=not self.ReducedMotion;self.Callbacks.ReducedMotion(self.ReducedMotion);self:Render()
+        end)
+        self:ActionRow("Low graphics: "..(if self.LowGraphics then "on" else "off"),function()
+            self.LowGraphics=not self.LowGraphics
+            if self.Callbacks.LowGraphics then self.Callbacks.LowGraphics(self.LowGraphics) end
+            self:Render()
         end)
     elseif self.Tab=="Pathway" then
         if state.PathwayId then

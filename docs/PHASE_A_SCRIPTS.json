@@ -1,0 +1,87 @@
+[
+  {
+    "file": "src/ReplicatedStorage/Shared/Theme.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ReplicatedStorage/Shared/Theme"
+  },
+  {
+    "file": "src/ReplicatedStorage/Shared/AnimConfig.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ReplicatedStorage/Shared/AnimConfig"
+  },
+  {
+    "file": "src/ReplicatedStorage/Shared/VfxConfig.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ReplicatedStorage/Shared/VfxConfig"
+  },
+  {
+    "file": "src/ReplicatedStorage/Shared/VisualBudget.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ReplicatedStorage/Shared/VisualBudget"
+  },
+  {
+    "file": "src/ServerScriptService/Services/WorldService.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ServerScriptService/Services/WorldService"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/AnimationController.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/AnimationController"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/CameraFeel.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/CameraFeel"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/EffectBlocks.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/EffectBlocks"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/HitPresentation.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/HitPresentation"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/MotionSpring.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/MotionSpring"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/VfxService.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/VfxService"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/VfxTestRoom.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/VfxTestRoom"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/UI/Feedback.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/UI/Feedback"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/UI/Menus.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/UI/Menus"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/UI/Developer.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/UI/Developer"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/UI/Presentation.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/UI/Presentation"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Mysteries.client.lua",
+    "script_class": "LocalScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Mysteries"
+  }
+]

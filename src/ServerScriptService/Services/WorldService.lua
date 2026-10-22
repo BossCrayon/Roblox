@@ -152,7 +152,7 @@ function World.Damage(self: World, e: any,amount: number,owner: Player,now: numb
     e.LastHit=owner;e.LastHitAt=now
     local applied=math.min(e.Humanoid.Health,amount,100000)
     e.Humanoid:TakeDamage(math.min(amount,100000))
-    self.FX:FireAllClients({Kind="Damage",Position=e.Root.Position,Amount=applied,Owner=owner.UserId,Target=e.Model})
+    self.FX:FireAllClients({Kind="Damage",Position=e.Root.Position,Amount=applied,Owner=owner.UserId,Target=e.Model,Dead=e.Humanoid.Health<=0})
     return true
 end
 function World.DamagePlayer(self: World, player: Player,amount: number,source: any,now: number)

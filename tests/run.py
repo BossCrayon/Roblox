@@ -22,7 +22,7 @@ def literal(text):
 sources = {str(p.relative_to(shared).with_suffix('')): p.read_text()
            for p in sorted(shared.rglob('*.lua'))}
 sources.update({'Server/'+str(p.relative_to(root/'src/ServerScriptService').with_suffix('')): p.read_text() for p in sorted((root/'src/ServerScriptService').rglob('*.lua')) if not p.name.endswith('.server.lua')})
-sources.update({'Client/'+str(p.relative_to(root/'src/StarterPlayer/StarterPlayerScripts').with_suffix('')): p.read_text() for p in sorted((root/'src/StarterPlayer/StarterPlayerScripts/UI').rglob('*.lua'))})
+sources.update({'Client/'+str(p.relative_to(root/'src/StarterPlayer/StarterPlayerScripts').with_suffix('')): p.read_text() for p in sorted((root/'src/StarterPlayer/StarterPlayerScripts').rglob('*.lua')) if not p.name.endswith('.client.lua')})
 lines = ['local sources = {']
 lines += ['[' + json.dumps(k) + '] = ' + literal(v) + ',' for k, v in sources.items()]
 lines += ['}', '''
@@ -77,6 +77,24 @@ if '--stats' not in sys.argv and '--catalog' not in sys.argv:
               end)''']
     lines += ['local uiTests=assert(loadstring(' + literal((root/'tests/ui.luau').read_text()) + ', "ui"))()',
               '''uiTests(data,function(path,environment)
+                  moduleOverrides[path]=environment
+                  cache[nodes[path]]=nil
+                  return moduleRequire(nodes[path])
+              end,nodes[""])''']
+    lines += ['local vfxTests=assert(loadstring(' + literal((root/'tests/vfx.luau').read_text()) + ', "vfx"))()',
+              '''vfxTests(function(path,environment)
+                  moduleOverrides[path]=environment
+                  cache[nodes[path]]=nil
+                  return moduleRequire(nodes[path])
+              end,nodes[""])''']
+    lines += ['local effectBlockTests=assert(loadstring(' + literal((root/'tests/effect_blocks.luau').read_text()) + ', "effect_blocks"))()',
+              '''effectBlockTests(function(path,environment)
+                  moduleOverrides[path]=environment
+                  cache[nodes[path]]=nil
+                  return moduleRequire(nodes[path])
+              end,nodes[""])''']
+    lines += ['local animationTests=assert(loadstring(' + literal((root/'tests/animation_controller.luau').read_text()) + ', "animation_controller"))()',
+              '''animationTests(function(path,environment)
                   moduleOverrides[path]=environment
                   cache[nodes[path]]=nil
                   return moduleRequire(nodes[path])

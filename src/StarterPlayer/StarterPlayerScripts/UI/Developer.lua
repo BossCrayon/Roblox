@@ -2,7 +2,7 @@
 local T=require(game:GetService("ReplicatedStorage").Shared.Theme)
 local Kit=require(script.Parent.Kit)
 local Developer={}
-function Developer.new(parent: Instance,send: any): any
+function Developer.new(parent: Instance,send: any,testRoom: (() -> ())?): any
     local self: any={Allowed=false,State=nil}
     self.Root=Kit.Panel(parent,"DeveloperPanel");self.Root.ZIndex=T.Layers.Developer;self.Root.Visible=false
     local title=Kit.Text(self.Root,"DEVELOPER · F8",T.Type.Heading,T.Fonts.Heading)
@@ -19,6 +19,14 @@ function Developer.new(parent: Instance,send: any): any
         end)
         b.Position=UDim2.fromOffset(T.Layout.Developer.Pad,T.Layout.Developer.Row*2+(i-1)*(T.Layout.Developer.Row+T.Layout.Developer.Gap))
         b.Size=UDim2.new(1,-T.Layout.Developer.Pad*2,0,T.Layout.Developer.Row);table.insert(self.Buttons,b)
+    end
+    if testRoom then
+        self.TestButton=Kit.Button(self.Scroll,"Studio VFX test room",function()
+            if self.Allowed then testRoom() end
+        end)
+        self.TestButton.Position=UDim2.fromOffset(T.Layout.Developer.Pad,T.Layout.Developer.Row*5+T.Layout.Developer.Gap*3)
+        self.TestButton.Size=UDim2.new(1,-T.Layout.Developer.Pad*2,0,T.Layout.Developer.Row)
+        self.Scroll.CanvasSize=UDim2.fromOffset(0,T.Layout.Developer.Row*6+T.Layout.Developer.Gap*4)
     end
     return setmetatable(self,{__index=Developer})
 end

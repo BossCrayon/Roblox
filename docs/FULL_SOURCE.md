@@ -2,6 +2,8 @@
 
 # Mysteries — playable Roblox foundation
 
+> **Animation/VFX — Phase A:** bounded client pools, 12 procedural animations, 11 reusable effect blocks, quality/120-stud LOD, reduced motion, low graphics and an authorized F8 Studio preview room. [Complete code, script classes/Explorer paths, and post-code tests](docs/PHASE_A_VFX_CODE.md) · [Numeric properties and exact screenshots/recordings to send](docs/PHASE_A_VFX.md). Pathway-specific choreography starts in Phase B.
+
 > **Visual overhaul — Phase 1:** the current build includes a themed HUD, Journal/Pathway/Inventory tabs, confirmation-based potion UI, custom prompts, feedback and F8-only developer diagnostics. [Full copy-ready code and script destinations](docs/PHASE1_UI_CODE.md) · [Studio checklist and exact screenshot requests](docs/PHASE1_UI.md). World relayout and permanent label replacement remain later visual phases.
 
 The six requested implementation phases are represented in this project: data, server progression/persistence, all 54 selected ability executors across Sequences 9–1, HUD/input, procedural NPCs/world, and a first balance pass. The roster remains **Seer/Fool, Marauder/Error, and Apprentice/Door only**, with no Sequence 0.
@@ -10,12 +12,12 @@ This is a playable foundation with bounded gameplay interpretations of the power
 
 ## Open and play
 
-1. Open the supplied **`build/Mysteries.rbxlx`** in desktop Roblox Studio and press **Play**. The server generates the sanctuary, potion altar, archives, practice doors, flame anchors, six arenas, and 18 procedural enemies. The client creates its HUD in PlayerGui from modules under StarterPlayerScripts/UI.
+1. Download **[studio/Mysteries.rbxlx](studio/Mysteries.rbxlx)** using GitHub's **Download raw file**, open it in desktop **Roblox Studio → File → Open from File**, and press **Play**. The server generates the sanctuary, potion altar, archives, practice doors, flame anchors, six arenas, and 18 procedural enemies. The client creates its HUD in PlayerGui from modules under StarterPlayerScripts/UI.
 2. Open the **journal [B]**, drink one of the three starter potions, and aim at nearby enemies or ground when using abilities.
 3. Use **Q, E, R, F, Z, X** for the six equipped abilities. **Left click** is a basic strike. Touch users have hotbar, journal, and strike buttons; touch targeting uses the center of the camera.
 4. In the journal select a numbered slot, then select an unlocked ability to equip it. Earlier powers remain available as sequence numbers decrease.
 
-Studio defaults to **session-only storage**, clearly marked in the HUD. No Studio API access is required for that demo and progress does not survive the server closing. Published servers always use real DataStoreService; they never silently fall back to volatile storage.
+Studio defaults to **session-only storage**, with storage diagnostics restricted to the authorized F8 developer panel. No Studio API access is required for that demo and progress does not survive the server closing. Published servers always use real DataStoreService; they never silently fall back to volatile storage.
 
 **F8 developer controls** provide Studio-only mastery for the individual creator or a server-allowlisted user. They require Studio and session-only storage; public mastery stones are removed. See `docs/PHASE1_UI.md` for unpublished-place setup. Unauthorized remote requests cannot grant mastery.
 
@@ -94,6 +96,7 @@ Validation covers:
 - **2,163 domain assertions:** complete 9→1 advancement, acting deduplication, sanity, resources, cast reservations, lease contention/expiry, corrupt saves, retries and ambiguous committed responses.
 - **388 executor/target assertions:** all 54 abilities across 28 handlers, ownership/range/visibility checks, limited loot and recordings, safe teleport rejection, real adapter damage decisions, one-use substitutes, graft reflections, and high-tier resistance. Roblox engine dependencies are mocked.
 - **221 UI assertions:** responsive geometry, preview/confirm/cancel behavior, prompt lifecycle, role checks and GUI component updates with engine stand-ins.
+- Animation/VFX assertions cover atomic budgets, seven pooled classes, culling/quality, all eleven blocks, animation blending/cleanup, camera caps/restoration and server-confirmed death presentation with engine stand-ins.
 - Compilation of production and test Luau, strict Roblox API/type analysis, a real Rojo place build, and inspection that every script in the place exactly matches its source.
 
 The domain and adapter boundaries deliberately accept validated dynamic profile/config/entity tables (`any`); strict mode does not replace runtime checks. No errors are suppressed with `--!nocheck`.
@@ -166,6 +169,80 @@ for pathwayId, pathway in pairs(Pathways) do
     end
 end
 return freeze(byId)
+```
+
+
+## src/ReplicatedStorage/Shared/AnimConfig.lua
+
+**ModuleScript** at `ReplicatedStorage/Shared/AnimConfig`. Create matching Folder parents.
+
+```lua
+--!strict
+-- Original, asset-free animation library. Optional uploaded assets override each entry.
+-- Degrees and studs below describe rendered joints only; no root physics are changed.
+local freeze=require(script.Parent.Freeze)
+type Pose={[string]: CFrame}
+local function frame(y: number,pitch: number,yaw: number,roll: number): CFrame
+    return CFrame.new(0,y,0)*CFrame.Angles(math.rad(pitch),math.rad(yaw),math.rad(roll))
+end
+local function still(entry: any,_time: number,_speed: number): Pose
+    local result: Pose={}
+    for role,value in pairs(entry.Pose) do result[role]=frame(value[1],value[2],value[3],value[4]) end
+    return result
+end
+local function breathe(entry: any,time: number,_speed: number): Pose
+    local wave=math.sin(time*math.pi*2/entry.Period)
+    return {Root=frame(wave*entry.Rise,0,0,0),Neck=frame(0,wave*entry.Nod,0,0)}
+end
+local function locomotion(entry: any,time: number,speed: number): Pose
+    local wave=math.sin(time*math.pi*2/entry.Period)
+    return {Root=frame(0,entry.Lean*speed,0,wave*entry.Sway*speed),Neck=frame(0,-entry.Lean*entry.CounterLean*speed,0,0)}
+end
+local function roll(entry: any,time: number,_speed: number): Pose
+    local progress=math.clamp(time/entry.Duration,0,1)
+    -- A compact torso tuck, rather than a root-part rotation or a movement grant.
+    local arc=math.sin(progress*math.pi)
+    return {Root=frame(-entry.Tuck*arc,entry.Pitch*arc,0,entry.Roll*arc),
+        LeftShoulder=frame(0,entry.ArmPitch*arc,0,0),RightShoulder=frame(0,entry.ArmPitch*arc,0,0)}
+end
+return freeze({
+    Spring={Frequency=8,MaxStep=0.1},
+    Blend={Default=0.12,MinFade=0.016,MaxFade=2,WeightEpsilon=0.001,MaxWeight=1,ReducedScale=0.3},
+    Locomotion={MinSpeed=0.1,RunSpeed=18,SpeedReference=16,MaxSpeedRatio=1.5,LandingVelocity=-3},
+    Safety={MaxPause=0.08,MaxFrameDelta=0.1,AssetLoadGrace=1.5,MaxAssetSpeed=2,MinAssetSpeed=0.1},
+    MotorRoles={RootJoint="Root",Root="Root",Waist="Waist",Neck="Neck",["Left Shoulder"]="LeftShoulder",
+        ["Right Shoulder"]="RightShoulder",LeftShoulder="LeftShoulder",RightShoulder="RightShoulder",
+        ["Left Hip"]="LeftHip",["Right Hip"]="RightHip",LeftHip="LeftHip",RightHip="RightHip"},
+    Aliases={["idle"]="Idle",["idle-breathing"]="Idle",["walk"]="Walk",["walk-lean"]="Walk",["run"]="Run",
+        ["jump"]="Jump",["land"]="Land",["cast-windup"]="CastWindup",["cast-release"]="CastRelease",
+        ["hit-react"]="HitReact",["dodge"]="Dodge",["roll"]="Roll",["death"]="Death",["victory"]="Victory"},
+    Entries={
+        Idle={AnimationId="",Procedural=breathe,Priority=0,AssetPriority=Enum.AnimationPriority.Idle,Loop=true,
+            Duration=2.8,FadeIn=0.2,FadeOut=0.2,Period=2.8,Rise=0.025,Nod=0.6},
+        Walk={AnimationId="",Procedural=locomotion,Priority=1,AssetPriority=Enum.AnimationPriority.Movement,Loop=true,
+            Duration=0.7,FadeIn=0.16,FadeOut=0.16,Period=0.7,Lean=3,Sway=0.7,CounterLean=0.5},
+        Run={AnimationId="",Procedural=locomotion,Priority=2,AssetPriority=Enum.AnimationPriority.Movement,Loop=true,
+            Duration=0.48,FadeIn=0.16,FadeOut=0.16,Period=0.48,Lean=7,Sway=1.2,CounterLean=0.5},
+        Jump={AnimationId="",Procedural=still,Priority=3,AssetPriority=Enum.AnimationPriority.Action,Loop=false,
+            Duration=0.3,FadeIn=0.06,FadeOut=0.12,Pose={Root={0.04,-6,0,0},Neck={0,4,0,0},LeftShoulder={0,-12,0,-5},RightShoulder={0,-12,0,5}}},
+        Land={AnimationId="",Procedural=still,Priority=3,AssetPriority=Enum.AnimationPriority.Action,Loop=false,
+            Duration=0.22,FadeIn=0.045,FadeOut=0.14,Pose={Root={-0.14,9,0,0},Neck={0,-5,0,0},LeftShoulder={0,10,0,-7},RightShoulder={0,10,0,7}}},
+        CastWindup={AnimationId="",Procedural=still,Priority=4,AssetPriority=Enum.AnimationPriority.Action2,Loop=true,
+            Duration=0.38,FadeIn=0.12,FadeOut=0.08,Pose={Root={0,-4,-7,0},Waist={0,0,-4,0},Neck={0,2,7,0},LeftShoulder={0,-28,-12,-18},RightShoulder={0,-45,8,18}}},
+        CastRelease={AnimationId="",Procedural=still,Priority=5,AssetPriority=Enum.AnimationPriority.Action3,Loop=false,
+            Duration=0.3,FadeIn=0.05,FadeOut=0.17,Pose={Root={0,6,6,0},Waist={0,0,4,0},Neck={0,-3,-6,0},LeftShoulder={0,-48,-12,-14},RightShoulder={0,-72,12,14}}},
+        HitReact={AnimationId="",Procedural=still,Priority=6,AssetPriority=Enum.AnimationPriority.Action3,Loop=false,
+            Duration=0.24,FadeIn=0.04,FadeOut=0.15,Pose={Root={0,-9,0,-4},Neck={0,5,0,3},LeftShoulder={0,-9,0,-5},RightShoulder={0,-9,0,5}}},
+        Dodge={AnimationId="",Procedural=roll,Priority=6,AssetPriority=Enum.AnimationPriority.Action3,Loop=false,
+            Duration=0.36,FadeIn=0.05,FadeOut=0.09,Tuck=0.15,Pitch=18,Roll=16,ArmPitch=-22},
+        Roll={AnimationId="",Procedural=roll,Priority=6,AssetPriority=Enum.AnimationPriority.Action3,Loop=false,
+            Duration=0.48,FadeIn=0.05,FadeOut=0.12,Tuck=0.24,Pitch=62,Roll=0,ArmPitch=-50},
+        Death={AnimationId="",Procedural=still,Priority=8,AssetPriority=Enum.AnimationPriority.Action4,Loop=true,
+            Duration=0.8,FadeIn=0.4,FadeOut=0.25,Pose={Root={-0.24,28,0,16},Neck={0,18,0,0},LeftShoulder={0,12,0,-12},RightShoulder={0,12,0,12}}},
+        Victory={AnimationId="",Procedural=still,Priority=7,AssetPriority=Enum.AnimationPriority.Action4,Loop=false,
+            Duration=1.4,FadeIn=0.25,FadeOut=0.3,Pose={Root={0.03,-3,0,0},Neck={0,-4,0,0},LeftShoulder={0,-100,0,-24},RightShoulder={0,-100,0,24}}},
+    },
+})
 ```
 
 
@@ -534,6 +611,19 @@ return freeze({
         Reject={Id=0,Volume=0.18},JournalOpen={Id=0,Volume=0.15},Advance={Id=0,Volume=0.28},
         Hit={Id=0,Volume=0.16},Abilities={},MaxPlaying=8,AbilityVolume=0.4,MinPitch=0.5,MaxPitch=2},
     Camera={MinZoom=8,MaxZoom=32},
+    CameraFeel={SmallStuds=0.10,MajorStuds=0.22,SmallDegrees=0.25,MajorDegrees=0.55,
+        SmallDuration=0.12,MajorDuration=0.22,FovKick=1.8,MaxFovKick=2.5,FovMin=1,FovMax=120,
+        Frequency=11,HitStop=0.045,MaxHitStop=0.06,StepCap=0.05,Epsilon=0.00001,DefaultTier=1,MajorTier=3,
+        BeforePriorityOffset=-1,AfterPriorityOffset=1,KickGap=0.10,
+        ShakeAxis={X=1,Y=0.6,Z=0.35},RotationAxis={X=0.5,Y=1,Z=0.4},
+        FrequencyRatio={X=1,Y=0.83,Z=1.17},Phase={X=0,Y=1.7,Z=3.2}},
+    Visuals={FlashGap=0.34,FlashOpacity=0.16,MaxDistance=120,LegacyPriority=1,
+        LegacyLife=0.5,LegacyStart=1,LegacyEnd=7,LegacyAlpha=0.25,RevealPriority=3,
+        GrayscaleSaturation=-1,AnimationViewDistance=120},
+    TestRoom={Width=420,Height=540,Margin=12,Header=48,Row=44,Gap=8,Pad=12,StatusHeight=54,
+        PreviewDistance=14,PreviewHeight=-2,PreviewSpacing=8,TargetOffset=8,
+        FloorSize={32,0.15,26,2,3,1},HeadSize=1.5,HeadHeight=2.2,FloorAlpha=0.25,FloorOffset=-3,ButtonColumns=3,
+        DefaultTier=1,DefaultPalette="Seer",StatInterval=0.25,PreviewDamage=24,OrientationEpsilon=0.01},
     Input={Keys={Enum.KeyCode.Q,Enum.KeyCode.E,Enum.KeyCode.R,Enum.KeyCode.F,Enum.KeyCode.Z,Enum.KeyCode.X},
         KeyNames={"Q","E","R","F","Z","X"},Journal=Enum.KeyCode.B,Developer=Enum.KeyCode.F8,
         RayLength=500,FallbackAim=50,ConfirmGamepad=Enum.KeyCode.ButtonA},
@@ -632,6 +722,160 @@ export type Ability = {
     Implemented: boolean, Operation: any?,
 }
 return table.freeze({})
+```
+
+
+## src/ReplicatedStorage/Shared/VfxConfig.lua
+
+**ModuleScript** at `ReplicatedStorage/Shared/VfxConfig`. Create matching Folder parents.
+
+```lua
+--!strict
+-- Original procedural visuals. Empty texture/sound IDs need no uploaded assets.
+local freeze=require(script.Parent.Freeze)
+local T=require(script.Parent.Theme)
+return freeze({
+    Palettes={
+        Seer={Primary=T.Colors.Fog,Secondary=T.Colors.DeepPurple,Accent=T.Colors.Gold},
+        Marauder={Primary=T.Colors.Crimson,Secondary=T.Colors.Black,Accent=T.Colors.Bronze},
+        Apprentice={Primary=T.Colors.Teal,Secondary=T.Colors.Silver,Accent=T.Colors.Starlight},
+    },
+    TierSequences={Low=7,Middle=4},
+    Tier={
+        {Scale=1,Emission=0.7}, -- Sequence 9-7
+        {Scale=1.35,Emission=1}, -- Sequence 6-4
+        {Scale=1.7,Emission=1.2}, -- Sequence 3-1; no full-screen geometry
+    },
+    Quality={LowLevel=3,MediumLevel=6,AutoLevel=5,Low=0.35,Medium=0.65,High=1,
+        Near=30,Middle=70,MaximumDistance=120,FarScale=0.5,MiddleScale=0.75,
+        LowEffects=4,MediumEffects=8,HighEffects=16,MobileEffects=8},
+    Pools={
+        Desktop={Part=160,Attachment=192,Beam=96,Trail=16,ParticleEmitter=24,PointLight=4,Highlight=8},
+        Mobile={Part=96,Attachment=112,Beam=56,Trail=8,ParticleEmitter=12,PointLight=2,Highlight=4},
+    },
+    Lifetime={Default=0.8,Maximum=8,MaxStep=0.1},
+    DefaultCosts={Part=1,Attachment=8,Beam=4},
+    Safety={MinimumPulseInterval=1/3,MaximumLightsPerEffect=1,PositionLimit=1000000},
+    Part={Size=Vector3.new(0.05,0.05,0.05),Color=T.Colors.Fog,Transparency=1,
+        Material=Enum.Material.Neon,Shape=Enum.PartType.Block},
+    Attachment={CFrame=CFrame.identity},
+    -- Rate stays zero: explicit bounded bursts only; no texture means geometric fallback.
+    Particle={Texture="",Rate=0,Lifetime=NumberRange.new(0.35,0.65),Speed=NumberRange.new(0.5,1.5),
+        SpreadAngle=Vector2.new(18,18),Size=NumberSequence.new({NumberSequenceKeypoint.new(0,0.10),NumberSequenceKeypoint.new(1,0)}),
+        Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,0.35),NumberSequenceKeypoint.new(1,1)}),
+        Color=ColorSequence.new(T.Colors.Fog,T.Colors.Gold),LightEmission=0.15,LightInfluence=0.8,
+        Drag=1.5,Acceleration=Vector3.new(0,0.7,0),Rotation=NumberRange.new(0,180),RotSpeed=NumberRange.new(-15,15),
+        VelocityInheritance=0,LockedToPart=false,Orientation=Enum.ParticleOrientation.FacingCamera,
+        EmissionDirection=Enum.NormalId.Top,ZOffset=0,TimeScale=1},
+    Beam={Texture="",TextureLength=1,TextureSpeed=0,TextureMode=Enum.TextureMode.Stretch,
+        Width0=0.055,Width1=0.055,Segments=12,CurveSize0=0,CurveSize1=0,FaceCamera=true,
+        Transparency=NumberSequence.new(0.25),Color=ColorSequence.new(T.Colors.Gold),
+        LightEmission=0.1,LightInfluence=0.9,ZOffset=0},
+    Trail={Texture="",TextureLength=1,TextureMode=Enum.TextureMode.Stretch,Lifetime=0.22,MinLength=0.03,MaxLength=8,
+        WidthScale=NumberSequence.new({NumberSequenceKeypoint.new(0,1),NumberSequenceKeypoint.new(1,0)}),
+        Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,0.4),NumberSequenceKeypoint.new(1,1)}),
+        Color=ColorSequence.new(T.Colors.Fog,T.Colors.Gold),LightEmission=0.1,LightInfluence=0.9,FaceCamera=true},
+    Light={Enabled=false,Brightness=0,Range=0,Shadows=false,Color=T.Colors.Gold},
+    Highlight={FillTransparency=0.65,OutlineTransparency=1,FillColor=T.Colors.Hit,OutlineColor=T.Colors.Fog,
+        DepthMode=Enum.HighlightDepthMode.Occluded},
+    Hit={Life=0.26,HighlightFill=0.65,Outline=1,KnockbackDistance=0.35,KnockbackLife=0.18,
+        DeathLife=0.8,DeathMotes=6,Priority=5,RevealPriority=2,RevealLife=T.Timing.Reveal,
+        Costs={Highlight=1,Part=1},DeathCosts={},MinimumHealth=0,MaxParts=12,DeathHold=2.1,
+        GhostAlpha=0.65,MinFlashGap=0.34},
+    Blocks={
+        Common={HostSize=0.05,Width=0.055,Alpha=0.25,Segments=12,MinSegments=4,FadeStart=0.18,
+            HeightOffset=0.10,ParticleCount=8,ParticleEmitScale=1,MoteThickness=0.06,MinimumLength=0.01,TangentVertical=0.95},
+        RingBurst={Duration=0.7,Priority=2,Radius=3,Start=0.35,Gap=0.25},
+        RisingMotes={Duration=1.2,Priority=1,Count=6,Height=3,Radius=1.8,Size=0.10,Orbit=0.3},
+        ThreadBeam={Duration=0.85,Priority=3,Length=7,Height=2,Width=0.045,Segments=16,Taper=0.55},
+        DoorFrame={Duration=1.1,Priority=3,Width=3,Height=5,Nested=2,Inset=0.3,Base=0.1},
+        StarBurst={Duration=0.65,Priority=2,Radius=2.4,Inner=0.3,Points=4,Start=0.35},
+        GlitchFlicker={Duration=1.1,Priority=2,Width=3,Height=3,Shift=0.3,Transitions=2,Split=0.2},
+        GroundRune={Duration=1.2,Priority=2,Radius=3,Inner=0.65,Spokes=4},
+        ImpactFlash={Duration=0.32,Priority=4,Radius=0.9,Inner=0.35,Alpha=0.42},
+        ScreenEdgePulse={Duration=0.5,Priority=4},
+        ShockwaveRing={Duration=0.8,Priority=2,Radius=4,Start=0.4},
+        AfterimageTrail={Duration=1,Priority=2,Length=5,Height=2,Width=0.12,Head=0.18},
+    },
+})
+```
+
+
+## src/ReplicatedStorage/Shared/VisualBudget.lua
+
+**ModuleScript** at `ReplicatedStorage/Shared/VisualBudget`. Create matching Folder parents.
+
+```lua
+--!strict
+-- Pure admission policy: reservations are atomic; equal/higher priority effects survive.
+local Budget={}
+Budget.__index=Budget
+type Counts={ [string]: number }
+type Entry={Costs: Counts, Priority: number, Serial: number}
+type Fields={Limits: Counts,Used: Counts,MaxEffects: number,Count: number,Serial: number,Entries:{[string]: Entry}}
+export type VisualBudget=typeof(setmetatable({} :: Fields,Budget))
+local function finite(value: number): boolean
+    return value==value and value>-math.huge and value<math.huge
+end
+local function valid(costs: Counts,limits: Counts): boolean
+    for class,count in pairs(costs) do
+        if type(count)~="number" or not finite(count) or count<0 or count%1~=0 or limits[class]==nil or count>limits[class] then return false end
+    end
+    return true
+end
+function Budget.new(limits: Counts,maxEffects: number): VisualBudget
+    assert(finite(maxEffects) and maxEffects>0 and maxEffects%1==0,"Invalid effect cap")
+    local used: Counts={}
+    for class,count in pairs(limits) do
+        assert(finite(count) and count>=0 and count%1==0,"Invalid pool cap")
+        used[class]=0
+    end
+    return setmetatable({Limits=table.clone(limits),Used=used,MaxEffects=maxEffects,Count=0,Serial=0,Entries={}},Budget)
+end
+local function fits(self: VisualBudget,costs: Counts,used: Counts,count: number): boolean
+    if count>=self.MaxEffects then return false end
+    for class,cost in pairs(costs) do
+        if (used[class] or 0)+cost>self.Limits[class] then return false end
+    end
+    return true
+end
+function Budget.Plan(self: VisualBudget,costs: Counts,priority: number): {string}?
+    if not finite(priority) or not valid(costs,self.Limits) then return nil end
+    local used=table.clone(self.Used)
+    if fits(self,costs,used,self.Count) then return {} end
+    local candidates: {{Id:string,Entry:Entry}}={}
+    for id,entry in pairs(self.Entries) do
+        if entry.Priority<priority then table.insert(candidates,{Id=id,Entry=entry}) end
+    end
+    table.sort(candidates,function(a,b)
+        return if a.Entry.Priority==b.Entry.Priority then a.Entry.Serial<b.Entry.Serial else a.Entry.Priority<b.Entry.Priority
+    end)
+    local victims: {string}={}
+    local count=self.Count
+    for _,candidate in ipairs(candidates) do
+        table.insert(victims,candidate.Id);count-=1
+        for class,cost in pairs(candidate.Entry.Costs) do used[class]-=cost end
+        if fits(self,costs,used,count) then return victims end
+    end
+    return nil
+end
+function Budget.Add(self: VisualBudget,id: string,costs: Counts,priority: number): boolean
+    if self.Entries[id] or not finite(priority) or not valid(costs,self.Limits) or not fits(self,costs,self.Used,self.Count) then return false end
+    self.Serial+=1;self.Count+=1
+    self.Entries[id]={Costs=table.clone(costs),Priority=priority,Serial=self.Serial}
+    for class,count in pairs(costs) do self.Used[class]+=count end
+    return true
+end
+function Budget.Remove(self: VisualBudget,id: string)
+    local entry=self.Entries[id]
+    if not entry then return end
+    self.Entries[id]=nil;self.Count-=1
+    for class,count in pairs(entry.Costs) do self.Used[class]-=count end
+end
+function Budget.Stats(self: VisualBudget): any
+    return {Count=self.Count,Used=table.clone(self.Used),Limits=table.clone(self.Limits),MaxEffects=self.MaxEffects}
+end
+return Budget
 ```
 
 
@@ -1993,7 +2237,7 @@ function World.Damage(self: World, e: any,amount: number,owner: Player,now: numb
     e.LastHit=owner;e.LastHitAt=now
     local applied=math.min(e.Humanoid.Health,amount,100000)
     e.Humanoid:TakeDamage(math.min(amount,100000))
-    self.FX:FireAllClients({Kind="Damage",Position=e.Root.Position,Amount=applied,Owner=owner.UserId,Target=e.Model})
+    self.FX:FireAllClients({Kind="Damage",Position=e.Root.Position,Amount=applied,Owner=owner.UserId,Target=e.Model,Dead=e.Humanoid.Health<=0})
     return true
 end
 function World.DamagePlayer(self: World, player: Player,amount: number,source: any,now: number)
@@ -2178,6 +2422,7 @@ local Prompts=require(UI.Prompts)
 local Feedback=require(UI.Feedback)
 local Developer=require(UI.Developer)
 local Presentation=require(UI.Presentation)
+local VfxTestRoom=require(script.Parent.Visuals.VfxTestRoom)
 local remotes=ReplicatedStorage:WaitForChild("MysteriesRemotes")
 local intent=remotes:WaitForChild("Intent") :: RemoteEvent
 local stateEvent=remotes:WaitForChild("State") :: RemoteEvent
@@ -2192,9 +2437,13 @@ local gui=Kit.New("ScreenGui",player.PlayerGui,{Name="MysteriesHUD",ResetOnSpawn
 local safeRoot=Kit.New("Frame",gui,{Name="SafeArea",Size=UDim2.fromScale(1,1),BackgroundTransparency=1})
 local state: any=nil
 local modal=false
+local menuModal=false
+local roomModal=false
 local cinematic=false
 local menus: any=nil
 local hud: any=nil
+local presentation: any=nil
+local testRoom: any=nil
 local promptUI=Prompts.new(safeRoot)
 local function send(action: string,payload: any) intent:FireServer(action,payload) end
 local function touchAim(): boolean
@@ -2234,13 +2483,36 @@ local feedback=Feedback.new(safeRoot,data,function(active: boolean)
     if hud then hud.Wordmark.Visible=not active and not promptUI.Root.Visible;hud.Pathway.Visible=not active and not promptUI.Root.Visible end
 end)
 hud=Hud.new(safeRoot,data,{Cast=cast,Melee=melee,Touch=UserInputService.TouchEnabled,TouchAim=touchAim,Journal=function(tab: string)
+    if roomModal then return end
     if menus.Root.Visible and menus.Tab==tab and menus.View=="Page" then menus:Close() else menus:Open(tab) end
 end})
+local function updateModal()
+    modal=menuModal or roomModal;promptUI:SetModal(modal);hud.Tooltip.Visible=false
+end
+local function visualSettings(reduced: boolean,low: boolean)
+    feedback:SetReducedMotion(reduced)
+    if presentation then presentation:SetSettings(reduced,low) end
+    if testRoom then
+        testRoom.Reduced=reduced;testRoom.Low=low
+        testRoom.ReducedButton.Text="Reduced motion: "..(if reduced then "on" else "off")
+        testRoom.LowButton.Text="Low graphics: "..(if low then "on" else "off")
+    end
+end
 menus=Menus.new(safeRoot,data,{Intent=send,Modal=function(open: boolean)
-    modal=open;promptUI:SetModal(open);hud.Tooltip.Visible=false
-end,ReducedMotion=function(reduced: boolean) feedback.ReducedMotion=reduced end})
-local developer=Developer.new(safeRoot,send)
-local presentation=Presentation.new(gui,data)
+    menuModal=open;updateModal()
+end,ReducedMotion=function(reduced: boolean) visualSettings(reduced,menus.LowGraphics) end,
+    LowGraphics=function(low: boolean) visualSettings(menus.ReducedMotion,low) end})
+presentation=Presentation.new(gui,data,{Damage=function(event: any) feedback:Damage(event) end,
+    ScreenEdgePulse=function() feedback:Flash() end})
+local developer: any=nil
+testRoom=VfxTestRoom.new(safeRoot,presentation,{Modal=function(open: boolean) roomModal=open;updateModal() end,
+    ReducedMotion=function(reduced: boolean) menus.ReducedMotion=reduced;visualSettings(reduced,menus.LowGraphics) end,
+    LowGraphics=function(low: boolean) menus.LowGraphics=low;visualSettings(menus.ReducedMotion,low) end,
+    Damage=function(event: any) feedback:Damage(event) end})
+developer=Developer.new(safeRoot,send,if RunService:IsStudio() then function()
+    if menus.Root.Visible then menus:Close() end
+    testRoom:Toggle(developer.Allowed);developer.Root.Visible=false
+end else nil)
 promptUI.OnVisibility=function(visible: boolean)
     hud.Pathway.Visible=not visible and not cinematic;hud.Wordmark.Visible=not visible and not cinematic
 end
@@ -2250,6 +2522,7 @@ local function resize()
     if size.X<=0 or size.Y<=0 then return end
     local layout=Layout.Resolve(T,size.X,size.Y,UserInputService.TouchEnabled)
     hud:Resize(layout);menus:Resize(layout);feedback:Resize(layout);developer:Resize(layout);promptUI.Layout=layout
+    testRoom:Resize(size.X,size.Y)
     hud.Wordmark.Visible=not cinematic and not promptUI.Root.Visible;hud.Pathway.Visible=not cinematic and not promptUI.Root.Visible
     if menus.Root.Visible then menus:Render() end
 end
@@ -2269,22 +2542,30 @@ stateEvent.OnClientEvent:Connect(function(update: any)
     end
     state=update
     developer:Update(update);hud:Render(update,os.clock());menus:Update(update);feedback:Update(update)
+    presentation:Update(update)
+    if not developer.Allowed and testRoom.Root.Visible then testRoom:Close() end
     if update.Dead and menus.Root.Visible then menus:Close() end
 end)
 effectEvent.OnClientEvent:Connect(function(event: any)
     if type(event)~="table" or typeof(event.Position)~="Vector3" or type(event.Kind)~="string" then return end
-    if event.Kind=="Damage" then feedback:Damage(event);return end
     presentation:Event(event)
 end)
 UserInputService.InputBegan:Connect(function(input: InputObject,processed: boolean)
     if UserInputService:GetFocusedTextBox() then return end
-    if input.KeyCode==T.Input.Developer then developer:Toggle();return end
+    if input.KeyCode==T.Input.Developer then
+        if testRoom.Root.Visible then testRoom:Close() else developer:Toggle() end
+        return
+    end
     if processed then return end
     if input.KeyCode==T.Input.Journal then
+        if roomModal then return end
         if menus.Root.Visible then menus:Close() else menus:Open("Journal") end
         return
     end
-    if input.KeyCode==Enum.KeyCode.Escape and menus.Root.Visible then menus:Close();return end
+    if input.KeyCode==Enum.KeyCode.Escape then
+        if testRoom.Root.Visible then testRoom:Close();return end
+        if menus.Root.Visible then menus:Close();return end
+    end
     if modal then return end
     -- E belongs to an active prompt, preventing a simultaneous slot-2 cast.
     if promptUI.Current and input.KeyCode==promptUI.Current.KeyboardKeyCode then return end
@@ -2293,6 +2574,7 @@ UserInputService.InputBegan:Connect(function(input: InputObject,processed: boole
 end)
 local accumulator=0
 RunService.Heartbeat:Connect(function(dt: number)
+    presentation:Step(dt);testRoom:Step(dt)
     accumulator+=dt
     if accumulator<T.Timing.Step then return end
     accumulator=0
@@ -2303,6 +2585,7 @@ RunService.Heartbeat:Connect(function(dt: number)
 end)
 resize()
 send("Sync",{})
+script.Destroying:Connect(function() testRoom:Close();presentation:Destroy() end)
 ```
 
 
@@ -2315,7 +2598,7 @@ send("Sync",{})
 local T=require(game:GetService("ReplicatedStorage").Shared.Theme)
 local Kit=require(script.Parent.Kit)
 local Developer={}
-function Developer.new(parent: Instance,send: any): any
+function Developer.new(parent: Instance,send: any,testRoom: (() -> ())?): any
     local self: any={Allowed=false,State=nil}
     self.Root=Kit.Panel(parent,"DeveloperPanel");self.Root.ZIndex=T.Layers.Developer;self.Root.Visible=false
     local title=Kit.Text(self.Root,"DEVELOPER · F8",T.Type.Heading,T.Fonts.Heading)
@@ -2332,6 +2615,14 @@ function Developer.new(parent: Instance,send: any): any
         end)
         b.Position=UDim2.fromOffset(T.Layout.Developer.Pad,T.Layout.Developer.Row*2+(i-1)*(T.Layout.Developer.Row+T.Layout.Developer.Gap))
         b.Size=UDim2.new(1,-T.Layout.Developer.Pad*2,0,T.Layout.Developer.Row);table.insert(self.Buttons,b)
+    end
+    if testRoom then
+        self.TestButton=Kit.Button(self.Scroll,"Studio VFX test room",function()
+            if self.Allowed then testRoom() end
+        end)
+        self.TestButton.Position=UDim2.fromOffset(T.Layout.Developer.Pad,T.Layout.Developer.Row*5+T.Layout.Developer.Gap*3)
+        self.TestButton.Size=UDim2.new(1,-T.Layout.Developer.Pad*2,0,T.Layout.Developer.Row)
+        self.Scroll.CanvasSize=UDim2.fromOffset(0,T.Layout.Developer.Row*6+T.Layout.Developer.Gap*4)
     end
     return setmetatable(self,{__index=Developer})
 end
@@ -2367,7 +2658,7 @@ local T=require(Shared.Theme)
 local Kit=require(script.Parent.Kit)
 local Feedback={}
 function Feedback.new(parent: GuiObject,data: any,cinematic: (boolean)->()): any
-    local self: any={SafeRoot=parent,Data=data,Cinematic=cinematic,State=nil,ReducedMotion=false,NoticeSerial=0,AdvanceSerial=0,Numbers={},Pool={},Layout=nil}
+    local self: any={SafeRoot=parent,Data=data,Cinematic=cinematic,State=nil,ReducedMotion=false,FlashTweens={},NoticeSerial=0,AdvanceSerial=0,Numbers={},Pool={},Layout=nil}
     self.Root=Kit.New("Frame",parent,{Name="Feedback",Size=UDim2.fromScale(1,1),BackgroundTransparency=1,ZIndex=T.Layers.Feedback})
     self.Notice=Kit.New("CanvasGroup",self.Root,{Name="Notice",BackgroundColor3=T.Colors.Ink,BorderSizePixel=0,Visible=false});Kit.Corner(self.Notice);Kit.Stroke(self.Notice)
     self.NoticeText=Kit.Text(self.Notice,"",T.Type.Number,T.Fonts.Number);self.NoticeText.Size=UDim2.new(1,-T.Layout.Modal.BodyPad*2,1,0);self.NoticeText.Position=UDim2.fromOffset(T.Layout.Modal.BodyPad,0);self.NoticeText.TextXAlignment=Enum.TextXAlignment.Center
@@ -2419,9 +2710,25 @@ end
 function Feedback.Flash(self: any)
     Kit.Sound(self.Root,"Hit")
     if self.ReducedMotion then return end
+    local now=os.clock()
+    if now-(self.LastFlash or -math.huge)<T.Visuals.FlashGap then return end
+    self.LastFlash=now
+    for _,tween in ipairs(self.FlashTweens) do tween:Cancel() end
+    table.clear(self.FlashTweens)
     for _,f in ipairs(self.Flashes) do
-        local tween=Kit.Tween(f,T.Timing.FlashIn,{BackgroundTransparency=1-T.Layout.Vignette.FlashAlpha})
-        tween.Completed:Once(function() if f.Parent then Kit.Tween(f,T.Timing.FlashOut,{BackgroundTransparency=1}) end end)
+        local tween=Kit.Tween(f,T.Timing.FlashIn,{BackgroundTransparency=1-math.min(T.Visuals.FlashOpacity,T.Layout.Vignette.FlashAlpha)})
+        table.insert(self.FlashTweens,tween)
+        tween.Completed:Once(function()
+            if f.Parent and not self.ReducedMotion then table.insert(self.FlashTweens,Kit.Tween(f,T.Timing.FlashOut,{BackgroundTransparency=1})) end
+        end)
+    end
+end
+function Feedback.SetReducedMotion(self: any,reduced: boolean)
+    self.ReducedMotion=reduced
+    if reduced then
+        for _,tween in ipairs(self.FlashTweens) do tween:Cancel() end
+        table.clear(self.FlashTweens)
+        for _,f in ipairs(self.Flashes) do f.BackgroundTransparency=1 end
     end
 end
 function Feedback.Sequence(self: any,state: any)
@@ -2473,7 +2780,7 @@ function Feedback.Step(self: any,now: number)
         elseif camera then
             local p,visible=camera:WorldToViewportPoint(number.Position+Vector3.new(0,T.Layout.Damage.OffsetStuds,0))
             local origin=self.SafeRoot.AbsolutePosition
-            number.Label.Visible=visible
+            number.Label.Visible=visible and (number.Position-camera.CFrame.Position).Magnitude<=T.Visuals.MaxDistance
             number.Label.Position=UDim2.fromOffset(p.X-origin.X+(number.Index%3-1)*T.Feedback.DamageStagger,p.Y-origin.Y-T.Layout.Damage.Rise*math.min(1,elapsed/T.Timing.DamageRise))
             local alpha=math.clamp((elapsed-T.Timing.DamageRise)/math.max(T.LegacyFX.MinBarFraction,T.Timing.DamageLife-T.Timing.DamageRise),0,1)
             number.Label.TextTransparency=alpha;number.Label.BackgroundTransparency=alpha
@@ -2804,7 +3111,7 @@ local Model=require(Shared.VisualModel)
 local Kit=require(script.Parent.Kit)
 local Menus={}
 function Menus.new(parent: Instance,data: any,callbacks: any): any
-    local self: any={Data=data,Callbacks=callbacks,State=nil,Tab="Journal",SelectedSlot=1,View="Page",PreviewId=nil,Purchase=false,Waiting=false,Rows={},LastKey="",ReducedMotion=false}
+    local self: any={Data=data,Callbacks=callbacks,State=nil,Tab="Journal",SelectedSlot=1,View="Page",PreviewId=nil,Purchase=false,Waiting=false,Rows={},LastKey="",ReducedMotion=false,LowGraphics=false}
     self.Root=Kit.New("Frame",parent,{Name="Menus",Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Visible=false,ZIndex=T.Layers.Modal})
     self.Dim=Kit.New("TextButton",self.Root,{Name="Backdrop",Size=UDim2.fromScale(1,1),Text="",AutoButtonColor=false,BackgroundColor3=T.Colors.Ink,BackgroundTransparency=T.Style.ModalDim,BorderSizePixel=0})
     self.Dim.Activated:Connect(function() self:Close() end)
@@ -2936,6 +3243,11 @@ function Menus.Render(self: any)
         self:ActionRow("Reduced motion: "..(if self.ReducedMotion then "on" else "off"),function()
             self.ReducedMotion=not self.ReducedMotion;self.Callbacks.ReducedMotion(self.ReducedMotion);self:Render()
         end)
+        self:ActionRow("Low graphics: "..(if self.LowGraphics then "on" else "off"),function()
+            self.LowGraphics=not self.LowGraphics
+            if self.Callbacks.LowGraphics then self.Callbacks.LowGraphics(self.LowGraphics) end
+            self:Render()
+        end)
     elseif self.Tab=="Pathway" then
         if state.PathwayId then
             local path=self.Data.Pathways[state.PathwayId];local seq=path.Sequences[state.Sequence]
@@ -3018,48 +3330,145 @@ return Menus
 
 ```lua
 --!strict
--- Keeps the existing pooled cosmetics working; pathway VFX redesign belongs to Phase 4.
-local T=require(game:GetService("ReplicatedStorage").Shared.Theme)
+-- Coordinator for server-confirmed cosmetics; no outcomes are computed here.
+local Players=game:GetService("Players")
+local Shared=game:GetService("ReplicatedStorage").Shared
+local T=require(Shared.Theme)
+local C=require(Shared.VfxConfig)
 local Kit=require(script.Parent.Kit)
+local Visuals=script.Parent.Parent.Visuals
+local VfxService=require(Visuals.VfxService)
+local Blocks=require(Visuals.EffectBlocks)
+local AnimationController=require(Visuals.AnimationController)
+local CameraFeel=require(Visuals.CameraFeel)
+local HitPresentation=require(Visuals.HitPresentation)
 local Presentation={}
-function Presentation.new(gui: Instance,data: any): any
-    local folder=Kit.New("Folder",workspace,{Name="LocalMysteriesFX"})
-    return setmetatable({GUI=gui,Data=data,Folder=folder,Pool={},Active=0,Highlights={},HighlightPool={},HighlightCount=0,SoundCount=0},{__index=Presentation})
+function Presentation.new(gui: Instance,data: any,callbacks: any?): any
+    local cb=callbacks or {}
+    local self: any=setmetatable({GUI=gui,Data=data,Callbacks=cb,SoundCount=0,Controllers={},Reduced=false,Low=false,
+        State=nil,Cast=nil,ScanElapsed=0,Demo=false},{__index=Presentation})
+    self.VFX=VfxService.new()
+    self.Blocks=Blocks.new(self.VFX,{ScreenEdgePulse=function(_color: Color3,_duration: number)
+        if not self.Reduced and cb.ScreenEdgePulse then cb.ScreenEdgePulse() end
+    end})
+    self.Camera=CameraFeel.new()
+    self.Hits=HitPresentation.new(self.VFX,self.Blocks)
+    self.Camera.OnHitStop=function(seconds: number)
+        local controller=self:LocalController()
+        if controller then controller:Pause(seconds) end
+    end
+    return self
 end
 function Presentation.Audio(self: any,hook: string,pitch: number?)
     local id=T.Sound.Abilities[hook]
     if type(id)~="number" or id<=0 or self.SoundCount>=T.Sound.MaxPlaying then return end
     self.SoundCount+=1
-    local sound=Kit.New("Sound",self.GUI,{SoundId="rbxassetid://"..tostring(math.floor(id)),Volume=T.Sound.AbilityVolume,PlaybackSpeed=math.clamp(pitch or T.LegacyFX.Pitch,T.Sound.MinPitch,T.Sound.MaxPitch)})
+    local sound=Kit.New("Sound",self.GUI,{SoundId="rbxassetid://"..tostring(math.floor(id)),Volume=T.Sound.AbilityVolume,
+        PlaybackSpeed=math.clamp(pitch or T.LegacyFX.Pitch,T.Sound.MinPitch,T.Sound.MaxPitch)})
     local released=false
     local function release()
         if released then return end;released=true;sound:Destroy();self.SoundCount-=1
     end
     sound.Ended:Once(release);sound:Play();task.delay(T.Timing.SoundLife,release)
 end
+function Presentation.Controller(self: any,character: Model?): any
+    if not character or not character.Parent or not character:FindFirstChildOfClass("Humanoid") then return nil end
+    if not self.Controllers[character] then
+        self.Controllers[character]=AnimationController.new(character,{ReducedMotion=self.Reduced})
+    end
+    return self.Controllers[character]
+end
+function Presentation.LocalController(self: any): any
+    return self:Controller(Players.LocalPlayer.Character)
+end
+function Presentation.SetSettings(self: any,reduced: boolean,low: boolean)
+    self.Reduced=reduced;self.Low=low
+    self.VFX:SetSettings(reduced,low);self.Camera:SetReducedMotion(reduced)
+    for _,controller in pairs(self.Controllers) do controller:SetReducedMotion(reduced) end
+end
+function Presentation.Update(self: any,state: any)
+    local previous=self.State;self.State=state
+    if not state.Ready then return end
+    local controller=self:LocalController()
+    if controller and not self.Demo then
+        if state.Casting and state.Casting~=self.Cast then controller:Play("CastWindup")
+        elseif not state.Casting and self.Cast then controller:Stop("CastWindup") end
+        if previous and previous.Ready and state.Health<previous.Health then
+            controller:Play("HitReact");self.Camera:Kick(1);self.Camera:HitStop()
+        end
+    end
+    self.Cast=state.Casting or nil
+end
 function Presentation.Event(self: any,event: any)
+    if not self.VFX:Visible(event.Position) then return end
+    if event.Kind=="Damage" then
+        self.Hits:Hit(event)
+        if self.Callbacks.Damage then self.Callbacks.Damage(event) end
+        if event.Owner==Players.LocalPlayer.UserId then self.Camera:Kick(1);self.Camera:HitStop() end
+        return
+    end
     if event.Kind=="VoiceProfile" then self:Audio(event.Hook,event.Pitch);return end
     local ability=self.Data.Abilities[event.Kind]
     if ability then self:Audio(ability.SFXHook) end
-    if event.Kind=="Reveal" and typeof(event.Target)=="Instance" then
-        if self.Highlights[event.Target] or self.HighlightCount>=T.LegacyFX.Max then return end
-        local highlight=table.remove(self.HighlightPool) or Instance.new("Highlight")
-        self.Highlights[event.Target]=highlight;self.HighlightCount+=1
-        highlight.Adornee=event.Target;highlight.FillColor=T.Colors.Sanity;highlight.OutlineColor=T.Colors.Fog
-        highlight.FillTransparency=T.LegacyFX.HighlightAlpha;highlight.Parent=self.Folder;highlight.Enabled=true
-        task.delay(T.Timing.Reveal,function()
-            self.Highlights[event.Target]=nil;self.HighlightCount-=1
-            highlight.Enabled=false;highlight.Adornee=nil;highlight.Parent=nil;table.insert(self.HighlightPool,highlight)
-        end)
-    elseif event.Kind~="Whisper" and self.Active<T.LegacyFX.Max then
-        local p: Part=table.remove(self.Pool) or Instance.new("Part")
-        p.Anchored=true;p.CanCollide=false;p.CanTouch=false;p.CanQuery=false;p.Shape=Enum.PartType.Ball;p.Material=Enum.Material.Neon
-        p.Size=Vector3.one*T.LegacyFX.StartSize;p.Position=event.Position;p.Transparency=T.LegacyFX.Alpha
-        p.Color=if ability then Kit.PathColor(ability.PathwayId) else T.Colors.Fog
-        self.Active+=1;p.Parent=self.Folder
-        local tween=Kit.Tween(p,T.Timing.Pulse,{Size=Vector3.one*T.LegacyFX.EndSize,Transparency=1})
-        tween.Completed:Once(function() self.Active-=1;p.Parent=nil;table.insert(self.Pool,p) end)
+    if event.Owner then
+        local caster=Players:GetPlayerByUserId(event.Owner)
+        local controller=caster and self:Controller(caster.Character)
+        if controller and (ability or event.Kind=="Melee") then
+            controller:Stop("CastWindup");controller:Play("CastRelease")
+        end
     end
+    if event.Kind=="Reveal" and typeof(event.Target)=="Instance" then
+        local h=self.VFX:Begin("Reveal",event.Position,1,T.Visuals.RevealPriority,{Highlight=1})
+        if not h then return end
+        h.Duration=C.Hit.RevealLife
+        local highlight=h:Acquire("Highlight")
+        highlight.Adornee=event.Target;highlight.FillColor=T.Colors.Sanity;highlight.OutlineColor=T.Colors.Fog
+        highlight.FillTransparency=T.LegacyFX.HighlightAlpha
+    elseif event.Kind~="Whisper" then
+        -- Preserve the old neutral pulse during Phase A. Pathway-specific layering
+        -- is deliberately deferred until the user continues to Phases B-D.
+        local h=self.VFX:Begin("LegacyPulse",event.Position,1,T.Visuals.LegacyPriority,{Part=1})
+        if not h then return end
+        h.Duration=T.Visuals.LegacyLife
+        local p=h:Acquire("Part")
+        p.Shape=Enum.PartType.Ball;p.Color=if ability then Kit.PathColor(ability.PathwayId) else T.Colors.Fog
+        p.Position=event.Position;p.Size=Vector3.one*T.Visuals.LegacyStart;p.Transparency=T.Visuals.LegacyAlpha
+        h.Update=function(_dt: number,_age: number,t: number)
+            p.Size=Vector3.one*(T.Visuals.LegacyStart+(T.Visuals.LegacyEnd-T.Visuals.LegacyStart)*t)
+            p.Transparency=T.Visuals.LegacyAlpha+(1-T.Visuals.LegacyAlpha)*t
+        end
+    end
+end
+function Presentation.Step(self: any,dt: number)
+    self.VFX:Step(dt);self.ScanElapsed+=dt
+    if self.ScanElapsed<T.TestRoom.StatInterval then return end;self.ScanElapsed=0
+    local wanted={}
+    for _,player in ipairs(Players:GetPlayers()) do
+        local character=player.Character
+        local root=character and character:FindFirstChild("HumanoidRootPart")
+        if character and root and root:IsA("BasePart") and (player==Players.LocalPlayer or self.VFX:Visible(root.Position)) then
+            wanted[character]=true;self:Controller(character)
+        end
+    end
+    for character,controller in pairs(self.Controllers) do
+        if not wanted[character] then controller:Destroy();self.Controllers[character]=nil end
+    end
+end
+function Presentation.DemoAnimation(self: any,name: string)
+    local controller=self:LocalController()
+    if not controller then return end
+    controller:Stop();controller.AutoLocomotion=false;self.Demo=true;controller:Play(name)
+end
+function Presentation.StopDemoAnimation(self: any)
+    if not self.Demo then return end
+    self.Demo=false
+    local controller=self:LocalController()
+    if controller then controller:Stop();controller.AutoState=nil;controller.AutoLocomotion=true end
+end
+function Presentation.Destroy(self: any)
+    self.Camera:Destroy();self.VFX:Destroy()
+    for _,controller in pairs(self.Controllers) do controller:Destroy() end
+    table.clear(self.Controllers)
 end
 return Presentation
 ```
@@ -3211,6 +3620,1060 @@ function Prompts.Project(self: any)
     self:Show(chosen~=nil)
 end
 return Prompts
+```
+
+
+## src/StarterPlayer/StarterPlayerScripts/Visuals/AnimationController.lua
+
+**ModuleScript** at `StarterPlayer/StarterPlayerScripts/Visuals/AnimationController`. Create matching Folder parents.
+
+```lua
+--!strict
+-- Local, additive Motor6D presentation. Never moves a root, changes a Humanoid
+-- property, disables Animate, or changes a track loaded by another controller.
+local RunService=game:GetService("RunService")
+local C=require(game:GetService("ReplicatedStorage").Shared.AnimConfig)
+local Spring=require(script.Parent.MotionSpring)
+local AnimationController={}
+AnimationController.__index=AnimationController
+type MotorState={Motor: Motor6D,Role: string,Base: CFrame?,Applied: CFrame?}
+type EntryState={Name: string,Entry: any,Elapsed: number,Target: number,Fade: number,Spring: any,
+    Track: AnimationTrack?,Animation: Animation?,AssetAge: number,AssetFailed: boolean}
+type Fields={Character: Model,Humanoid: Humanoid?,Root: BasePart?,Animator: Animator?,Motors: {MotorState},
+    States: {[string]: EntryState},Connections: {RBXScriptConnection},ReducedMotion: boolean,
+    AutoLocomotion: boolean,AutoState: string?,PauseLeft: number,Destroyed: boolean,WasAirborne: boolean,LastVertical: number}
+export type Controller=typeof(setmetatable({} :: Fields,AnimationController))
+local function finite(value: number): boolean return value==value and math.abs(value)<math.huge end
+local function resolve(name: string): string return C.Aliases[name] or name end
+local function contentId(value: any): string?
+    if type(value)~="string" or value=="" then return nil end
+    local digits=string.match(value,"^rbxassetid://(%d+)$") or string.match(value,"^(%d+)$")
+    local number=if digits then tonumber(digits) else nil
+    return if number and number>0 then "rbxassetid://"..(digits :: string) else nil
+end
+local function dispose(state: EntryState)
+    if state.Track then state.Track:Stop();state.Track:Destroy();state.Track=nil end
+    if state.Animation then state.Animation:Destroy();state.Animation=nil end
+end
+function AnimationController.new(character: Model,options: any?): Controller
+    local opts=options or {}
+    local humanoid=character:FindFirstChildOfClass("Humanoid")
+    local root=character:FindFirstChild("HumanoidRootPart")
+    local self: Controller=setmetatable({Character=character,Humanoid=humanoid,
+        Root=if root and root:IsA("BasePart") then root else character.PrimaryPart,
+        Animator=if humanoid then humanoid:FindFirstChildOfClass("Animator") else nil,
+        Motors={},States={},Connections={},ReducedMotion=opts.ReducedMotion==true,
+        AutoLocomotion=opts.AutoLocomotion~=false,AutoState=nil,PauseLeft=0,Destroyed=false,WasAirborne=false,LastVertical=0},AnimationController)
+    local function motor(instance: Instance)
+        if instance:IsA("Motor6D") then
+            local role=C.MotorRoles[instance.Name]
+            if role then table.insert(self.Motors,{Motor=instance,Role=role,Base=nil,Applied=nil}) end
+        elseif instance:IsA("BasePart") and instance.Name=="HumanoidRootPart" then
+            self.Root=instance
+        elseif instance:IsA("Animator") and instance.Parent==self.Humanoid then
+            self.Animator=instance
+        end
+    end
+    for _,descendant in ipairs(character:GetDescendants()) do motor(descendant) end
+    table.insert(self.Connections,character.DescendantAdded:Connect(motor))
+    table.insert(self.Connections,character.DescendantRemoving:Connect(function(instance: Instance)
+        if instance==self.Root then self.Root=nil end
+        if instance==self.Animator then self.Animator=nil end
+        for i=#self.Motors,1,-1 do
+            if self.Motors[i].Motor==instance then
+                local m=self.Motors[i]
+                if m.Applied and m.Base and m.Motor.Transform==m.Applied then m.Motor.Transform=m.Base end
+                table.remove(self.Motors,i)
+            end
+        end
+    end))
+    if opts.AutoStep~=false then
+        -- Animator writes after PreAnimation and before PreSimulation. Undo only
+        -- our exact last transform, then compose onto that frame's authored pose.
+        table.insert(self.Connections,RunService.PreAnimation:Connect(function() self:Restore() end))
+        table.insert(self.Connections,RunService.PreSimulation:Connect(function(dt: number) self:Step(dt) end))
+    end
+    if humanoid then
+        table.insert(self.Connections,humanoid.Died:Connect(function() self:Play("Death") end))
+        table.insert(self.Connections,humanoid.StateChanged:Connect(function(_old: Enum.HumanoidStateType,new: Enum.HumanoidStateType)
+            if new==Enum.HumanoidStateType.Jumping then self:Play("Jump") end
+        end))
+    end
+    return self
+end
+function AnimationController.Restore(self: Controller)
+    for _,m in ipairs(self.Motors) do
+        if m.Motor.Parent and m.Base and m.Applied and m.Motor.Transform==m.Applied then m.Motor.Transform=m.Base end
+        m.Base=nil;m.Applied=nil
+    end
+end
+function AnimationController.Play(self: Controller,name: string,weight: number?,fade: number?): boolean
+    if self.Destroyed then return false end
+    name=resolve(name)
+    local entry=C.Entries[name]
+    if not entry then return false end
+    local target=if weight and finite(weight) then math.clamp(weight,0,C.Blend.MaxWeight) else C.Blend.MaxWeight
+    local transition=if fade and finite(fade) then math.clamp(fade,C.Blend.MinFade,C.Blend.MaxFade) else entry.FadeIn
+    local state: EntryState?=self.States[name]
+    if not state then
+        local created: EntryState={Name=name,Entry=entry,Elapsed=0,Target=target,Fade=transition,Spring=Spring.new(0),
+            Track=nil,Animation=nil,AssetAge=0,AssetFailed=false}
+        self.States[name]=created;state=created
+        local id=contentId(entry.AnimationId)
+        if id and self.Animator then
+            local animation=Instance.new("Animation");animation.AnimationId=id;created.Animation=animation
+            local ok,track=pcall(function() return (self.Animator :: Animator):LoadAnimation(animation) end)
+            if ok then
+                created.Track=track;track.Priority=entry.AssetPriority;track.Looped=entry.Loop
+            else
+                created.AssetFailed=true;animation:Destroy();created.Animation=nil
+            end
+        end
+    end
+    assert(state)
+    state.Elapsed=0;state.AssetAge=0;state.Target=target;state.Fade=transition
+    local track=state.Track
+    if track and not state.AssetFailed then
+        track:Play(transition,target,if self.PauseLeft>0 then 0 else 1)
+    end
+    return true
+end
+function AnimationController.Stop(self: Controller,name: string?,fade: number?)
+    local wanted=if name then resolve(name) else nil
+    for key,state in pairs(self.States) do
+        if not wanted or key==wanted then
+            state.Target=0
+            state.Fade=if fade and finite(fade) then math.clamp(fade,C.Blend.MinFade,C.Blend.MaxFade) else state.Entry.FadeOut
+            if state.Track then state.Track:Stop(state.Fade) end
+        end
+    end
+end
+function AnimationController.Blend(self: Controller,name: string,weight: number,fade: number?): boolean
+    if self.Destroyed or not finite(weight) then return false end
+    name=resolve(name)
+    local state=self.States[name]
+    if not state then return self:Play(name,weight,fade) end
+    state.Target=math.clamp(weight,0,C.Blend.MaxWeight)
+    state.Fade=if fade and finite(fade) then math.clamp(fade,C.Blend.MinFade,C.Blend.MaxFade) else C.Blend.Default
+    if state.Track then state.Track:AdjustWeight(state.Target,state.Fade) end
+    return true
+end
+function AnimationController.Pause(self: Controller,duration: number)
+    if not finite(duration) then return end
+    self.PauseLeft=math.max(self.PauseLeft,math.clamp(duration,0,C.Safety.MaxPause))
+    for _,state in pairs(self.States) do
+        if state.Track and state.Track.IsPlaying then state.Track:AdjustSpeed(0) end
+    end
+end
+function AnimationController.SetReducedMotion(self: Controller,reduced: boolean)
+    self.ReducedMotion=reduced
+    if reduced then
+        self.PauseLeft=0
+        for _,state in pairs(self.States) do
+            if state.Track and state.Track.IsPlaying then state.Track:AdjustSpeed(1) end
+        end
+    end
+end
+function AnimationController.Locomotion(self: Controller): number
+    local humanoid,root=self.Humanoid,self.Root
+    if not self.AutoLocomotion or not humanoid or not root then return 0 end
+    if humanoid.Health<=0 then
+        if not self.States.Death then self:Play("Death") end
+        return 0
+    end
+    local velocity=root.AssemblyLinearVelocity
+    local speed=Vector3.new(velocity.X,0,velocity.Z).Magnitude
+    local airborne=humanoid.FloorMaterial==Enum.Material.Air
+    if self.WasAirborne and not airborne and self.LastVertical<C.Locomotion.LandingVelocity then self:Play("Land") end
+    self.WasAirborne=airborne;self.LastVertical=velocity.Y
+    local name=if airborne or speed<C.Locomotion.MinSpeed then "Idle" elseif speed>=C.Locomotion.RunSpeed then "Run" else "Walk"
+    if self.AutoState~=name then
+        if self.AutoState then self:Stop(self.AutoState) end
+        self.AutoState=name;self:Play(name)
+    end
+    return math.clamp(speed/C.Locomotion.SpeedReference,0,C.Locomotion.MaxSpeedRatio)
+end
+function AnimationController.Step(self: Controller,delta: number)
+    if self.Destroyed or not finite(delta) or delta<0 then return end
+    self:Restore()
+    local dt=math.min(delta,C.Safety.MaxFrameDelta)
+    local paused=self.PauseLeft>0
+    self.PauseLeft=math.max(0,self.PauseLeft-dt)
+    if paused and self.PauseLeft==0 then
+        for _,state in pairs(self.States) do
+            if state.Track and state.Track.IsPlaying then state.Track:AdjustSpeed(1) end
+        end
+    end
+    local elapsed=if paused then 0 else dt
+    local speed=self:Locomotion()
+    local ordered: {EntryState}={}
+    local assetPriority=-math.huge
+    for name,state in pairs(self.States) do
+        state.Elapsed+=elapsed;state.AssetAge+=dt
+        if not state.Entry.Loop and state.Elapsed>=state.Entry.Duration then
+            state.Target=0;state.Fade=state.Entry.FadeOut
+        end
+        state.Spring.Frequency=1/state.Fade
+        state.Spring:Step(elapsed,state.Target)
+        if state.Track then
+            local track=state.Track
+            if track.Length>0 and track.IsPlaying then
+                assetPriority=math.max(assetPriority,state.Entry.Priority)
+                track:AdjustWeight(state.Target,state.Fade)
+            elseif state.AssetAge>=C.Safety.AssetLoadGrace then
+                -- Invalid/unpermitted/unloaded real assets never leave an empty pose.
+                track:Stop();track:Destroy();state.Track=nil;state.AssetFailed=true
+                if state.Animation then state.Animation:Destroy();state.Animation=nil end
+            end
+        end
+        if state.Target==0 and state.Spring.Value<C.Blend.WeightEpsilon then
+            dispose(state);self.States[name]=nil
+        else table.insert(ordered,state) end
+    end
+    table.sort(ordered,function(a: EntryState,b: EntryState)
+        if a.Entry.Priority==b.Entry.Priority then return a.Name<b.Name end
+        return a.Entry.Priority<b.Entry.Priority
+    end)
+    local poses: {[string]: CFrame}={}
+    for _,state in ipairs(ordered) do
+        if state.Entry.Priority>assetPriority then
+            local weight=math.clamp(state.Spring.Value,0,C.Blend.MaxWeight)
+            if self.ReducedMotion then weight*=C.Blend.ReducedScale end
+            local pose=state.Entry.Procedural(state.Entry,state.Elapsed,speed)
+            for role,transform in pairs(pose) do
+                poses[role]=(poses[role] or CFrame.identity):Lerp(transform,weight)
+            end
+        end
+    end
+    for _,m in ipairs(self.Motors) do
+        if m.Motor.Parent then
+            local offset=poses[m.Role]
+            if offset then
+                m.Base=m.Motor.Transform;m.Motor.Transform=(m.Base :: CFrame)*offset
+                -- Store the engine's read-back value, including its precision.
+                m.Applied=m.Motor.Transform
+            end
+        end
+    end
+end
+function AnimationController.Destroy(self: Controller)
+    if self.Destroyed then return end
+    self.Destroyed=true;self:Restore()
+    for _,connection in ipairs(self.Connections) do connection:Disconnect() end
+    for _,state in pairs(self.States) do dispose(state) end
+    table.clear(self.Connections);table.clear(self.States);table.clear(self.Motors)
+end
+return AnimationController
+```
+
+
+## src/StarterPlayer/StarterPlayerScripts/Visuals/CameraFeel.lua
+
+**ModuleScript** at `StarterPlayer/StarterPlayerScripts/Visuals/CameraFeel`. Create matching Folder parents.
+
+```lua
+--!strict
+-- Additive presentation only. No physics, player input, simulation time or default
+-- camera updates are paused. The prior contribution is removed before Camera.
+local RunService=game:GetService("RunService")
+local T=require(game:GetService("ReplicatedStorage").Shared.Theme)
+local C=T.CameraFeel
+local CameraFeel={}
+local nextId=0
+
+local function finite(value: number): boolean
+    return value==value and value>-math.huge and value<math.huge
+end
+
+local function unitOrZero(x: number,y: number,z: number): Vector3
+    local vector=Vector3.new(x,y,z)
+    return if vector.Magnitude>C.Epsilon then vector.Unit else Vector3.zero
+end
+
+function CameraFeel.Restore(self: any)
+    local camera: Camera?=self.LastCamera
+    if not camera then return end
+    -- An unrelated camera script may have written after this module. Preserve its
+    -- new value; only undo a value we can identify as our own exact contribution.
+    if self.LastOutput and camera.CFrame==self.LastOutput then camera.CFrame=self.LastBase end
+    if self.LastOutputFov and math.abs(camera.FieldOfView-self.LastOutputFov)<=C.Epsilon then
+        camera.FieldOfView=self.LastBaseFov
+    end
+    self.LastCamera=nil;self.LastOutput=nil;self.LastOutputFov=nil
+end
+
+function CameraFeel.Step(self: any,delta: number)
+    if self.Destroyed then return end
+    self.SinceKick+=delta
+    if self.ReducedMotion or self.Life<=0 then return end
+    local dt=math.clamp(delta,0,C.StepCap)
+    local held=math.min(self.Hold,dt)
+    self.Hold-=held;self.Elapsed+=dt-held
+    if self.Elapsed>=self.Life then self.Life=0;return end
+    local camera=workspace.CurrentCamera
+    if not camera then return end
+    local remaining=1-self.Elapsed/self.Life
+    local envelope=remaining*remaining
+    local time=self.Elapsed*C.Frequency*math.pi*2
+    local ratio=C.FrequencyRatio
+    local phase=C.Phase
+    local axis=C.ShakeAxis
+    local rotation=C.RotationAxis
+    local x=math.sin(time*ratio.X+phase.X)
+    local y=math.sin(time*ratio.Y+phase.Y)
+    local z=math.sin(time*ratio.Z+phase.Z)
+    -- Normalize the direction, then scale by the envelope. Simultaneous events
+    -- share this single envelope, so vector magnitude cannot add past the cap.
+    local translation=unitOrZero(x*axis.X,y*axis.Y,z*axis.Z)*self.Studs*envelope
+    local angles=unitOrZero(y*rotation.X,z*rotation.Y,x*rotation.Z)*math.rad(self.Degrees)*envelope
+    local base=camera.CFrame
+    local baseFov=camera.FieldOfView
+    local output=base*CFrame.new(translation)*CFrame.Angles(angles.X,angles.Y,angles.Z)
+    local outputFov=math.clamp(baseFov+self.Fov*envelope,C.FovMin,C.FovMax)
+    self.LastCamera=camera;self.LastBase=base;self.LastOutput=output
+    self.LastBaseFov=baseFov;self.LastOutputFov=outputFov
+    camera.CFrame=output;camera.FieldOfView=outputFov
+end
+
+function CameraFeel.new(): any
+    nextId+=1
+    local self: any=setmetatable({Destroyed=false,ReducedMotion=false,Elapsed=0,Life=0,
+        Hold=0,Studs=0,Degrees=0,Fov=0,SinceKick=math.huge,OnHitStop=nil,
+        BeforeName="MysteriesCameraRestore"..nextId,AfterName="MysteriesCameraFeel"..nextId}, {__index=CameraFeel})
+    RunService:BindToRenderStep(self.BeforeName,Enum.RenderPriority.Camera.Value+C.BeforePriorityOffset,function()
+        self:Restore()
+    end)
+    RunService:BindToRenderStep(self.AfterName,Enum.RenderPriority.Camera.Value+C.AfterPriorityOffset,function(dt: number)
+        self:Step(dt)
+    end)
+    return self
+end
+
+function CameraFeel.Kick(self: any,tier: number?): boolean
+    if self.Destroyed or self.ReducedMotion then return false end
+    local selected=if type(tier)=="number" and finite(tier) then tier else C.DefaultTier
+    local fraction=math.clamp((selected-C.DefaultTier)/(C.MajorTier-C.DefaultTier),0,1)
+    local studs=C.SmallStuds+(C.MajorStuds-C.SmallStuds)*fraction
+    if self.SinceKick<C.KickGap and studs<=self.Studs then return false end
+    self.Studs=math.min(studs,C.MajorStuds)
+    self.Degrees=math.min(C.SmallDegrees+(C.MajorDegrees-C.SmallDegrees)*fraction,C.MajorDegrees)
+    self.Life=C.SmallDuration+(C.MajorDuration-C.SmallDuration)*fraction
+    self.Fov=math.min(C.FovKick*self.Studs/C.MajorStuds,C.MaxFovKick)
+    self.Elapsed=0;self.Hold=0;self.SinceKick=0
+    return true
+end
+
+function CameraFeel.HitStop(self: any,duration: number?): number
+    if self.Destroyed or self.ReducedMotion then return 0 end
+    local selected=if type(duration)=="number" and finite(duration) then duration else C.HitStop
+    local seconds=math.clamp(selected,0,C.MaxHitStop)
+    self.Hold=math.max(self.Hold,seconds)
+    -- The caller can pause its procedural character overlay for the same time.
+    -- This never changes Animator playback speed or delays a gameplay action.
+    if seconds>0 and self.OnHitStop then self.OnHitStop(seconds) end
+    return seconds
+end
+
+function CameraFeel.SetReducedMotion(self: any,reduced: boolean)
+    self.ReducedMotion=reduced==true
+    if self.ReducedMotion then
+        self.Life=0;self.Hold=0;self.SinceKick=math.huge;self:Restore()
+    end
+end
+
+function CameraFeel.Destroy(self: any)
+    if self.Destroyed then return end
+    self.Destroyed=true
+    RunService:UnbindFromRenderStep(self.BeforeName)
+    RunService:UnbindFromRenderStep(self.AfterName)
+    self:Restore();self.OnHitStop=nil
+end
+
+return CameraFeel
+```
+
+
+## src/StarterPlayer/StarterPlayerScripts/Visuals/EffectBlocks.lua
+
+**ModuleScript** at `StarterPlayer/StarterPlayerScripts/Visuals/EffectBlocks`. Create matching Folder parents.
+
+```lua
+--!strict
+-- Original, texture-free silhouettes. Optional particles supplement, never replace, geometry.
+local C: any=require(game:GetService("ReplicatedStorage").Shared.VfxConfig)
+local Blocks={}
+Blocks.Names={"RingBurst","RisingMotes","ThreadBeam","DoorFrame","StarBurst","GlitchFlicker","GroundRune","ImpactFlash","ScreenEdgePulse","ShockwaveRing","AfterimageTrail"}
+local TAU=math.pi*2
+local function take(handle: any,class: string,parent: Instance?): any
+    local object=handle:Acquire(class,parent)
+    assert(object,"EffectBlocks exceeded reserved "..class.." budget")
+    return object
+end
+local function alpha(age: number,duration: number,start: number): number
+    return math.clamp((age/duration-start)/(1-start),0,1)
+end
+local function color(value: Color3): ColorSequence return ColorSequence.new(value) end
+local function point(x: number,y: number,z: number): Vector3 return Vector3.new(x,y,z) end
+local function segment(handle: any,host: BasePart,width: number,tint: Color3): any
+    local a=take(handle,"Attachment",host) :: Attachment
+    local b=take(handle,"Attachment",host) :: Attachment
+    local beam=take(handle,"Beam",host) :: Beam
+    beam.Attachment0=a;beam.Attachment1=b;beam.Color=color(tint);beam.Width0=width;beam.Width1=width
+    return {A=a,B=b,Beam=beam}
+end
+local function setLine(line: any,a: Vector3,b: Vector3,transparency: number)
+    line.A.Position=a;line.B.Position=b;line.Beam.Transparency=NumberSequence.new(transparency)
+end
+local function reserve(name: string,c: any,detail: number,low: boolean): (any,number,number)
+    local segments=math.max(C.Blocks.Common.MinSegments,math.floor(C.Blocks.Common.Segments*detail))
+    local n=0
+    if name=="RingBurst" or name=="ShockwaveRing" then n=segments
+    elseif name=="GroundRune" then n=segments+(if low then 0 else c.Spokes)
+    elseif name=="DoorFrame" then n=(if low then 1 else c.Nested)*3
+    elseif name=="StarBurst" then n=c.Points*2
+    elseif name=="GlitchFlicker" then n=4
+    elseif name=="ImpactFlash" then n=2
+    elseif name=="ThreadBeam" then n=1 end
+    local motes=if name=="RisingMotes" then math.max(1,math.floor(c.Count*detail)) else 0
+    local trail=if name=="AfterimageTrail" and not low then 1 else 0
+    local afterHead=if name=="AfterimageTrail" then 1 else 0
+    local host=if name=="ScreenEdgePulse" then 0 else 1
+    local emitter=if name=="RisingMotes" and C.Particle.Texture~="" then 1 else 0
+    return {Part=host+motes+afterHead,Attachment=n*2+trail*2,Beam=n,Trail=trail,ParticleEmitter=emitter},segments,motes
+end
+function Blocks.new(service: any,callbacks: any?): any
+    return setmetatable({Service=service,Callbacks=callbacks or {},LastPulse=nil},{__index=Blocks})
+end
+function Blocks.Play(self: any,name: string,position: Vector3,paletteName: string?,tier: number?,options: any?): any
+    local c=C.Blocks[name]
+    if not c or typeof(position)~="Vector3" then return nil end
+    local pulse=name=="ImpactFlash" or name=="ScreenEdgePulse"
+    local now=os.clock()
+    if pulse then
+        if self.Service:Profile().ReducedMotion then return nil end
+        if self.LastPulse and now-self.LastPulse<C.Safety.MinimumPulseInterval then return nil end
+    end
+    local opts=options or {}
+    local detail=self.Service:Detail(position)
+    local low=detail<=C.Quality.Low
+    local costs,segments,motes=reserve(name,c,detail,low)
+    local h=self.Service:Begin(name,position,tier or 1,c.Priority,costs)
+    if not h then return nil end
+    if pulse then self.LastPulse=now end
+    h.Duration=c.Duration
+    local p=C.Palettes[paletteName or "Seer"] or C.Palettes.Seer
+    local scale=h.Scale
+    local common=C.Blocks.Common
+    local width=common.Width*scale
+    local host: any=nil
+    if costs.Part>0 then
+        host=take(h,"Part",nil)
+        host.Size=Vector3.one*common.HostSize
+        host.CFrame=if typeof(opts.Frame)=="CFrame" then opts.Frame else CFrame.new(position)
+    end
+    local update: (number,number,number)->() = function() end
+    if name=="RingBurst" or name=="ShockwaveRing" or name=="GroundRune" then
+        local lines={}
+        for _=1,segments do table.insert(lines,segment(h,host,width,p.Accent)) end
+        local spokes={}
+        if name=="GroundRune" and not low then
+            for _=1,c.Spokes do table.insert(spokes,segment(h,host,width,p.Primary)) end
+        end
+        update=function(_dt: number,age: number,t: number)
+            local radius=c.Radius*scale
+            if name~="GroundRune" then radius*=c.Start+(1-c.Start)*t end
+            local fade=common.Alpha+(1-common.Alpha)*alpha(age,c.Duration,common.FadeStart)
+            for i,line in ipairs(lines) do
+                local a=(i-1)/segments*TAU
+                local b=i/segments*TAU
+                if name=="RingBurst" then b-=c.Gap/segments end
+                setLine(line,point(math.cos(a)*radius,common.HeightOffset,math.sin(a)*radius),point(math.cos(b)*radius,common.HeightOffset,math.sin(b)*radius),fade)
+            end
+            for i,line in ipairs(spokes) do
+                local a=(i-1)/c.Spokes*TAU
+                local direction=point(math.cos(a),0,math.sin(a))
+                setLine(line,direction*radius*c.Inner+Vector3.yAxis*common.HeightOffset,direction*radius+Vector3.yAxis*common.HeightOffset,fade)
+            end
+        end
+    elseif name=="RisingMotes" then
+        local pieces={}
+        for i=1,motes do
+            local part=take(h,"Part",nil) :: Part
+            part.Shape=Enum.PartType.Ball;part.Color=if i%2==0 then p.Accent else p.Primary
+            part.Size=Vector3.one*c.Size*scale
+            table.insert(pieces,part)
+        end
+        if costs.ParticleEmitter>0 then
+            local emitter=take(h,"ParticleEmitter",host) :: ParticleEmitter
+            emitter.Color=color(p.Primary)
+            emitter:Emit(math.max(1,math.floor(common.ParticleCount*h.Detail*common.ParticleEmitScale)))
+        end
+        update=function(_dt: number,age: number,t: number)
+            for i,part in ipairs(pieces) do
+                local a=(i-1)/motes*TAU+(if h.ReducedMotion then 0 else t*c.Orbit)
+                local rise=if h.ReducedMotion then c.Height*(i/motes) else t*c.Height
+                part.CFrame=host.CFrame*CFrame.new(math.cos(a)*c.Radius*scale,rise*scale,math.sin(a)*c.Radius*scale)
+                part.Transparency=common.Alpha+(1-common.Alpha)*alpha(age,c.Duration,common.FadeStart)
+            end
+        end
+    elseif name=="ThreadBeam" then
+        local line=segment(h,host,c.Width*scale,p.Accent)
+        local endpoint=if typeof(opts.EndPosition)=="Vector3" then host.CFrame:PointToObjectSpace(opts.EndPosition) else point(c.Length*scale,0,0)
+        local arch=Vector3.yAxis*c.Height*scale
+        local a=Vector3.zero
+        local tangent0=endpoint/3+arch
+        local tangent1=endpoint/3-arch
+        -- Beams use +X on each attachment as their cubic Bezier tangent.
+        local function tangentFrame(at: Vector3,tangent: Vector3): CFrame
+            local right=if tangent.Magnitude>common.MinimumLength then tangent.Unit else Vector3.xAxis
+            local up=if math.abs(right:Dot(Vector3.yAxis))<common.TangentVertical then Vector3.yAxis else Vector3.zAxis
+            local back=right:Cross(up).Unit
+            return CFrame.fromMatrix(at,right,back:Cross(right).Unit,back)
+        end
+        line.A.CFrame=tangentFrame(a,tangent0);line.B.CFrame=tangentFrame(endpoint,tangent1)
+        line.Beam.CurveSize0=tangent0.Magnitude;line.Beam.CurveSize1=tangent1.Magnitude
+        line.Beam.Segments=c.Segments;line.Beam.Width1=c.Width*scale*c.Taper
+        update=function(_dt: number,age: number,_t: number)
+            line.Beam.Transparency=NumberSequence.new(common.Alpha+(1-common.Alpha)*alpha(age,c.Duration,common.FadeStart))
+        end
+    elseif name=="DoorFrame" then
+        local layers=if low then 1 else c.Nested
+        local lines={}
+        for _=1,layers*3 do table.insert(lines,segment(h,host,width,p.Primary)) end
+        update=function(_dt: number,age: number,_t: number)
+            local fade=common.Alpha+(1-common.Alpha)*alpha(age,c.Duration,common.FadeStart)
+            for i=1,layers do
+                local half=(c.Width/2-(i-1)*c.Inset)*scale
+                local base=c.Base*scale
+                local top=(c.Height-(i-1)*c.Inset)*scale
+                local offset=(i-1)*3
+                setLine(lines[offset+1],point(-half,base,0),point(-half,top,0),fade)
+                setLine(lines[offset+2],point(-half,top,0),point(half,top,0),fade)
+                setLine(lines[offset+3],point(half,top,0),point(half,base,0),fade)
+            end
+        end
+    elseif name=="StarBurst" or name=="ImpactFlash" then
+        local lines={}
+        local count=if name=="ImpactFlash" then 2 else c.Points*2
+        for _=1,count do table.insert(lines,segment(h,host,width,p.Accent)) end
+        update=function(_dt: number,age: number,t: number)
+            local fade=(c.Alpha or common.Alpha)+(1-(c.Alpha or common.Alpha))*alpha(age,c.Duration,common.FadeStart)
+            local radius=c.Radius*scale*(if h.ReducedMotion then 1 else (c.Start or c.Inner)+(1-(c.Start or c.Inner))*t)
+            for i,line in ipairs(lines) do
+                if name=="ImpactFlash" then
+                    local direction=if i==1 then Vector3.xAxis else Vector3.yAxis
+                    setLine(line,-direction*radius,direction*radius,fade)
+                else
+                    local a=(i-1)/count*TAU
+                    local b=i/count*TAU
+                    local r0=if i%2==1 then radius else radius*c.Inner
+                    local r1=if i%2==1 then radius*c.Inner else radius
+                    setLine(line,point(math.cos(a)*r0,math.sin(a)*r0,0),point(math.cos(b)*r1,math.sin(b)*r1,0),fade)
+                end
+            end
+        end
+    elseif name=="GlitchFlicker" then
+        local lines={}
+        for _=1,4 do table.insert(lines,segment(h,host,width,p.Accent)) end
+        update=function(_dt: number,age: number,t: number)
+            -- Two positional edits over 1.1s; opacity never oscillates or flashes.
+            local step=if h.ReducedMotion or low then 0 else math.floor(t*c.Transitions)
+            local shift=(if step%2==0 then -1 else 1)*c.Shift*scale
+            local x=c.Width/2*scale;local y=c.Height/2*scale
+            local gap=c.Split*scale
+            local fade=common.Alpha+(1-common.Alpha)*alpha(age,c.Duration,common.FadeStart)
+            setLine(lines[1],point(-x+shift,-y,0),point(-x+shift,y,0),fade)
+            setLine(lines[2],point(-x+shift,y,0),point(-gap+shift,y,0),fade)
+            setLine(lines[3],point(x-shift,y,0),point(x-shift,-y,0),fade)
+            setLine(lines[4],point(x-shift,-y,0),point(gap-shift,-y,0),fade)
+        end
+    elseif name=="ScreenEdgePulse" then
+        if self.Callbacks.ScreenEdgePulse then self.Callbacks.ScreenEdgePulse(p.Primary,c.Duration) end
+    elseif name=="AfterimageTrail" then
+        local head=take(h,"Part",nil) :: Part
+        head.Size=point(c.Head,c.Height,c.Head)*scale;head.Color=p.Primary
+        local trail: Trail?=nil
+        if costs.Trail>0 then
+            local a=take(h,"Attachment",head) :: Attachment
+            local b=take(h,"Attachment",head) :: Attachment
+            a.Position=Vector3.yAxis*c.Height*scale/2;b.Position=-Vector3.yAxis*c.Height*scale/2
+            local ribbon=take(h,"Trail",head) :: Trail
+            ribbon.Attachment0=a;ribbon.Attachment1=b
+            ribbon.Color=color(p.Primary);ribbon.Enabled=not h.ReducedMotion
+            trail=ribbon
+        end
+        update=function(_dt: number,age: number,t: number)
+            head.CFrame=host.CFrame*CFrame.new((if h.ReducedMotion then 0 else t*c.Length)*scale,c.Height*scale/2,0)
+            head.Transparency=common.Alpha+(1-common.Alpha)*alpha(age,c.Duration,common.FadeStart)
+            if trail then trail.Enabled=not h.ReducedMotion end
+        end
+    end
+    h.Update=update
+    update(0,0,0)
+    return h
+end
+return Blocks
+```
+
+
+## src/StarterPlayer/StarterPlayerScripts/Visuals/HitPresentation.lua
+
+**ModuleScript** at `StarterPlayer/StarterPlayerScripts/Visuals/HitPresentation`. Create matching Folder parents.
+
+```lua
+--!strict
+-- Confirmed hits only. Recoil is a disposable silhouette; target physics never move.
+local C=require(game:GetService("ReplicatedStorage").Shared.VfxConfig)
+local HitPresentation={}
+function HitPresentation.new(vfx: any,blocks: any): any
+    return setmetatable({VFX=vfx,Blocks=blocks,Flashes=setmetatable({},{__mode="k"}),Deaths=setmetatable({},{__mode="k"})},{__index=HitPresentation})
+end
+function HitPresentation.Hit(self: any,event: any)
+    local target=event.Target
+    if typeof(target)~="Instance" or not target:IsA("Model") or not target.Parent then return end
+    if not self.VFX:Visible(event.Position) then return end
+    local humanoid=target:FindFirstChildOfClass("Humanoid")
+    if event.Dead==true or (humanoid and humanoid.Health<=C.Hit.MinimumHealth) then self:Death(target,event.Position);return end
+    if self.VFX:Profile().ReducedMotion then return end
+    local now=os.clock()
+    if now-(self.Flashes[target] or -math.huge)<C.Hit.MinFlashGap then return end
+    self.Flashes[target]=now
+    local handle=self.VFX:Begin("ConfirmedHit",event.Position,1,C.Hit.Priority,C.Hit.Costs)
+    if not handle then return end
+    handle.Duration=C.Hit.Life
+    local highlight=handle:Acquire("Highlight")
+    if highlight then
+        highlight.Adornee=target;highlight.FillColor=C.Highlight.FillColor
+        highlight.FillTransparency=C.Hit.HighlightFill;highlight.OutlineTransparency=C.Hit.Outline
+        highlight.Enabled=true
+    end
+    local body=target:FindFirstChild("UpperTorso") or target:FindFirstChild("Torso") or target.PrimaryPart
+    local ghost=handle:Acquire("Part")
+    local start: CFrame?=nil
+    local direction=Vector3.zero
+    if ghost and body and body:IsA("BasePart") then
+        start=body.CFrame;direction=body.CFrame.LookVector
+        ghost.Size=body.Size;ghost.CFrame=start;ghost.Color=C.Highlight.FillColor;ghost.Transparency=C.Hit.GhostAlpha
+    end
+    handle.Update=function(_dt: number,age: number)
+        if not target.Parent then handle:Finish();return end
+        if highlight then highlight.FillTransparency=C.Hit.HighlightFill+(1-C.Hit.HighlightFill)*math.clamp(age/C.Hit.Life,0,1) end
+        if ghost and start then
+            local alpha=math.clamp(age/C.Hit.KnockbackLife,0,1)
+            ghost.CFrame=start+direction*C.Hit.KnockbackDistance*math.sin(alpha*math.pi)
+            ghost.Transparency=C.Hit.GhostAlpha+(1-C.Hit.GhostAlpha)*alpha
+        end
+    end
+end
+function HitPresentation.Death(self: any,target: Model,position: Vector3)
+    if self.Deaths[target] then return end
+    local handle=self.VFX:Begin("DeathDissolve",position,1,C.Hit.Priority,C.Hit.DeathCosts)
+    if not handle then return end
+    self.Deaths[target]=true;handle.Duration=C.Hit.DeathHold
+    local parts={}
+    for _,item in ipairs(target:GetDescendants()) do
+        if item:IsA("BasePart") and #parts<C.Hit.MaxParts then table.insert(parts,{Part=item,Original=item.LocalTransparencyModifier}) end
+    end
+    handle.OnFinish=function()
+        self.Deaths[target]=nil
+        for _,entry in ipairs(parts) do
+            if entry.Part.Parent then entry.Part.LocalTransparencyModifier=entry.Original end
+        end
+    end
+    handle.Update=function(_dt: number,age: number)
+        if not target.Parent then handle:Finish();return end
+        local alpha=math.clamp(age/C.Hit.DeathLife,0,1)
+        for _,entry in ipairs(parts) do
+            if entry.Part.Parent then entry.Part.LocalTransparencyModifier=entry.Original+(1-entry.Original)*alpha end
+        end
+    end
+    self.Blocks:Play("RisingMotes",position,"Seer",1)
+end
+return HitPresentation
+```
+
+
+## src/StarterPlayer/StarterPlayerScripts/Visuals/MotionSpring.lua
+
+**ModuleScript** at `StarterPlayer/StarterPlayerScripts/Visuals/MotionSpring`. Create matching Folder parents.
+
+```lua
+--!strict
+-- Critically damped scalar spring. Stable closed form; no physics or server time.
+local C=require(game:GetService("ReplicatedStorage").Shared.AnimConfig)
+local MotionSpring={}
+MotionSpring.__index=MotionSpring
+type Fields={Value: number,Velocity: number,Frequency: number}
+export type Spring=typeof(setmetatable({} :: Fields,MotionSpring))
+function MotionSpring.new(value: number,frequency: number?): Spring
+    return setmetatable({Value=value,Velocity=0,Frequency=frequency or C.Spring.Frequency},MotionSpring)
+end
+function MotionSpring.Reset(self: Spring,value: number)
+    self.Value=value;self.Velocity=0
+end
+function MotionSpring.Step(self: Spring,delta: number,target: number): number
+    if delta<=0 then return self.Value end
+    local omega=math.max(0,self.Frequency)*math.pi*2
+    if omega==0 then self.Value=target;self.Velocity=0;return target end
+    local dt=math.min(delta,C.Spring.MaxStep)
+    local difference=self.Value-target
+    local tangent=self.Velocity+omega*difference
+    local decay=math.exp(-omega*dt)
+    self.Value=target+(difference+tangent*dt)*decay
+    self.Velocity=(self.Velocity-omega*tangent*dt)*decay
+    return self.Value
+end
+function MotionSpring.Smoothstep(value: number): number
+    local t=math.clamp(value,0,1)
+    return t*t*(3-2*t)
+end
+return MotionSpring
+```
+
+
+## src/StarterPlayer/StarterPlayerScripts/Visuals/VfxService.lua
+
+**ModuleScript** at `StarterPlayer/StarterPlayerScripts/Visuals/VfxService`. Create matching Folder parents.
+
+```lua
+--!strict
+-- Client-only bounded pool/reservation owner. Nothing here can decide a hit or move a character.
+local Shared=game:GetService("ReplicatedStorage").Shared
+local Config=require(Shared.VfxConfig)
+local Budget=require(Shared.VisualBudget)
+local UserInputService=game:GetService("UserInputService")
+local Service={}
+Service.__index=Service
+local Handle={}
+Handle.__index=Handle
+local function finite(value: number): boolean
+    return value==value and value>-math.huge and value<math.huge
+end
+local function validPosition(position: any): boolean
+    return typeof(position)=="Vector3" and finite(position.X) and finite(position.Y) and finite(position.Z)
+        and position.Magnitude<=Config.Safety.PositionLimit
+end
+local function qualityLevel(): number
+    local ok,value=pcall(function() return UserSettings():GetService("UserGameSettings").SavedQualityLevel.Value end)
+    return if ok and type(value)=="number" and value>0 then value else Config.Quality.AutoLevel
+end
+local function camera(self: any): Camera?
+    return self.Camera or workspace.CurrentCamera
+end
+local function defaults(object: any,class: string)
+    local props: any
+    if class=="ParticleEmitter" then props=Config.Particle
+    elseif class=="PointLight" then props=Config.Light
+    else props=Config[class] end
+    if props then for property,value in pairs(props) do object[property]=value end end
+    if class=="Part" then
+        object.Anchored=true;object.CanCollide=false;object.CanTouch=false;object.CanQuery=false
+        object.CastShadow=false;object.CFrame=CFrame.identity
+    elseif class=="Beam" or class=="Trail" then
+        object.Attachment0=nil;object.Attachment1=nil;object.Enabled=true
+        if class=="Trail" then object:Clear() end
+    elseif class=="ParticleEmitter" then object.Enabled=false;object:Clear()
+    elseif class=="Highlight" then object.Adornee=nil;object.Enabled=true end
+end
+local function park(object: any,class: string)
+    if class=="Beam" or class=="Trail" then
+        object.Enabled=false;object.Attachment0=nil;object.Attachment1=nil
+        if class=="Trail" then object:Clear() end
+    elseif class=="ParticleEmitter" then object.Enabled=false;object:Clear()
+    elseif class=="PointLight" then object.Enabled=false
+    elseif class=="Highlight" then object.Enabled=false;object.Adornee=nil end
+    object.Parent=nil
+end
+function Handle.Acquire(self: any,class: string,parent: Instance?): any
+    if not self.Active or (self.Acquired[class] or 0)>=(self.Costs[class] or 0) then return nil end
+    local owner=self.Owner
+    local pool=owner.Pools[class]
+    if not pool then return nil end
+    local object=table.remove(pool)
+    if not object then
+        if owner.Allocated[class]>=owner.Limits[class] then return nil end
+        object=Instance.new(class :: any);owner.Allocated[class]+=1
+    end
+    local acquired: any=object
+    defaults(acquired,class)
+    acquired.Name="VFX_"..class;acquired.Parent=parent or owner.Folder
+    self.Acquired[class]=(self.Acquired[class] or 0)+1
+    table.insert(self.Objects,{Object=acquired,Class=class})
+    return acquired
+end
+function Handle.Finish(self: any)
+    if not self.Active then return end
+    self.Active=false
+    local owner=self.Owner
+    owner.Active[self.Id]=nil;owner.Budget:Remove(self.Id)
+    if self.OnFinish then
+        local ok=pcall(self.OnFinish)
+        if not ok then owner.Errors+=1 end
+    end
+    for _,entry in ipairs(self.Objects) do
+        park(entry.Object,entry.Class);table.insert(owner.Pools[entry.Class],entry.Object)
+    end
+    table.clear(self.Objects);self.Update=nil;self.OnFinish=nil
+end
+Handle.Stop=Handle.Finish
+function Service.new(options: any?): any
+    local settings=options or {}
+    local folder=Instance.new("Folder");folder.Name="LocalVisualFramework";folder.Parent=workspace
+    local mobile=if settings.Mobile~=nil then settings.Mobile else UserInputService.TouchEnabled
+    local limits=if mobile then Config.Pools.Mobile else Config.Pools.Desktop
+    local self: any=setmetatable({Folder=folder,Camera=settings.Camera,Mobile=mobile,
+        LowGraphics=settings.LowGraphics==true,ReducedMotion=settings.ReducedMotion==true,
+        Pools={},Allocated={},Limits=limits,Active={},Serial=0,Evicted=0,Dropped=0,Errors=0,Destroyed=false,ProfileKey=""},Service)
+    for class in pairs(limits) do self.Pools[class]={};self.Allocated[class]=0 end
+    self:_Refresh()
+    return self
+end
+function Service._Refresh(self: any)
+    local level=qualityLevel()
+    local q=Config.Quality
+    local low=self.LowGraphics or level<=q.LowLevel
+    local detail=if low then q.Low else (if level<=q.MediumLevel then q.Medium else q.High)
+    local maxEffects=if low then q.LowEffects else (if level<=q.MediumLevel then q.MediumEffects else q.HighEffects)
+    if self.Mobile then maxEffects=math.min(maxEffects,q.MobileEffects) end
+    local key=tostring(detail)..":"..tostring(self.ReducedMotion)
+    if self.ProfileKey~=key then
+        local finishing={}
+        for _,effect in pairs(self.Active) do table.insert(finishing,effect) end
+        for _,effect in ipairs(finishing) do effect:Finish() end
+        self.Budget=Budget.new(self.Limits,maxEffects);self.ProfileKey=key
+    end
+    self.CurrentProfile={Detail=detail,Low=low,ReducedMotion=self.ReducedMotion,Mobile=self.Mobile,Level=level,MaxEffects=maxEffects}
+end
+function Service.Profile(self: any): any
+    self:_Refresh()
+    return table.clone(self.CurrentProfile)
+end
+function Service.Visible(self: any,position: any): boolean
+    if self.Destroyed or not validPosition(position) then return false end
+    local current=camera(self)
+    if not current or (position-current.CFrame.Position).Magnitude>Config.Quality.MaximumDistance then return false end
+    local point,onScreen=current:WorldToViewportPoint(position)
+    return onScreen and point.Z>0
+end
+function Service.Detail(self: any,position: Vector3): number
+    local profile=self:Profile()
+    local current=camera(self)
+    if not current then return profile.Detail end
+    local distance=(position-current.CFrame.Position).Magnitude
+    if distance>Config.Quality.Middle then return profile.Detail*Config.Quality.FarScale end
+    if distance>Config.Quality.Near then return profile.Detail*Config.Quality.MiddleScale end
+    return profile.Detail
+end
+function Service.PowerTier(sequence: number): number
+    if sequence>=Config.TierSequences.Low then return 1 end
+    if sequence>=Config.TierSequences.Middle then return 2 end
+    return #Config.Tier
+end
+function Service.Begin(self: any,name: string,position: Vector3,tier: number,priority: number,costs: {[string]:number}?): any
+    if not self:Visible(position) then self.Dropped+=1;return nil end
+    self:_Refresh()
+    if not finite(tier) then self.Dropped+=1;return nil end
+    local request=costs or Config.DefaultCosts
+    if (request.PointLight or 0)>Config.Safety.MaximumLightsPerEffect then self.Dropped+=1;return nil end
+    local victims=self.Budget:Plan(request,priority)
+    if not victims then self.Dropped+=1;return nil end
+    for _,id in ipairs(victims) do
+        local victim=self.Active[id]
+        if victim then victim:Finish();self.Evicted+=1 end
+    end
+    self.Serial+=1
+    local id=tostring(self.Serial)
+    if not self.Budget:Add(id,request,priority) then self.Dropped+=1;return nil end
+    local resolvedTier=math.clamp(math.floor(tier),1,#Config.Tier)
+    local effect: any=setmetatable({Owner=self,Id=id,Name=name,Position=position,Tier=resolvedTier,
+        Scale=Config.Tier[resolvedTier].Scale,Detail=self:Detail(position),Low=self.CurrentProfile.Low,
+        ReducedMotion=self.ReducedMotion,Priority=priority,Costs=table.clone(request),Acquired={},Objects={},
+        Age=0,Duration=Config.Lifetime.Default,Active=true,Update=nil,OnFinish=nil},Handle)
+    self.Active[id]=effect
+    return effect
+end
+function Service.SetSettings(self: any,reduced: boolean,low: boolean)
+    if self.Destroyed then return end
+    self.ReducedMotion=reduced;self.LowGraphics=low;self:_Refresh()
+end
+function Service.Step(self: any,dt: number)
+    if self.Destroyed or not finite(dt) or dt<0 then return end
+    self:_Refresh()
+    local snapshot={}
+    for _,effect in pairs(self.Active) do table.insert(snapshot,effect) end
+    for _,effect in ipairs(snapshot) do
+        if not effect.Active then continue end
+        effect.Age+=dt
+        local duration=if finite(effect.Duration) then math.clamp(effect.Duration,0,Config.Lifetime.Maximum) else Config.Lifetime.Default
+        if not self:Visible(effect.Position) then effect:Finish();continue end
+        local progress=if duration>0 then math.clamp(effect.Age/duration,0,1) else 1
+        if effect.Update then
+            local ok=pcall(effect.Update,math.min(dt,Config.Lifetime.MaxStep),effect.Age,progress)
+            if not ok then self.Errors+=1;effect:Finish() end
+        end
+        if effect.Age>=duration then effect:Finish() end
+    end
+end
+function Service.Stats(self: any): any
+    local stats=self.Budget:Stats()
+    local pools={}
+    for class,pool in pairs(self.Pools) do pools[class]=#pool end
+    return {Active=stats.Count,Reserved=stats.Used,Limits=table.clone(self.Limits),Allocated=table.clone(self.Allocated),
+        Pools=pools,MaxEffects=stats.MaxEffects,Evicted=self.Evicted,Dropped=self.Dropped,Errors=self.Errors}
+end
+function Service.Destroy(self: any)
+    if self.Destroyed then return end
+    self.Destroyed=true
+    local snapshot={}
+    for _,effect in pairs(self.Active) do table.insert(snapshot,effect) end
+    for _,effect in ipairs(snapshot) do effect:Finish() end
+    for _,pool in pairs(self.Pools) do for _,object in ipairs(pool) do object:Destroy() end;table.clear(pool) end
+    self.Folder:Destroy()
+end
+return Service
+```
+
+
+## src/StarterPlayer/StarterPlayerScripts/Visuals/VfxTestRoom.lua
+
+**ModuleScript** at `StarterPlayer/StarterPlayerScripts/Visuals/VfxTestRoom`. Create matching Folder parents.
+
+```lua
+--!strict
+-- Local preview only, launched by the server-authorized F8 panel in Studio.
+-- The stage has no collision/query and sends no remote or gameplay intent.
+local RunService=game:GetService("RunService")
+local Lighting=game:GetService("Lighting")
+local Shared=game:GetService("ReplicatedStorage").Shared
+local T=require(Shared.Theme)
+local A=require(Shared.AnimConfig)
+local Kit=require(script.Parent.Parent.UI.Kit)
+local Blocks=require(script.Parent.EffectBlocks)
+local TestRoom={}
+function TestRoom.new(parent: Instance,presentation: any,callbacks: any): any
+    local self: any=setmetatable({Presentation=presentation,Callbacks=callbacks,Palette=T.TestRoom.DefaultPalette,
+        Reduced=false,Low=false,Gray=false,Elapsed=0,Stage=nil,Position=Vector3.zero},{__index=TestRoom})
+    self.Root=Kit.Panel(parent,"VFXTestRoom");self.Root.ZIndex=T.Layers.Developer;self.Root.Visible=false
+    local title=Kit.Text(self.Root,"VFX TEST ROOM · STUDIO",T.Type.Heading,T.Fonts.Heading)
+    title.Position=UDim2.fromOffset(T.TestRoom.Pad,0);title.Size=UDim2.new(1,-T.TestRoom.Header-T.TestRoom.Pad,0,T.TestRoom.Header)
+    local close=Kit.Button(self.Root,T.Style.CloseSymbol,function() self:Close() end)
+    close.Position=UDim2.new(1,-T.TestRoom.Header,0,0);close.Size=UDim2.fromOffset(T.TestRoom.Header,T.TestRoom.Header)
+    self.Scroll=Kit.New("ScrollingFrame",self.Root,{BackgroundTransparency=1,BorderSizePixel=0,
+        Position=UDim2.fromOffset(T.TestRoom.Pad,T.TestRoom.Header),Size=UDim2.new(1,-T.TestRoom.Pad*2,1,-T.TestRoom.Header-T.TestRoom.StatusHeight),
+        AutomaticCanvasSize=Enum.AutomaticSize.Y,CanvasSize=UDim2.fromOffset(0,0),ScrollBarThickness=T.Style.Stroke})
+    Kit.New("UIListLayout",self.Scroll,{Padding=UDim.new(0,T.TestRoom.Gap),SortOrder=Enum.SortOrder.LayoutOrder})
+    local order=0
+    local function row(text: string,action: ()->())
+        order+=1
+        local button=Kit.Button(self.Scroll,text,action)
+        button.Size=UDim2.new(1,-T.TestRoom.Gap,0,T.TestRoom.Row);button.LayoutOrder=order
+        return button
+    end
+    self.PaletteButton=row("Palette: "..self.Palette,function()
+        self.Palette=if self.Palette=="Seer" then "Marauder" elseif self.Palette=="Marauder" then "Apprentice" else "Seer"
+        self.PaletteButton.Text="Palette: "..self.Palette
+    end)
+    row("Recenter local preview stage",function() self:StageAtCamera() end)
+    self.ReducedButton=row("Reduced motion: off",function()
+        self.Reduced=not self.Reduced;callbacks.ReducedMotion(self.Reduced)
+        self.ReducedButton.Text="Reduced motion: "..(if self.Reduced then "on" else "off")
+    end)
+    self.LowButton=row("Low graphics: off",function()
+        self.Low=not self.Low;callbacks.LowGraphics(self.Low)
+        self.LowButton.Text="Low graphics: "..(if self.Low then "on" else "off")
+    end)
+    self.GrayButton=row("Silhouette view: color",function()
+        self.Gray=not self.Gray
+        if self.Gray and not self.GrayEffect then
+            self.GrayEffect=Kit.New("ColorCorrectionEffect",Lighting,{Name="MysteriesSilhouettePreview",Saturation=T.Visuals.GrayscaleSaturation})
+        elseif self.GrayEffect then self.GrayEffect:Destroy();self.GrayEffect=nil end
+        self.GrayButton.Text="Silhouette view: "..(if self.Gray then "grayscale" else "color")
+    end)
+    for _,name in ipairs(Blocks.Names) do
+        for tier=1,#require(Shared.VfxConfig).Tier do
+            row(name.." · Tier "..tier,function()
+                if not self.Stage then self:StageAtCamera() end
+                local grounded=name=="RingBurst" or name=="GroundRune" or name=="ShockwaveRing" or name=="DoorFrame"
+                local origin=if grounded then self.Position+Vector3.new(0,T.TestRoom.FloorOffset,0) else self.Position
+                local frame=CFrame.new(origin)
+                local camera=workspace.CurrentCamera
+                if camera and name~="RingBurst" and name~="GroundRune" and name~="ShockwaveRing" then
+                    local direction=Vector3.new(camera.CFrame.Position.X-origin.X,0,camera.CFrame.Position.Z-origin.Z)
+                    if direction.Magnitude>T.TestRoom.OrientationEpsilon then frame=CFrame.lookAt(origin,origin+direction) end
+                end
+                presentation.Blocks:Play(name,origin,self.Palette,tier,{Frame=frame,EndPosition=self.Position+Vector3.new(T.TestRoom.TargetOffset,0,0),Target=self.Dummy})
+            end)
+        end
+    end
+    local names={}
+    for name in pairs(A.Entries) do table.insert(names,name) end;table.sort(names)
+    for _,name in ipairs(names) do row("Animation · "..name,function() presentation:DemoAnimation(name) end) end
+    row("Stop animation preview",function() presentation:StopDemoAnimation() end)
+    row("Camera · small hit",function() presentation.Camera:Kick(1);presentation.Camera:HitStop() end)
+    row("Camera · major cast",function() presentation.Camera:Kick(#require(Shared.VfxConfig).Tier) end)
+    row("Confirmed hit preview",function()
+        if not self.Dummy then self:StageAtCamera() end
+        presentation.Hits:Hit({Target=self.Dummy,Position=self.Position})
+        callbacks.Damage({Owner=game:GetService("Players").LocalPlayer.UserId,Position=self.Position,Amount=T.TestRoom.PreviewDamage})
+    end)
+    row("Death dissolve preview",function()
+        if not self.Dummy then self:StageAtCamera() end
+        presentation.Hits:Death(self.Dummy,self.Position)
+    end)
+    self.Status=Kit.Text(self.Root,"",T.Type.Micro,T.Fonts.Number)
+    self.Status.Position=UDim2.new(0,T.TestRoom.Pad,1,-T.TestRoom.StatusHeight)
+    self.Status.Size=UDim2.new(1,-T.TestRoom.Pad*2,0,T.TestRoom.StatusHeight)
+    return self
+end
+function TestRoom.StageAtCamera(self: any)
+    if self.Stage then self.Stage:Destroy();self.Stage=nil;self.Dummy=nil end
+    local camera=workspace.CurrentCamera
+    if not camera then return end
+    local center=camera.CFrame.Position+camera.CFrame.LookVector*T.TestRoom.PreviewDistance+Vector3.new(0,T.TestRoom.PreviewHeight,0)
+    self.Position=center
+    self.Stage=Kit.New("Folder",workspace,{Name="LocalVfxPreviewStage"})
+    local size=T.TestRoom.FloorSize
+    Kit.New("Part",self.Stage,{Name="PreviewFloor",Anchored=true,CanCollide=false,CanTouch=false,CanQuery=false,
+        Size=Vector3.new(size[1],size[2],size[3]),Position=center+Vector3.new(0,T.TestRoom.FloorOffset,0),
+        Color=T.Colors.Ink,Transparency=T.TestRoom.FloorAlpha,CastShadow=false})
+    self.Dummy=Kit.New("Model",self.Stage,{Name="Local preview mannequin"})
+    local body=Kit.New("Part",self.Dummy,{Name="Torso",Anchored=true,CanCollide=false,CanTouch=false,CanQuery=false,
+        Size=Vector3.new(size[4],size[5],size[6]),Position=center,Color=T.Colors.Slate,CastShadow=false})
+    self.Dummy.PrimaryPart=body
+    Kit.New("Part",self.Dummy,{Name="Head",Anchored=true,CanCollide=false,CanTouch=false,CanQuery=false,
+        Size=Vector3.one*T.TestRoom.HeadSize,Position=center+Vector3.new(0,T.TestRoom.HeadHeight,0),Color=T.Colors.Muted,CastShadow=false})
+    Kit.New("Humanoid",self.Dummy,{RequiresNeck=false,DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None})
+end
+function TestRoom.Resize(self: any,width: number,height: number)
+    self.Root.Size=UDim2.fromOffset(math.min(T.TestRoom.Width,width-T.TestRoom.Margin*2),math.min(T.TestRoom.Height,height-T.TestRoom.Margin*2))
+    self.Root.Position=UDim2.new(1,-T.TestRoom.Margin,0,T.TestRoom.Margin);self.Root.AnchorPoint=Vector2.new(1,0)
+end
+function TestRoom.Toggle(self: any,allowed: boolean)
+    if not allowed or not RunService:IsStudio() then self:Close();return end
+    if self.Root.Visible then self:Close();return end
+    self.Root.Visible=true;self:StageAtCamera();self.Callbacks.Modal(true)
+end
+function TestRoom.Close(self: any)
+    self.Root.Visible=false
+    if self.Stage then self.Stage:Destroy();self.Stage=nil;self.Dummy=nil end
+    if self.GrayEffect then self.GrayEffect:Destroy();self.GrayEffect=nil end
+    self.Gray=false;self.GrayButton.Text="Silhouette view: color"
+    self.Presentation:StopDemoAnimation();self.Callbacks.Modal(false)
+end
+function TestRoom.Step(self: any,dt: number)
+    if not self.Root.Visible then return end
+    self.Elapsed+=dt
+    if self.Elapsed<T.TestRoom.StatInterval then return end;self.Elapsed=0
+    local stats=self.Presentation.VFX:Stats()
+    local profile=self.Presentation.VFX:Profile()
+    local allocated=0;local reserved=0
+    for _,count in pairs(stats.Allocated) do allocated+=count end
+    for _,count in pairs(stats.Reserved) do reserved+=count end
+    self.Status.Text="Active "..stats.Active.." / "..profile.MaxEffects.." · dropped "..stats.Dropped.." · evicted "..stats.Evicted.."\n"..
+        (if profile.Mobile then "Mobile" else "Desktop").." · quality "..profile.Level.." · detail "..string.format("%.2f",profile.Detail)..
+        "\nInstances "..allocated.." allocated · "..reserved.." reserved · errors "..stats.Errors
+end
+return TestRoom
 ```
 
 

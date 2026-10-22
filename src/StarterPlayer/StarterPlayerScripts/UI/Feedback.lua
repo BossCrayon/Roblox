@@ -6,7 +6,7 @@ local T=require(Shared.Theme)
 local Kit=require(script.Parent.Kit)
 local Feedback={}
 function Feedback.new(parent: GuiObject,data: any,cinematic: (boolean)->()): any
-    local self: any={SafeRoot=parent,Data=data,Cinematic=cinematic,State=nil,ReducedMotion=false,NoticeSerial=0,AdvanceSerial=0,Numbers={},Pool={},Layout=nil}
+    local self: any={SafeRoot=parent,Data=data,Cinematic=cinematic,State=nil,ReducedMotion=false,FlashTweens={},NoticeSerial=0,AdvanceSerial=0,Numbers={},Pool={},Layout=nil}
     self.Root=Kit.New("Frame",parent,{Name="Feedback",Size=UDim2.fromScale(1,1),BackgroundTransparency=1,ZIndex=T.Layers.Feedback})
     self.Notice=Kit.New("CanvasGroup",self.Root,{Name="Notice",BackgroundColor3=T.Colors.Ink,BorderSizePixel=0,Visible=false});Kit.Corner(self.Notice);Kit.Stroke(self.Notice)
     self.NoticeText=Kit.Text(self.Notice,"",T.Type.Number,T.Fonts.Number);self.NoticeText.Size=UDim2.new(1,-T.Layout.Modal.BodyPad*2,1,0);self.NoticeText.Position=UDim2.fromOffset(T.Layout.Modal.BodyPad,0);self.NoticeText.TextXAlignment=Enum.TextXAlignment.Center
@@ -58,9 +58,25 @@ end
 function Feedback.Flash(self: any)
     Kit.Sound(self.Root,"Hit")
     if self.ReducedMotion then return end
+    local now=os.clock()
+    if now-(self.LastFlash or -math.huge)<T.Visuals.FlashGap then return end
+    self.LastFlash=now
+    for _,tween in ipairs(self.FlashTweens) do tween:Cancel() end
+    table.clear(self.FlashTweens)
     for _,f in ipairs(self.Flashes) do
-        local tween=Kit.Tween(f,T.Timing.FlashIn,{BackgroundTransparency=1-T.Layout.Vignette.FlashAlpha})
-        tween.Completed:Once(function() if f.Parent then Kit.Tween(f,T.Timing.FlashOut,{BackgroundTransparency=1}) end end)
+        local tween=Kit.Tween(f,T.Timing.FlashIn,{BackgroundTransparency=1-math.min(T.Visuals.FlashOpacity,T.Layout.Vignette.FlashAlpha)})
+        table.insert(self.FlashTweens,tween)
+        tween.Completed:Once(function()
+            if f.Parent and not self.ReducedMotion then table.insert(self.FlashTweens,Kit.Tween(f,T.Timing.FlashOut,{BackgroundTransparency=1})) end
+        end)
+    end
+end
+function Feedback.SetReducedMotion(self: any,reduced: boolean)
+    self.ReducedMotion=reduced
+    if reduced then
+        for _,tween in ipairs(self.FlashTweens) do tween:Cancel() end
+        table.clear(self.FlashTweens)
+        for _,f in ipairs(self.Flashes) do f.BackgroundTransparency=1 end
     end
 end
 function Feedback.Sequence(self: any,state: any)
@@ -112,7 +128,7 @@ function Feedback.Step(self: any,now: number)
         elseif camera then
             local p,visible=camera:WorldToViewportPoint(number.Position+Vector3.new(0,T.Layout.Damage.OffsetStuds,0))
             local origin=self.SafeRoot.AbsolutePosition
-            number.Label.Visible=visible
+            number.Label.Visible=visible and (number.Position-camera.CFrame.Position).Magnitude<=T.Visuals.MaxDistance
             number.Label.Position=UDim2.fromOffset(p.X-origin.X+(number.Index%3-1)*T.Feedback.DamageStagger,p.Y-origin.Y-T.Layout.Damage.Rise*math.min(1,elapsed/T.Timing.DamageRise))
             local alpha=math.clamp((elapsed-T.Timing.DamageRise)/math.max(T.LegacyFX.MinBarFraction,T.Timing.DamageLife-T.Timing.DamageRise),0,1)
             number.Label.TextTransparency=alpha;number.Label.BackgroundTransparency=alpha

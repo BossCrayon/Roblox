@@ -59,6 +59,19 @@ return freeze({
         Reject={Id=0,Volume=0.18},JournalOpen={Id=0,Volume=0.15},Advance={Id=0,Volume=0.28},
         Hit={Id=0,Volume=0.16},Abilities={},MaxPlaying=8,AbilityVolume=0.4,MinPitch=0.5,MaxPitch=2},
     Camera={MinZoom=8,MaxZoom=32},
+    CameraFeel={SmallStuds=0.10,MajorStuds=0.22,SmallDegrees=0.25,MajorDegrees=0.55,
+        SmallDuration=0.12,MajorDuration=0.22,FovKick=1.8,MaxFovKick=2.5,FovMin=1,FovMax=120,
+        Frequency=11,HitStop=0.045,MaxHitStop=0.06,StepCap=0.05,Epsilon=0.00001,DefaultTier=1,MajorTier=3,
+        BeforePriorityOffset=-1,AfterPriorityOffset=1,KickGap=0.10,
+        ShakeAxis={X=1,Y=0.6,Z=0.35},RotationAxis={X=0.5,Y=1,Z=0.4},
+        FrequencyRatio={X=1,Y=0.83,Z=1.17},Phase={X=0,Y=1.7,Z=3.2}},
+    Visuals={FlashGap=0.34,FlashOpacity=0.16,MaxDistance=120,LegacyPriority=1,
+        LegacyLife=0.5,LegacyStart=1,LegacyEnd=7,LegacyAlpha=0.25,RevealPriority=3,
+        GrayscaleSaturation=-1,AnimationViewDistance=120},
+    TestRoom={Width=420,Height=540,Margin=12,Header=48,Row=44,Gap=8,Pad=12,StatusHeight=54,
+        PreviewDistance=14,PreviewHeight=-2,PreviewSpacing=8,TargetOffset=8,
+        FloorSize={32,0.15,26,2,3,1},HeadSize=1.5,HeadHeight=2.2,FloorAlpha=0.25,FloorOffset=-3,ButtonColumns=3,
+        DefaultTier=1,DefaultPalette="Seer",StatInterval=0.25,PreviewDamage=24,OrientationEpsilon=0.01},
     Input={Keys={Enum.KeyCode.Q,Enum.KeyCode.E,Enum.KeyCode.R,Enum.KeyCode.F,Enum.KeyCode.Z,Enum.KeyCode.X},
         KeyNames={"Q","E","R","F","Z","X"},Journal=Enum.KeyCode.B,Developer=Enum.KeyCode.F8,
         RayLength=500,FallbackAim=50,ConfirmGamepad=Enum.KeyCode.ButtonA},
@@ -628,7 +641,7 @@ local Model=require(Shared.VisualModel)
 local Kit=require(script.Parent.Kit)
 local Menus={}
 function Menus.new(parent: Instance,data: any,callbacks: any): any
-    local self: any={Data=data,Callbacks=callbacks,State=nil,Tab="Journal",SelectedSlot=1,View="Page",PreviewId=nil,Purchase=false,Waiting=false,Rows={},LastKey="",ReducedMotion=false}
+    local self: any={Data=data,Callbacks=callbacks,State=nil,Tab="Journal",SelectedSlot=1,View="Page",PreviewId=nil,Purchase=false,Waiting=false,Rows={},LastKey="",ReducedMotion=false,LowGraphics=false}
     self.Root=Kit.New("Frame",parent,{Name="Menus",Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Visible=false,ZIndex=T.Layers.Modal})
     self.Dim=Kit.New("TextButton",self.Root,{Name="Backdrop",Size=UDim2.fromScale(1,1),Text="",AutoButtonColor=false,BackgroundColor3=T.Colors.Ink,BackgroundTransparency=T.Style.ModalDim,BorderSizePixel=0})
     self.Dim.Activated:Connect(function() self:Close() end)
@@ -759,6 +772,11 @@ function Menus.Render(self: any)
         end
         self:ActionRow("Reduced motion: "..(if self.ReducedMotion then "on" else "off"),function()
             self.ReducedMotion=not self.ReducedMotion;self.Callbacks.ReducedMotion(self.ReducedMotion);self:Render()
+        end)
+        self:ActionRow("Low graphics: "..(if self.LowGraphics then "on" else "off"),function()
+            self.LowGraphics=not self.LowGraphics
+            if self.Callbacks.LowGraphics then self.Callbacks.LowGraphics(self.LowGraphics) end
+            self:Render()
         end)
     elseif self.Tab=="Pathway" then
         if state.PathwayId then
@@ -1002,7 +1020,7 @@ local T=require(Shared.Theme)
 local Kit=require(script.Parent.Kit)
 local Feedback={}
 function Feedback.new(parent: GuiObject,data: any,cinematic: (boolean)->()): any
-    local self: any={SafeRoot=parent,Data=data,Cinematic=cinematic,State=nil,ReducedMotion=false,NoticeSerial=0,AdvanceSerial=0,Numbers={},Pool={},Layout=nil}
+    local self: any={SafeRoot=parent,Data=data,Cinematic=cinematic,State=nil,ReducedMotion=false,FlashTweens={},NoticeSerial=0,AdvanceSerial=0,Numbers={},Pool={},Layout=nil}
     self.Root=Kit.New("Frame",parent,{Name="Feedback",Size=UDim2.fromScale(1,1),BackgroundTransparency=1,ZIndex=T.Layers.Feedback})
     self.Notice=Kit.New("CanvasGroup",self.Root,{Name="Notice",BackgroundColor3=T.Colors.Ink,BorderSizePixel=0,Visible=false});Kit.Corner(self.Notice);Kit.Stroke(self.Notice)
     self.NoticeText=Kit.Text(self.Notice,"",T.Type.Number,T.Fonts.Number);self.NoticeText.Size=UDim2.new(1,-T.Layout.Modal.BodyPad*2,1,0);self.NoticeText.Position=UDim2.fromOffset(T.Layout.Modal.BodyPad,0);self.NoticeText.TextXAlignment=Enum.TextXAlignment.Center
@@ -1054,9 +1072,25 @@ end
 function Feedback.Flash(self: any)
     Kit.Sound(self.Root,"Hit")
     if self.ReducedMotion then return end
+    local now=os.clock()
+    if now-(self.LastFlash or -math.huge)<T.Visuals.FlashGap then return end
+    self.LastFlash=now
+    for _,tween in ipairs(self.FlashTweens) do tween:Cancel() end
+    table.clear(self.FlashTweens)
     for _,f in ipairs(self.Flashes) do
-        local tween=Kit.Tween(f,T.Timing.FlashIn,{BackgroundTransparency=1-T.Layout.Vignette.FlashAlpha})
-        tween.Completed:Once(function() if f.Parent then Kit.Tween(f,T.Timing.FlashOut,{BackgroundTransparency=1}) end end)
+        local tween=Kit.Tween(f,T.Timing.FlashIn,{BackgroundTransparency=1-math.min(T.Visuals.FlashOpacity,T.Layout.Vignette.FlashAlpha)})
+        table.insert(self.FlashTweens,tween)
+        tween.Completed:Once(function()
+            if f.Parent and not self.ReducedMotion then table.insert(self.FlashTweens,Kit.Tween(f,T.Timing.FlashOut,{BackgroundTransparency=1})) end
+        end)
+    end
+end
+function Feedback.SetReducedMotion(self: any,reduced: boolean)
+    self.ReducedMotion=reduced
+    if reduced then
+        for _,tween in ipairs(self.FlashTweens) do tween:Cancel() end
+        table.clear(self.FlashTweens)
+        for _,f in ipairs(self.Flashes) do f.BackgroundTransparency=1 end
     end
 end
 function Feedback.Sequence(self: any,state: any)
@@ -1108,7 +1142,7 @@ function Feedback.Step(self: any,now: number)
         elseif camera then
             local p,visible=camera:WorldToViewportPoint(number.Position+Vector3.new(0,T.Layout.Damage.OffsetStuds,0))
             local origin=self.SafeRoot.AbsolutePosition
-            number.Label.Visible=visible
+            number.Label.Visible=visible and (number.Position-camera.CFrame.Position).Magnitude<=T.Visuals.MaxDistance
             number.Label.Position=UDim2.fromOffset(p.X-origin.X+(number.Index%3-1)*T.Feedback.DamageStagger,p.Y-origin.Y-T.Layout.Damage.Rise*math.min(1,elapsed/T.Timing.DamageRise))
             local alpha=math.clamp((elapsed-T.Timing.DamageRise)/math.max(T.LegacyFX.MinBarFraction,T.Timing.DamageLife-T.Timing.DamageRise),0,1)
             number.Label.TextTransparency=alpha;number.Label.BackgroundTransparency=alpha
@@ -1130,7 +1164,7 @@ return Feedback
 local T=require(game:GetService("ReplicatedStorage").Shared.Theme)
 local Kit=require(script.Parent.Kit)
 local Developer={}
-function Developer.new(parent: Instance,send: any): any
+function Developer.new(parent: Instance,send: any,testRoom: (() -> ())?): any
     local self: any={Allowed=false,State=nil}
     self.Root=Kit.Panel(parent,"DeveloperPanel");self.Root.ZIndex=T.Layers.Developer;self.Root.Visible=false
     local title=Kit.Text(self.Root,"DEVELOPER · F8",T.Type.Heading,T.Fonts.Heading)
@@ -1147,6 +1181,14 @@ function Developer.new(parent: Instance,send: any): any
         end)
         b.Position=UDim2.fromOffset(T.Layout.Developer.Pad,T.Layout.Developer.Row*2+(i-1)*(T.Layout.Developer.Row+T.Layout.Developer.Gap))
         b.Size=UDim2.new(1,-T.Layout.Developer.Pad*2,0,T.Layout.Developer.Row);table.insert(self.Buttons,b)
+    end
+    if testRoom then
+        self.TestButton=Kit.Button(self.Scroll,"Studio VFX test room",function()
+            if self.Allowed then testRoom() end
+        end)
+        self.TestButton.Position=UDim2.fromOffset(T.Layout.Developer.Pad,T.Layout.Developer.Row*5+T.Layout.Developer.Gap*3)
+        self.TestButton.Size=UDim2.new(1,-T.Layout.Developer.Pad*2,0,T.Layout.Developer.Row)
+        self.Scroll.CanvasSize=UDim2.fromOffset(0,T.Layout.Developer.Row*6+T.Layout.Developer.Gap*4)
     end
     return setmetatable(self,{__index=Developer})
 end
@@ -1177,48 +1219,145 @@ return Developer
 
 ```lua
 --!strict
--- Keeps the existing pooled cosmetics working; pathway VFX redesign belongs to Phase 4.
-local T=require(game:GetService("ReplicatedStorage").Shared.Theme)
+-- Coordinator for server-confirmed cosmetics; no outcomes are computed here.
+local Players=game:GetService("Players")
+local Shared=game:GetService("ReplicatedStorage").Shared
+local T=require(Shared.Theme)
+local C=require(Shared.VfxConfig)
 local Kit=require(script.Parent.Kit)
+local Visuals=script.Parent.Parent.Visuals
+local VfxService=require(Visuals.VfxService)
+local Blocks=require(Visuals.EffectBlocks)
+local AnimationController=require(Visuals.AnimationController)
+local CameraFeel=require(Visuals.CameraFeel)
+local HitPresentation=require(Visuals.HitPresentation)
 local Presentation={}
-function Presentation.new(gui: Instance,data: any): any
-    local folder=Kit.New("Folder",workspace,{Name="LocalMysteriesFX"})
-    return setmetatable({GUI=gui,Data=data,Folder=folder,Pool={},Active=0,Highlights={},HighlightPool={},HighlightCount=0,SoundCount=0},{__index=Presentation})
+function Presentation.new(gui: Instance,data: any,callbacks: any?): any
+    local cb=callbacks or {}
+    local self: any=setmetatable({GUI=gui,Data=data,Callbacks=cb,SoundCount=0,Controllers={},Reduced=false,Low=false,
+        State=nil,Cast=nil,ScanElapsed=0,Demo=false},{__index=Presentation})
+    self.VFX=VfxService.new()
+    self.Blocks=Blocks.new(self.VFX,{ScreenEdgePulse=function(_color: Color3,_duration: number)
+        if not self.Reduced and cb.ScreenEdgePulse then cb.ScreenEdgePulse() end
+    end})
+    self.Camera=CameraFeel.new()
+    self.Hits=HitPresentation.new(self.VFX,self.Blocks)
+    self.Camera.OnHitStop=function(seconds: number)
+        local controller=self:LocalController()
+        if controller then controller:Pause(seconds) end
+    end
+    return self
 end
 function Presentation.Audio(self: any,hook: string,pitch: number?)
     local id=T.Sound.Abilities[hook]
     if type(id)~="number" or id<=0 or self.SoundCount>=T.Sound.MaxPlaying then return end
     self.SoundCount+=1
-    local sound=Kit.New("Sound",self.GUI,{SoundId="rbxassetid://"..tostring(math.floor(id)),Volume=T.Sound.AbilityVolume,PlaybackSpeed=math.clamp(pitch or T.LegacyFX.Pitch,T.Sound.MinPitch,T.Sound.MaxPitch)})
+    local sound=Kit.New("Sound",self.GUI,{SoundId="rbxassetid://"..tostring(math.floor(id)),Volume=T.Sound.AbilityVolume,
+        PlaybackSpeed=math.clamp(pitch or T.LegacyFX.Pitch,T.Sound.MinPitch,T.Sound.MaxPitch)})
     local released=false
     local function release()
         if released then return end;released=true;sound:Destroy();self.SoundCount-=1
     end
     sound.Ended:Once(release);sound:Play();task.delay(T.Timing.SoundLife,release)
 end
+function Presentation.Controller(self: any,character: Model?): any
+    if not character or not character.Parent or not character:FindFirstChildOfClass("Humanoid") then return nil end
+    if not self.Controllers[character] then
+        self.Controllers[character]=AnimationController.new(character,{ReducedMotion=self.Reduced})
+    end
+    return self.Controllers[character]
+end
+function Presentation.LocalController(self: any): any
+    return self:Controller(Players.LocalPlayer.Character)
+end
+function Presentation.SetSettings(self: any,reduced: boolean,low: boolean)
+    self.Reduced=reduced;self.Low=low
+    self.VFX:SetSettings(reduced,low);self.Camera:SetReducedMotion(reduced)
+    for _,controller in pairs(self.Controllers) do controller:SetReducedMotion(reduced) end
+end
+function Presentation.Update(self: any,state: any)
+    local previous=self.State;self.State=state
+    if not state.Ready then return end
+    local controller=self:LocalController()
+    if controller and not self.Demo then
+        if state.Casting and state.Casting~=self.Cast then controller:Play("CastWindup")
+        elseif not state.Casting and self.Cast then controller:Stop("CastWindup") end
+        if previous and previous.Ready and state.Health<previous.Health then
+            controller:Play("HitReact");self.Camera:Kick(1);self.Camera:HitStop()
+        end
+    end
+    self.Cast=state.Casting or nil
+end
 function Presentation.Event(self: any,event: any)
+    if not self.VFX:Visible(event.Position) then return end
+    if event.Kind=="Damage" then
+        self.Hits:Hit(event)
+        if self.Callbacks.Damage then self.Callbacks.Damage(event) end
+        if event.Owner==Players.LocalPlayer.UserId then self.Camera:Kick(1);self.Camera:HitStop() end
+        return
+    end
     if event.Kind=="VoiceProfile" then self:Audio(event.Hook,event.Pitch);return end
     local ability=self.Data.Abilities[event.Kind]
     if ability then self:Audio(ability.SFXHook) end
-    if event.Kind=="Reveal" and typeof(event.Target)=="Instance" then
-        if self.Highlights[event.Target] or self.HighlightCount>=T.LegacyFX.Max then return end
-        local highlight=table.remove(self.HighlightPool) or Instance.new("Highlight")
-        self.Highlights[event.Target]=highlight;self.HighlightCount+=1
-        highlight.Adornee=event.Target;highlight.FillColor=T.Colors.Sanity;highlight.OutlineColor=T.Colors.Fog
-        highlight.FillTransparency=T.LegacyFX.HighlightAlpha;highlight.Parent=self.Folder;highlight.Enabled=true
-        task.delay(T.Timing.Reveal,function()
-            self.Highlights[event.Target]=nil;self.HighlightCount-=1
-            highlight.Enabled=false;highlight.Adornee=nil;highlight.Parent=nil;table.insert(self.HighlightPool,highlight)
-        end)
-    elseif event.Kind~="Whisper" and self.Active<T.LegacyFX.Max then
-        local p: Part=table.remove(self.Pool) or Instance.new("Part")
-        p.Anchored=true;p.CanCollide=false;p.CanTouch=false;p.CanQuery=false;p.Shape=Enum.PartType.Ball;p.Material=Enum.Material.Neon
-        p.Size=Vector3.one*T.LegacyFX.StartSize;p.Position=event.Position;p.Transparency=T.LegacyFX.Alpha
-        p.Color=if ability then Kit.PathColor(ability.PathwayId) else T.Colors.Fog
-        self.Active+=1;p.Parent=self.Folder
-        local tween=Kit.Tween(p,T.Timing.Pulse,{Size=Vector3.one*T.LegacyFX.EndSize,Transparency=1})
-        tween.Completed:Once(function() self.Active-=1;p.Parent=nil;table.insert(self.Pool,p) end)
+    if event.Owner then
+        local caster=Players:GetPlayerByUserId(event.Owner)
+        local controller=caster and self:Controller(caster.Character)
+        if controller and (ability or event.Kind=="Melee") then
+            controller:Stop("CastWindup");controller:Play("CastRelease")
+        end
     end
+    if event.Kind=="Reveal" and typeof(event.Target)=="Instance" then
+        local h=self.VFX:Begin("Reveal",event.Position,1,T.Visuals.RevealPriority,{Highlight=1})
+        if not h then return end
+        h.Duration=C.Hit.RevealLife
+        local highlight=h:Acquire("Highlight")
+        highlight.Adornee=event.Target;highlight.FillColor=T.Colors.Sanity;highlight.OutlineColor=T.Colors.Fog
+        highlight.FillTransparency=T.LegacyFX.HighlightAlpha
+    elseif event.Kind~="Whisper" then
+        -- Preserve the old neutral pulse during Phase A. Pathway-specific layering
+        -- is deliberately deferred until the user continues to Phases B-D.
+        local h=self.VFX:Begin("LegacyPulse",event.Position,1,T.Visuals.LegacyPriority,{Part=1})
+        if not h then return end
+        h.Duration=T.Visuals.LegacyLife
+        local p=h:Acquire("Part")
+        p.Shape=Enum.PartType.Ball;p.Color=if ability then Kit.PathColor(ability.PathwayId) else T.Colors.Fog
+        p.Position=event.Position;p.Size=Vector3.one*T.Visuals.LegacyStart;p.Transparency=T.Visuals.LegacyAlpha
+        h.Update=function(_dt: number,_age: number,t: number)
+            p.Size=Vector3.one*(T.Visuals.LegacyStart+(T.Visuals.LegacyEnd-T.Visuals.LegacyStart)*t)
+            p.Transparency=T.Visuals.LegacyAlpha+(1-T.Visuals.LegacyAlpha)*t
+        end
+    end
+end
+function Presentation.Step(self: any,dt: number)
+    self.VFX:Step(dt);self.ScanElapsed+=dt
+    if self.ScanElapsed<T.TestRoom.StatInterval then return end;self.ScanElapsed=0
+    local wanted={}
+    for _,player in ipairs(Players:GetPlayers()) do
+        local character=player.Character
+        local root=character and character:FindFirstChild("HumanoidRootPart")
+        if character and root and root:IsA("BasePart") and (player==Players.LocalPlayer or self.VFX:Visible(root.Position)) then
+            wanted[character]=true;self:Controller(character)
+        end
+    end
+    for character,controller in pairs(self.Controllers) do
+        if not wanted[character] then controller:Destroy();self.Controllers[character]=nil end
+    end
+end
+function Presentation.DemoAnimation(self: any,name: string)
+    local controller=self:LocalController()
+    if not controller then return end
+    controller:Stop();controller.AutoLocomotion=false;self.Demo=true;controller:Play(name)
+end
+function Presentation.StopDemoAnimation(self: any)
+    if not self.Demo then return end
+    self.Demo=false
+    local controller=self:LocalController()
+    if controller then controller:Stop();controller.AutoState=nil;controller.AutoLocomotion=true end
+end
+function Presentation.Destroy(self: any)
+    self.Camera:Destroy();self.VFX:Destroy()
+    for _,controller in pairs(self.Controllers) do controller:Destroy() end
+    table.clear(self.Controllers)
 end
 return Presentation
 ```
@@ -1250,6 +1389,7 @@ local Prompts=require(UI.Prompts)
 local Feedback=require(UI.Feedback)
 local Developer=require(UI.Developer)
 local Presentation=require(UI.Presentation)
+local VfxTestRoom=require(script.Parent.Visuals.VfxTestRoom)
 local remotes=ReplicatedStorage:WaitForChild("MysteriesRemotes")
 local intent=remotes:WaitForChild("Intent") :: RemoteEvent
 local stateEvent=remotes:WaitForChild("State") :: RemoteEvent
@@ -1264,9 +1404,13 @@ local gui=Kit.New("ScreenGui",player.PlayerGui,{Name="MysteriesHUD",ResetOnSpawn
 local safeRoot=Kit.New("Frame",gui,{Name="SafeArea",Size=UDim2.fromScale(1,1),BackgroundTransparency=1})
 local state: any=nil
 local modal=false
+local menuModal=false
+local roomModal=false
 local cinematic=false
 local menus: any=nil
 local hud: any=nil
+local presentation: any=nil
+local testRoom: any=nil
 local promptUI=Prompts.new(safeRoot)
 local function send(action: string,payload: any) intent:FireServer(action,payload) end
 local function touchAim(): boolean
@@ -1306,13 +1450,36 @@ local feedback=Feedback.new(safeRoot,data,function(active: boolean)
     if hud then hud.Wordmark.Visible=not active and not promptUI.Root.Visible;hud.Pathway.Visible=not active and not promptUI.Root.Visible end
 end)
 hud=Hud.new(safeRoot,data,{Cast=cast,Melee=melee,Touch=UserInputService.TouchEnabled,TouchAim=touchAim,Journal=function(tab: string)
+    if roomModal then return end
     if menus.Root.Visible and menus.Tab==tab and menus.View=="Page" then menus:Close() else menus:Open(tab) end
 end})
+local function updateModal()
+    modal=menuModal or roomModal;promptUI:SetModal(modal);hud.Tooltip.Visible=false
+end
+local function visualSettings(reduced: boolean,low: boolean)
+    feedback:SetReducedMotion(reduced)
+    if presentation then presentation:SetSettings(reduced,low) end
+    if testRoom then
+        testRoom.Reduced=reduced;testRoom.Low=low
+        testRoom.ReducedButton.Text="Reduced motion: "..(if reduced then "on" else "off")
+        testRoom.LowButton.Text="Low graphics: "..(if low then "on" else "off")
+    end
+end
 menus=Menus.new(safeRoot,data,{Intent=send,Modal=function(open: boolean)
-    modal=open;promptUI:SetModal(open);hud.Tooltip.Visible=false
-end,ReducedMotion=function(reduced: boolean) feedback.ReducedMotion=reduced end})
-local developer=Developer.new(safeRoot,send)
-local presentation=Presentation.new(gui,data)
+    menuModal=open;updateModal()
+end,ReducedMotion=function(reduced: boolean) visualSettings(reduced,menus.LowGraphics) end,
+    LowGraphics=function(low: boolean) visualSettings(menus.ReducedMotion,low) end})
+presentation=Presentation.new(gui,data,{Damage=function(event: any) feedback:Damage(event) end,
+    ScreenEdgePulse=function() feedback:Flash() end})
+local developer: any=nil
+testRoom=VfxTestRoom.new(safeRoot,presentation,{Modal=function(open: boolean) roomModal=open;updateModal() end,
+    ReducedMotion=function(reduced: boolean) menus.ReducedMotion=reduced;visualSettings(reduced,menus.LowGraphics) end,
+    LowGraphics=function(low: boolean) menus.LowGraphics=low;visualSettings(menus.ReducedMotion,low) end,
+    Damage=function(event: any) feedback:Damage(event) end})
+developer=Developer.new(safeRoot,send,if RunService:IsStudio() then function()
+    if menus.Root.Visible then menus:Close() end
+    testRoom:Toggle(developer.Allowed);developer.Root.Visible=false
+end else nil)
 promptUI.OnVisibility=function(visible: boolean)
     hud.Pathway.Visible=not visible and not cinematic;hud.Wordmark.Visible=not visible and not cinematic
 end
@@ -1322,6 +1489,7 @@ local function resize()
     if size.X<=0 or size.Y<=0 then return end
     local layout=Layout.Resolve(T,size.X,size.Y,UserInputService.TouchEnabled)
     hud:Resize(layout);menus:Resize(layout);feedback:Resize(layout);developer:Resize(layout);promptUI.Layout=layout
+    testRoom:Resize(size.X,size.Y)
     hud.Wordmark.Visible=not cinematic and not promptUI.Root.Visible;hud.Pathway.Visible=not cinematic and not promptUI.Root.Visible
     if menus.Root.Visible then menus:Render() end
 end
@@ -1341,22 +1509,30 @@ stateEvent.OnClientEvent:Connect(function(update: any)
     end
     state=update
     developer:Update(update);hud:Render(update,os.clock());menus:Update(update);feedback:Update(update)
+    presentation:Update(update)
+    if not developer.Allowed and testRoom.Root.Visible then testRoom:Close() end
     if update.Dead and menus.Root.Visible then menus:Close() end
 end)
 effectEvent.OnClientEvent:Connect(function(event: any)
     if type(event)~="table" or typeof(event.Position)~="Vector3" or type(event.Kind)~="string" then return end
-    if event.Kind=="Damage" then feedback:Damage(event);return end
     presentation:Event(event)
 end)
 UserInputService.InputBegan:Connect(function(input: InputObject,processed: boolean)
     if UserInputService:GetFocusedTextBox() then return end
-    if input.KeyCode==T.Input.Developer then developer:Toggle();return end
+    if input.KeyCode==T.Input.Developer then
+        if testRoom.Root.Visible then testRoom:Close() else developer:Toggle() end
+        return
+    end
     if processed then return end
     if input.KeyCode==T.Input.Journal then
+        if roomModal then return end
         if menus.Root.Visible then menus:Close() else menus:Open("Journal") end
         return
     end
-    if input.KeyCode==Enum.KeyCode.Escape and menus.Root.Visible then menus:Close();return end
+    if input.KeyCode==Enum.KeyCode.Escape then
+        if testRoom.Root.Visible then testRoom:Close();return end
+        if menus.Root.Visible then menus:Close();return end
+    end
     if modal then return end
     -- E belongs to an active prompt, preventing a simultaneous slot-2 cast.
     if promptUI.Current and input.KeyCode==promptUI.Current.KeyboardKeyCode then return end
@@ -1365,6 +1541,7 @@ UserInputService.InputBegan:Connect(function(input: InputObject,processed: boole
 end)
 local accumulator=0
 RunService.Heartbeat:Connect(function(dt: number)
+    presentation:Step(dt);testRoom:Step(dt)
     accumulator+=dt
     if accumulator<T.Timing.Step then return end
     accumulator=0
@@ -1375,6 +1552,7 @@ RunService.Heartbeat:Connect(function(dt: number)
 end)
 resize()
 send("Sync",{})
+script.Destroying:Connect(function() testRoom:Close();presentation:Destroy() end)
 ```
 
 
@@ -1539,7 +1717,7 @@ function World.Damage(self: World, e: any,amount: number,owner: Player,now: numb
     e.LastHit=owner;e.LastHitAt=now
     local applied=math.min(e.Humanoid.Health,amount,100000)
     e.Humanoid:TakeDamage(math.min(amount,100000))
-    self.FX:FireAllClients({Kind="Damage",Position=e.Root.Position,Amount=applied,Owner=owner.UserId,Target=e.Model})
+    self.FX:FireAllClients({Kind="Damage",Position=e.Root.Position,Amount=applied,Owner=owner.UserId,Target=e.Model,Dead=e.Humanoid.Health<=0})
     return true
 end
 function World.DamagePlayer(self: World, player: Player,amount: number,source: any,now: number)

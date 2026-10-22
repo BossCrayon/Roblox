@@ -14,6 +14,7 @@ if not place.is_file(): raise SystemExit('Run scripts/check.py to build/validate
 (root/'studio').mkdir(exist_ok=True)
 shutil.copyfile(place,root/'studio/Mysteries.rbxlx')
 subprocess.run(['python3','scripts/generate_ui_docs.py'],cwd=root,check=True)
+subprocess.run(['python3','scripts/generate_vfx_docs.py'],cwd=root,check=True)
 for flag,target in [('--stats','STATS.md'),('--catalog','ABILITY_GUIDE.md')]:
     result=subprocess.run(['python3','tests/run.py','/workspace/lotm-tools/luau/luau',flag],cwd=root,check=True,capture_output=True,text=True)
     (root/'docs'/target).write_text(result.stdout.rstrip()+'\n')

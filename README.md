@@ -1,5 +1,7 @@
 # Mysteries — playable Roblox foundation
 
+> **Animation/VFX — Phase A:** bounded client pools, 12 procedural animations, 11 reusable effect blocks, quality/120-stud LOD, reduced motion, low graphics and an authorized F8 Studio preview room. [Complete code, script classes/Explorer paths, and post-code tests](docs/PHASE_A_VFX_CODE.md) · [Numeric properties and exact screenshots/recordings to send](docs/PHASE_A_VFX.md). Pathway-specific choreography starts in Phase B.
+
 > **Visual overhaul — Phase 1:** the current build includes a themed HUD, Journal/Pathway/Inventory tabs, confirmation-based potion UI, custom prompts, feedback and F8-only developer diagnostics. [Full copy-ready code and script destinations](docs/PHASE1_UI_CODE.md) · [Studio checklist and exact screenshot requests](docs/PHASE1_UI.md). World relayout and permanent label replacement remain later visual phases.
 
 The six requested implementation phases are represented in this project: data, server progression/persistence, all 54 selected ability executors across Sequences 9–1, HUD/input, procedural NPCs/world, and a first balance pass. The roster remains **Seer/Fool, Marauder/Error, and Apprentice/Door only**, with no Sequence 0.
@@ -8,12 +10,12 @@ This is a playable foundation with bounded gameplay interpretations of the power
 
 ## Open and play
 
-1. Open the supplied **`build/Mysteries.rbxlx`** in desktop Roblox Studio and press **Play**. The server generates the sanctuary, potion altar, archives, practice doors, flame anchors, six arenas, and 18 procedural enemies. The client creates its HUD in PlayerGui from modules under StarterPlayerScripts/UI.
+1. Download **[studio/Mysteries.rbxlx](studio/Mysteries.rbxlx)** using GitHub's **Download raw file**, open it in desktop **Roblox Studio → File → Open from File**, and press **Play**. The server generates the sanctuary, potion altar, archives, practice doors, flame anchors, six arenas, and 18 procedural enemies. The client creates its HUD in PlayerGui from modules under StarterPlayerScripts/UI.
 2. Open the **journal [B]**, drink one of the three starter potions, and aim at nearby enemies or ground when using abilities.
 3. Use **Q, E, R, F, Z, X** for the six equipped abilities. **Left click** is a basic strike. Touch users have hotbar, journal, and strike buttons; touch targeting uses the center of the camera.
 4. In the journal select a numbered slot, then select an unlocked ability to equip it. Earlier powers remain available as sequence numbers decrease.
 
-Studio defaults to **session-only storage**, clearly marked in the HUD. No Studio API access is required for that demo and progress does not survive the server closing. Published servers always use real DataStoreService; they never silently fall back to volatile storage.
+Studio defaults to **session-only storage**, with storage diagnostics restricted to the authorized F8 developer panel. No Studio API access is required for that demo and progress does not survive the server closing. Published servers always use real DataStoreService; they never silently fall back to volatile storage.
 
 **F8 developer controls** provide Studio-only mastery for the individual creator or a server-allowlisted user. They require Studio and session-only storage; public mastery stones are removed. See `docs/PHASE1_UI.md` for unpublished-place setup. Unauthorized remote requests cannot grant mastery.
 
@@ -92,6 +94,7 @@ Validation covers:
 - **2,163 domain assertions:** complete 9→1 advancement, acting deduplication, sanity, resources, cast reservations, lease contention/expiry, corrupt saves, retries and ambiguous committed responses.
 - **388 executor/target assertions:** all 54 abilities across 28 handlers, ownership/range/visibility checks, limited loot and recordings, safe teleport rejection, real adapter damage decisions, one-use substitutes, graft reflections, and high-tier resistance. Roblox engine dependencies are mocked.
 - **221 UI assertions:** responsive geometry, preview/confirm/cancel behavior, prompt lifecycle, role checks and GUI component updates with engine stand-ins.
+- Animation/VFX assertions cover atomic budgets, seven pooled classes, culling/quality, all eleven blocks, animation blending/cleanup, camera caps/restoration and server-confirmed death presentation with engine stand-ins.
 - Compilation of production and test Luau, strict Roblox API/type analysis, a real Rojo place build, and inspection that every script in the place exactly matches its source.
 
 The domain and adapter boundaries deliberately accept validated dynamic profile/config/entity tables (`any`); strict mode does not replace runtime checks. No errors are suppressed with `--!nocheck`.
