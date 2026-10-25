@@ -75,7 +75,8 @@ function Presentation.Update(self: any,state: any)
     end
 end
 function Presentation.Event(self: any,event: any)
-    if event.Kind=="AbilityVisual" then self.Abilities:Event(event);return end
+    if event.Kind=="AbilityVisual" or event.Kind=="StatusVisual" or event.Kind=="VisualTrigger" or event.Kind=="GateRemoval"
+        or event.Kind=="GateSnapshot" or event.Kind=="EchoSnapshot" then self.Abilities:Event(event);return end
     if not self.VFX:Visible(event.Position) then return end
     if event.Kind=="Damage" then
         self.Hits:Hit(event)
@@ -143,6 +144,10 @@ function Presentation.StopDemoAnimation(self: any)
     self.Demo=false
     local controller=self:LocalController()
     if controller then controller:Stop();controller.AutoState=nil;controller.AutoLocomotion=true end
+end
+function Presentation.PreviewTrigger(self: any,id: string,trigger: string,origin: Vector3,destination: Vector3,target: Instance?)
+    self:StopDemoAnimation()
+    self.Abilities:Preview(id,"Confirmed",origin,destination,target,"Result",trigger)
 end
 function Presentation.Destroy(self: any)
     self.Abilities:Destroy();self.Camera:Destroy();self.VFX:Destroy()

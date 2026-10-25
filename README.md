@@ -1,10 +1,10 @@
 # Mysteries — playable Roblox foundation
 
-> **[EXISTING] Phase B:** all 54 powers now have pathway-shaped cues, with dedicated procedural packages for **Spirit Vision, Flame Jump, Pickpocket, Ability Theft, Door Opening and Travel**. Accepted-cast timing, actual travel endpoints, private sensing batches, theft capture/release and cancellation feed the existing pooled framework. [Full code, classes and Explorer paths](docs/PHASE_B_VFX_CODE.md) · [Studio tests and exact captures to send](docs/PHASE_B_VFX.md). **[PROPOSED]** Bespoke choreography for the other 48 powers remains later work. Studio rendering remains unverified.
+> **[EXISTING] Phases C–E:** all **54 abilities** now have dedicated procedural compositions and cast-pose profiles. Confirmed status cues, real thread counts, recorded-power charges, substitute/graft/payload triggers, historical echoes and persistent gates reuse the pooled framework. [Full code, classes and exact Explorer paths](docs/PHASE_CDE_VFX_CODE.md) · [Coverage, Studio checklist and exact captures to send](docs/PHASE_CDE_VFX.md). Studio rendering remains unverified. **[PROPOSED]** Phases F–I (full HUD skins, world, outfits and enemy redesign) remain future work.
 
 > **Admin powers:** `johnskie816` is configured in the server allowlist. Click **ADMIN**, choose a pathway and Sequence 9–1, then **Apply pathway & sequence**. [Setup, behavior and Studio checks](docs/ADMIN_POWERS.md). Published-server selections save to your profile; Studio session-only selections reset when you stop Play.
 
-> **Animation/VFX — Phase A:** bounded client pools, 12 procedural animations, 11 reusable effect blocks, quality/120-stud LOD, reduced motion, low graphics and an authorized F8 Studio preview room. Phase B reuses these and adds a pooled stencil/composition helper. [Framework code and script destinations](docs/PHASE_A_VFX_CODE.md) · [Numeric properties and framework tests](docs/PHASE_A_VFX.md).
+> **Animation/VFX — Phase A:** bounded client pools, 12 procedural animations, 11 reusable effect blocks, quality/120-stud LOD, reduced motion, low graphics and an authorized F8 Studio preview room. Phases B–E reuse these and add pooled stencil, card, paper, veil and contour compositions. [Framework code and script destinations](docs/PHASE_A_VFX_CODE.md) · [Numeric properties and framework tests](docs/PHASE_A_VFX.md).
 
 > **Visual overhaul — Phase 1:** the current build includes a themed HUD, Journal/Pathway/Inventory tabs, confirmation-based potion UI, custom prompts, feedback and authorized developer diagnostics. [Full copy-ready code and script destinations](docs/PHASE1_UI_CODE.md) · [Studio checklist and exact screenshot requests](docs/PHASE1_UI.md). World relayout and permanent label replacement remain later visual phases.
 
@@ -96,11 +96,12 @@ Validation covers:
 
 - **1,306 data assertions:** roster, references, stats, jumps, bounds and immutability.
 - **2,163 domain assertions:** complete 9→1 advancement, acting deduplication, sanity, resources, cast reservations, lease contention/expiry, corrupt saves, retries and ambiguous committed responses.
-- **699 executor/target assertions:** all 54 abilities across 28 handlers, with the production visual-event adapter and unchanged ownership/range/visibility checks, limited loot/recordings, safe teleports, damage decisions, substitutes, graft reflections and resistance. Roblox engine dependencies are mocked.
-- **270 UI assertions:** responsive geometry, confirmation/cancellation, prompt lifecycle, role/admin controls, stored-power badge and synchronized cast-bar lifecycle with engine stand-ins.
+- **701 executor/target assertions:** all 54 abilities across 28 handlers, with the production visual-event adapter and unchanged ownership/range/visibility checks, limited loot/recordings, safe teleports, damage decisions, substitutes, graft reflections and resistance. Roblox engine dependencies are mocked.
+- **278 UI assertions:** responsive geometry, confirmation/cancellation, prompt lifecycle, role/admin controls, stored-power badge and synchronized cast-bar lifecycle with engine stand-ins.
 - **572 admin progression assertions:** authorization denial, malformed inputs, all 27 pathway/sequence choices, valid loadouts/stats, persistence compatibility and cleanup bookkeeping.
 - Animation/VFX assertions cover atomic budgets, seven pooled classes, culling/quality, all eleven blocks, animation blending/cleanup, camera caps/restoration and server-confirmed death presentation with engine stand-ins.
-- Phase B assertions cover all 54 visual routes at three qualities with/without Reduced Motion, six mobile packages, atomic multi-anchor admission/culling, moving symbols, private reveals, monotonic tokens and cancellation/stale-event rejection. [Details](docs/PHASE_B_VFX.md).
+- **1,336 ability/status assertions:** all 54 dedicated recipes at three qualities with/without Reduced Motion, mobile packages, atomic multi-anchor admission/culling, private reveals/statuses, monotonic tokens, cancellation/stale-event rejection, bounded status labels, gate fallback/cleanup and late-join gate/echo snapshots. [Details](docs/PHASE_CDE_VFX.md).
+- **9,617 assertions total**, followed by compilation of **62 Luau files** and source verification of **49 ModuleScripts, one Script and one LocalScript** in the built place.
 - Compilation of production and test Luau, strict Roblox API/type analysis, a real Rojo place build, and inspection that every script in the place exactly matches its source.
 
 The domain and adapter boundaries deliberately accept validated dynamic profile/config/entity tables (`any`); strict mode does not replace runtime checks. No errors are suppressed with `--!nocheck`.

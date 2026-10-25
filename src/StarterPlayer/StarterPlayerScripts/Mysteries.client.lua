@@ -144,7 +144,8 @@ stateEvent.OnClientEvent:Connect(function(update: any)
     if update.Dead and menus.Root.Visible then menus:Close() end
 end)
 effectEvent.OnClientEvent:Connect(function(event: any)
-    if type(event)~="table" or typeof(event.Position)~="Vector3" or type(event.Kind)~="string" then return end
+    if type(event)~="table" or type(event.Kind)~="string" then return end
+    if event.Kind~="GateRemoval" and typeof(event.Position)~="Vector3" then return end
     presentation:Event(event)
 end)
 UserInputService.InputBegan:Connect(function(input: InputObject,processed: boolean)

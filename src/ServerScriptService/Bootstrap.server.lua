@@ -66,7 +66,7 @@ local function notify(player: Player,text: string)
     if player.Parent then stateEvent:FireClient(player,{Message=string.sub(text,1,data.Runtime.MaxMessageLength)}) end
 end
 local world=World.new(data,domain,states,fx)
-local visualEvents=VisualEvents.new(world,VfxConfig.Protocol,function() return workspace:GetServerTimeNow() end)
+local visualEvents=VisualEvents.new(world,VfxConfig.Protocol,function() return workspace:GetServerTimeNow() end,VfxConfig.Status)
 world.Visuals=visualEvents
 local effects=Effects.new(world,domain,notify)
 world:Build()
@@ -92,7 +92,7 @@ local function sendState(player: Player)
         Digestion=p.Digestion,ActingProgress=p.ActingProgress,Health=s.Health,MaxHealth=s.Stats.Health,
         Spirituality=s.Spirituality,MaxSpirituality=s.Stats.Spirituality,Sanity=s.Sanity,Mode=s.Mode,
         Gold=p.Gold,WishCredits=p.WishCredits,Inventory=Domain.Copy(p.Inventory),Loadout=Domain.Copy(p.AbilityLoadout),
-        Cooldowns=cooldowns,Statuses=statuses,Dead=s.Dead,RecordedCharges=s.RecordedPower and s.RecordedPower.Charges or 0,StolenPower=s.StolenPower or false,
+        Cooldowns=cooldowns,Statuses=statuses,Dead=s.Dead,RecordedCharges=s.RecordedPower and s.RecordedPower.Charges or 0,RecordedPowerId=s.RecordedPower and s.RecordedPower.Id or false,StolenPower=s.StolenPower or false,
         Casting=s.Pending and s.Pending.Id or false,CastRemaining=s.Pending and math.max(0,s.Pending.EndsAt-now) or 0,CastSerial=s.CastSerial,VisualToken=s.VisualToken or 0})
 end
 local function bindCharacter(player: Player,character: Model)
@@ -203,7 +203,7 @@ Players.PlayerRemoving:Connect(releasePlayer)
 for _,player in ipairs(Players:GetPlayers()) do loadPlayer(player) end
 intent.OnServerEvent:Connect(function(player: Player,action: any,payload: any)
     if closing or type(action)~="string" or #action>12 or not limiter:Allow(player,os.clock()) then return end
-    if action=="Sync" then sendState(player);return end
+    if action=="Sync" then sendState(player);visualEvents:Sync(player);return end
     local s=states[player]
     if not s or not s.Ready or s.Dead or type(payload)~="table" then return end
     local now=os.clock()
@@ -323,7 +323,7 @@ task.spawn(function()
                 end)
             end
         end
-        world:Step(math.min(dt,1),now);effects:Step(now);visualEvents:Step()
+        world:Step(math.min(dt,1),now);effects:Step(now);visualEvents:Step(now)
         if now>=nextState then
             nextState=now+data.Runtime.StateIntervalSeconds
             for player in pairs(states) do if player.Parent then sendState(player) end end

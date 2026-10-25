@@ -27,15 +27,40 @@ return function(data: any,load: any,shared: any)
     CM.__mul=function(a,b) return cf(a.Position+b.Position) end
     CM.__add=function(a,b) return cf(a.Position+b) end
     function cm:PointToObjectSpace(p) return p-self.Position end
-    local frames={new=cf,identity=cf(),lookAt=function(p) return cf(p) end,fromMatrix=function(p) return cf(p) end}
+    local frames={new=cf,identity=cf(),lookAt=function(p) return cf(p) end,fromMatrix=function(p) return cf(p) end,Angles=function() return cf() end}
     local function instance(class)
-        local object={ClassName=class,_kind="Instance",Parent=true,Name=class,CFrame=cf(),Size=v(7,9,1)}
-        function object:IsA(kind) return kind==class or (kind=="BasePart" and class=="Part") end
-        function object:Clear() end
-        function object:Emit(count) self.Emitted=count end
-        function object:Destroy() self.Parent=nil end
-        function object:FindFirstChild(name) return if name=="HumanoidRootPart" then self.PrimaryPart else nil end
-        return setmetatable(object,{__index=function(a,k) if k=="Position" then return a.CFrame.Position end end})
+        local props={ClassName=class,_kind="Instance",Parent=true,Name=class,CFrame=cf(),Size=v(7,9,1),Transparency=0,LocalTransparencyModifier=0,Color={R=0.5,G=0.5,B=0.5}}
+        local children={};local methods={};local object
+        function methods:IsA(kind) return kind==class or (kind=="BasePart" and class=="Part") end
+        function methods:Clear() end
+        function methods:Emit(count) props.Emitted=count end
+        function methods:Destroy() for _,child in ipairs(table.clone(children)) do child:Destroy() end;object.Parent=nil end
+        function methods:GetDescendants()
+            local result={};for _,child in ipairs(children) do table.insert(result,child);for _,item in ipairs(child:GetDescendants()) do table.insert(result,item) end end
+            return result
+        end
+        function methods:FindFirstChild(name)
+            for _,child in ipairs(children) do if child.Name==name then return child end end
+            return if name=="HumanoidRootPart" then props.PrimaryPart else nil
+        end
+        function methods:FindFirstChildOfClass(kind)
+            for _,child in ipairs(children) do if child:IsA(kind) then return child end end;return nil
+        end
+        object=setmetatable({_Children=children},{__index=function(_,key)
+            if methods[key] then return methods[key] end
+            if key=="Position" then return props.CFrame.Position end
+            if props[key]~=nil then return props[key] end
+            for _,child in ipairs(children) do if child.Name==key then return child end end
+        end,__newindex=function(_,key,value)
+            if key=="Parent" then
+                if type(props.Parent)=="table" and props.Parent._Children then
+                    local index=table.find(props.Parent._Children,object);if index then table.remove(props.Parent._Children,index) end
+                end
+                if type(value)=="table" and value._Children then table.insert(value._Children,object) end
+            end
+            props[key]=value
+        end})
+        return object
     end
     local enums=setmetatable({},{__index=function(a,key)
         local namespace=setmetatable({},{__index=function(b,item) local out={Name=item,Value=1};rawset(b,item,out);return out end})
@@ -48,7 +73,7 @@ return function(data: any,load: any,shared: any)
         return {Z=1},if self.Mode=="All" then true elseif self.Mode=="Positive" then p.X>=0 else p.X<0
     end
     local worldRoot={CurrentCamera=camera}
-    local env={Vector3={new=v,zero=v(0,0,0),one=v(1,1,1),xAxis=v(1,0,0),yAxis=v(0,1,0),zAxis=v(0,0,1)},CFrame=frames,
+    local env={UDim2={fromOffset=function(x,y) return {X=x,Y=y} end,fromScale=function(x,y) return {X=x,Y=y} end},Vector3={new=v,zero=v(0,0,0),one=v(1,1,1),xAxis=v(1,0,0),yAxis=v(0,1,0),zAxis=v(0,0,1)},CFrame=frames,
         Vector2={new=function(x,y) return {X=x,Y=y} end},Enum=enums,workspace=worldRoot,Instance={new=instance},
         Color3={fromRGB=function(r,g,b) return {R=r/255,G=g/255,B=b/255} end},
         NumberRange={new=sequence},NumberSequence={new=sequence},ColorSequence={new=sequence},NumberSequenceKeypoint={new=sequence},
@@ -61,11 +86,15 @@ return function(data: any,load: any,shared: any)
         end}}
     load("Theme",env)
     local C=load("VfxConfig",env)
+    local T=load("Theme",env)
     local Service=load("Client/Visuals/VfxService",env)
     local Blocks=load("Client/Visuals/EffectBlocks",env)
     load("Client/Visuals/PathwayEffects/Seer",env);load("Client/Visuals/PathwayEffects/Marauder",env);load("Client/Visuals/PathwayEffects/Apprentice",env)
+    load("Client/Visuals/Choreography",env)
     load("Client/Visuals/StatusPresentation",env)
     local Presenter=load("Client/Visuals/AbilityPresentation",env)
+    local Status=load("Client/Visuals/StatusPresentation",env)
+    local Anim=load("AnimConfig",env)
     local Events=load("Server/Services/VisualEventService",{})
     local service=Service.new();local blocks=Blocks.new(service)
     local layer=function(x) return {Name="DoorFrame",Position=v(x,0,0),Palette="Apprentice"} end
@@ -242,5 +271,129 @@ return function(data: any,load: any,shared: any)
     events:Remove(player)
     check(events.Active[player]==nil and events.Counters[player]==nil,"Leaving player releases server evidence trackers")
     check(state.Pending.Token==1 and state.CastSerial==0,"Evidence adapter never changes pending gameplay or cast serial")
-    print("PASS: "..checks.." Phase B composite/54-route/protocol/evidence assertions (engine stand-ins; no rendering)")
+    -- C–E: all routes have real registered recipes and matching procedural profiles.
+    local registry={Seer=load("Client/Visuals/PathwayEffects/Seer",env),Marauder=load("Client/Visuals/PathwayEffects/Marauder",env),Apprentice=load("Client/Visuals/PathwayEffects/Apprentice",env)}
+    local Choreo=load("Client/Visuals/Choreography",env)
+    for id,a in pairs(data.Abilities) do
+        local event=packet(id,"Result",1);event.Target=target;event.Radius=4
+        local ctx={Layer=function(name,pos,options) return {Name=name,Position=pos,Palette=a.PathwayId,Options=options or {}} end,
+            Frame=function(pos) return cf(pos) end,Simplified=false}
+        local layers=registry[a.PathwayId].Build(a,event,Choreo.Extend(a,event,ctx))
+        check(layers and #layers>0,"Dedicated pathway recipe exists without generic fallback: "..id)
+        check(Anim.AbilityProfiles[id] and Anim.CastProfiles[Anim.AbilityProfiles[id]],"Every ability selects a procedural pose profile")
+        check(Anim.AbilityTimings[id].Windup==a.CastTimeSeconds,"Pose windup preserves authoritative cast duration")
+    end
+    local serverState=state
+    serverState.Profile={PathwayId="Seer"};serverState.Ready=true;serverState.Dead=false;serverState.Statuses={}
+    local npc=instance("Model");npc.PrimaryPart=instance("Part");npc.PrimaryPart.CFrame=cf(20,0,0);npc.PrimaryPart.Parent=npc
+    local npcHum=instance("Humanoid");npcHum.Health=100;npcHum.Parent=npc
+    local enemy={Model=npc,Root=npc.PrimaryPart,Humanoid=npcHum,Threads=1,Statuses={Threaded={Owner=player,ExpiresAt=520}}}
+    serverWorld.Entities={[npc]=enemy};serverWorld.Data=data
+    serverWorld.Root=function() return root end
+    broadcasts={};privatePackets={}
+    local watched=Events.new(serverWorld,C.Protocol,function() return now end,C.Status)
+    watched:Statuses(500)
+    check(#privatePackets==1 and #broadcasts==0,"Thread stages are private to the authorizing caster")
+    check(privatePackets[1].Event.Count==1 and privatePackets[1].Event.Required==3,"Thread count and requirement come from actual server state/data")
+    watched:Statuses(500.25)
+    check(#privatePackets==1,"Unchanged status produces no per-frame network stream")
+    enemy.Threads=2;enemy.Statuses.Threaded.ExpiresAt=530;watched:Statuses(501)
+    check(privatePackets[#privatePackets].Event.Count==2,"Confirmed second thread stage updates")
+    enemy.Statuses={Controlled={Owner=player,ExpiresAt=535}};enemy.Owner=player;watched:Statuses(502)
+    check(#broadcasts==1 and broadcasts[1].StatusId=="Controlled","Only actual control completion produces a public ownership mark")
+    check(privatePackets[#privatePackets].Event.Action=="Remove","Replaced thread status is explicitly removed")
+    local controlled=enemy.Statuses.Controlled
+    watched:Statuses(536)
+    check(broadcasts[#broadcasts].Action=="Remove" and enemy.Statuses.Controlled==controlled,"Expiry evidence does not mutate gameplay status tables")
+    enemy.Statuses={Payload={Owner=player,ExpiresAt=550}};watched:Statuses(537)
+    check(privatePackets[#privatePackets].Event.StatusId=="Payload" and privatePackets[#privatePackets].Event.Private,"Hidden payload remains caster-only before triggering")
+    watched:Sync(players[2]);local synced=#privatePackets
+    check(synced>0 and (privatePackets[synced].Owner~=players[2] or privatePackets[synced].Event.StatusId~="Payload"),"Late observer sync cannot disclose private payload")
+    -- A late joiner may receive a new live status before older active statuses sync.
+    enemy.Statuses.Controlled={Owner=player,ExpiresAt=550};watched:Statuses(538)
+    local observerStatus=Status.new(nil,function() return now end)
+    local newer=table.clone(broadcasts[#broadcasts]);newer.Target=instance("Model")
+    watched.Revision+=1;newer.Revision=watched.Revision
+    check(observerStatus:Event(newer,2),"Late observer can receive a newer live status before sync")
+    watched.LastSync[players[2]]=nil;watched:Sync(players[2])
+    local activeSnapshot=privatePackets[#privatePackets].Event
+    check(activeSnapshot.StatusId=="Controlled" and activeSnapshot.Revision>newer.Revision,
+        "Current status sync receives a fresh revision beyond intervening live receipts")
+    check(observerStatus:Event(activeSnapshot,2),"Late observer retains earlier active statuses after a newer live receipt")
+    watched:Trigger(player,"PayloadTriggered","Marauder_2_Secondary",v(20,0,0),npc)
+    check(broadcasts[#broadcasts].Kind=="VisualTrigger" and broadcasts[#broadcasts].Trigger=="PayloadTriggered","Confirmed trigger has a distinct cue ID")
+    -- Actual client status renderer, GUI pooling, gate fallback and appearance restoration.
+    quality=10;input.TouchEnabled=false;camera.CFrame=cf();camera.Mode="All"
+    local effects=Service.new();local library=Blocks.new(effects);local status=Status.new(effects,function() return now end,library)
+    local source={Kind="StatusVisual",Action="Set",Owner=1,Target=npc,StatusId="Threaded",Position=v(20,0,0),
+        PathwayId="Seer",Count=2,Required=3,Revision=1,ExpiresAt=now+20,At=now}
+    check(status:Event(source,1),"Client admits private thread receipt for its owner")
+    status:Step()
+    check(status.Records[npc].Widget and status.Records[npc].Widget.Status.Text=="Threads 2/3","Pooled badge displays confirmed thread progress")
+    local oldWidget=status.Records[npc].Widget
+    local removed=table.clone(source);removed.Action="Remove";removed.Revision=2
+    status:Event(removed,1);status:Step()
+    check(not oldWidget.Enabled and status.Records[npc]==nil,"Removal parks and detaches status GUI")
+    check(not status:Event(source,1),"Stale status cannot resurrect a removed badge")
+    local privateCopy=table.clone(source);privateCopy.Owner=2;privateCopy.Revision=3
+    check(not status:Event(privateCopy,1),"Client also enforces hidden status ownership")
+    local public=table.clone(source);public.StatusId="Controlled";public.Revision=4
+    status:Event(public,1);status:Step()
+    check(status.Records[npc].Widget==oldWidget and status.Widgets==1,"Badges reuse pooled GUI after status replacement")
+    for index=1,T.StatusUI.Max+2 do
+        local model=instance("Model");model.PrimaryPart=instance("Part");model.PrimaryPart.CFrame=cf(20+index,0,0)
+        local event=table.clone(public);event.Target=model;event.Revision=4+index
+        status:Event(event,1)
+    end
+    status:Step();check(status.Widgets<=T.StatusUI.Max,"Status GUI allocation respects global widget cap")
+    input.TouchEnabled=true;status:Step()
+    local visible=0;for _,entry in pairs(status.Records) do if entry.Widget and entry.Widget.Enabled then visible+=1 end end
+    check(visible<=T.StatusUI.MobileMax,"Touch mode reduces visible status labels")
+    input.TouchEnabled=false
+    local left=instance("Part");left.CFrame=cf(10,4,0);local right=instance("Part");right.CFrame=cf(30,4,0)
+    local originalColor=left.Color
+    status:Gate({Gates={left,right},Owner=1,AbilityId="Apprentice_1",ExpiresAt=now+25})
+    status:Step()
+    check(status.Gates[1].Handle and left.LocalTransparencyModifier==1,"Real proxy pane hides only after frame admission")
+    local gateHandle=status.Gates[1].Handle
+    effects:SetSettings(true,true)
+    check(not gateHandle.Active and left.LocalTransparencyModifier==0,"Quality change restores pane while old frame releases")
+    now+=C.Status.Retry;status:Step()
+    check(status.Gates[1].Handle.Active,"Persistent gate renews under new quality without a gameplay gate")
+    status:RemoveGates(1)
+    check(left.LocalTransparencyModifier==0 and left.Color==originalColor and status.Gates[1]==nil,"Gate removal restores original local appearance")
+    local blockers={}
+    for _=1,effects:Profile().MaxEffects do
+        table.insert(blockers,library:Compose({{Name="RingBurst",Position=v(10,0,0),Palette="Seer"}},1,5,1))
+    end
+    status:Gate({Gates={left,right},Owner=1,AbilityId="Apprentice_5_Secondary",ExpiresAt=now+25});status:Step()
+    check(not status.Gates[1].Handle and left.LocalTransparencyModifier==0,"Budget denial keeps real gate fallback visible")
+    for _,handle in ipairs(blockers) do if handle then handle:Finish() end end
+    status:RemoveGates(1)
+
+    local body=instance("Part");body.Parent=npc;body.Color={R=1,G=0,B=0};body.LocalTransparencyModifier=0
+    local bodyColor=body.Color
+    status:Echo({Echo=npc,Owner=1,ExpiresAt=now+10})
+    check(body.Color==C.Status.EchoColor and body.LocalTransparencyModifier==C.Status.EchoAlpha,"Historical dressing alters presentation only")
+    status:ClearLocal(1)
+    check(body.Color==bodyColor and body.LocalTransparencyModifier==0,"Administrative cleanup restores echo appearance")
+    local snapshots={};local observer=players[2]
+    local realGates={instance("Part"),instance("Part")};realGates[1].CFrame=cf(10,0,0);realGates[2].CFrame=cf(30,0,0)
+    local cache=Events.new(serverWorld,C.Protocol,function() return now end,C.Status)
+    serverWorld.FX.FireClient=function(_self,recipient,event) table.insert(snapshots,{Player=recipient,Event=event}) end
+    local gateContext={Player=player,State=state,Root=root,Position=v(30,0,0),Ability=data.Abilities.Apprentice_5_Secondary,VisualGates=realGates,VisualExpires=600}
+    cache:Result(gateContext,cache:Capture(gateContext),true,nil,550)
+    cache:Sync(observer)
+    check(#snapshots==1 and snapshots[1].Event.Kind=="GateSnapshot","Late join receives active gate appearance without recasting")
+    cache:Sync(observer);check(#snapshots==1,"Status/gate resync is separately throttled")
+    now+=C.Protocol.SyncInterval;cache:RemoveGates(player);cache:Sync(observer)
+    check(#snapshots==1,"Removed gates are not resurrected by synchronization")
+    local echoContext={Player=player,State=state,Root=root,Position=v(20,0,0),Ability=data.Abilities.Seer_3,VisualEcho=npc,VisualExpires=575}
+    cache:Result(echoContext,cache:Capture(echoContext),true,nil,550)
+    now+=C.Protocol.SyncInterval;cache:Sync(observer)
+    check(snapshots[#snapshots].Event.Kind=="EchoSnapshot","Late join receives historical summon appearance")
+    cache:Remove(player)
+    check(next(cache.Gates)==nil and next(cache.Echoes)==nil,"Departing owner clears persistent cosmetic caches")
+    status:Clear();effects:Destroy()
+    print("PASS: "..checks.." ability composition/54-route/status/privacy/lifecycle assertions (engine stand-ins; no rendering)")
 end

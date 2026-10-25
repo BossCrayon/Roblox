@@ -26,7 +26,7 @@ local function roll(entry: any,time: number,_speed: number): Pose
     return {Root=frame(-entry.Tuck*arc,entry.Pitch*arc,0,entry.Roll*arc),
         LeftShoulder=frame(0,entry.ArmPitch*arc,0,0),RightShoulder=frame(0,entry.ArmPitch*arc,0,0)}
 end
-return freeze({
+local config={
     Spring={Frequency=8,MaxStep=0.1},
     Blend={Default=0.12,MinFade=0.016,MaxFade=2,WeightEpsilon=0.001,MaxWeight=1,ReducedScale=0.3},
     Locomotion={MinSpeed=0.1,RunSpeed=18,SpeedReference=16,MaxSpeedRatio=1.5,LandingVelocity=-3},
@@ -77,4 +77,75 @@ return freeze({
         Victory={AnimationId="",Procedural=still,Priority=7,AssetPriority=Enum.AnimationPriority.Action4,Loop=false,
             Duration=1.4,FadeIn=0.25,FadeOut=0.3,Pose={Root={0.03,-3,0,0},Neck={0,-4,0,0},LeftShoulder={0,-100,0,-24},RightShoulder={0,-100,0,24}}},
     },
-})
+}
+-- The twelve animation states remain intact. Ability profiles select original
+-- joint poses and optional asset slots without changing authoritative cast time.
+local poses={
+    Divination={{0,0,0,0},{0,-25,0,-14},{0,-25,0,14}},
+    Acrobat={{-0.08,10,-10,-5},{0,-18,0,-12},{0,-30,0,20}},
+    Composure={{0,-2,0,0},{0,-10,0,-6},{0,-10,0,6}},
+    Paper={{0,2,0,0},{0,-42,-10,-12},{0,-42,10,12}},
+    Veil={{0,0,-5,0},{0,-14,0,-8},{0,-75,10,12}},
+    Voice={{0,0,5,0},{0,-10,0,-6},{0,-54,0,8}},
+    Puppet={{0,-3,-4,0},{0,-58,-8,-24},{0,-58,8,24}},
+    Exchange={{0,-2,10,0},{0,-44,-20,-25},{0,-62,20,25}},
+    Illusion={{0,-3,-8,0},{0,-65,0,-30},{0,-38,10,18}},
+    History={{0,-5,0,0},{0,-52,-16,-26},{0,-52,16,26}},
+    Recovery={{0,-4,0,0},{0,-40,-14,-10},{0,-40,14,10}},
+    Miracle={{0,-5,0,0},{0,-55,-15,-28},{0,-55,15,28}},
+    Graft={{0,0,8,0},{0,-66,-15,-22},{0,-34,15,22}},
+    Domain={{0,-4,0,0},{0,-72,-12,-32},{0,-72,12,32}},
+    Stealth={{-0.04,6,8,-3},{0,-10,0,-5},{0,-18,0,8}},
+    Deceit={{0,0,-9,0},{0,-20,-12,-8},{0,-48,18,22}},
+    Decipher={{0,4,0,0},{0,-48,-8,-12},{0,-48,8,12}},
+    Thought={{0,-2,7,0},{0,-18,0,-8},{0,-67,-12,10}},
+    Parasite={{0,5,5,0},{0,-22,0,-8},{0,-58,12,10}},
+    Destiny={{0,-2,-12,0},{0,-25,-10,-8},{0,-68,20,20}},
+    Time={{0,-2,0,0},{0,-35,-15,-10},{0,-70,15,16}},
+    Trick={{0,3,-8,0},{0,-18,-10,-8},{0,-48,12,20}},
+    Astrology={{0,-6,0,0},{0,-50,-14,-18},{0,-50,14,18}},
+    Record={{0,0,7,0},{0,-58,-8,-14},{0,-44,12,14}},
+    Release={{0,3,0,0},{0,-40,-8,-18},{0,-74,8,20}},
+    Conceal={{0,-3,0,0},{0,-48,-16,-10},{0,-48,16,10}},
+    Seal={{0,2,0,0},{0,-62,-16,-32},{0,-62,16,32}},
+    Replica={{0,-3,0,0},{0,-64,-8,-20},{0,-64,8,20}},
+    Gate={{0,-4,0,0},{0,-72,-15,-30},{0,-72,15,30}},
+    Closure={{0,4,0,0},{0,-60,16,-12},{0,-60,-16,12}},
+}
+local families: {[string]: {{string}}}={
+    Seer={{"Divination","Reading"},{"Acrobat","Composure"},{"Flame","Paper"},{"Veil","Voice"},{"Puppet","Puppet"},
+        {"Exchange","Illusion"},{"History","Recovery"},{"Miracle","Recovery"},{"Graft","Domain"}},
+    Marauder={{"Pickpocket","Stealth"},{"Deceit","Deceit"},{"Decipher","Reading"},{"Theft","Theft"},{"Thought","Thought"},
+        {"Parasite","Parasite"},{"Deceit","Puppet"},{"Destiny","Destiny"},{"Time","Time"}},
+    Apprentice={{"Threshold","Reading"},{"Trick","Trick"},{"Astrology","Seal"},{"Record","Release"},{"Travel","Gate"},
+        {"Conceal","Seal"},{"Travel","Conceal"},{"Replica","Gate"},{"Gate","Closure"}},
+}
+local release: {[string]: {{number}}}={
+    Seer={{0.22,0.18},{0.20,0.25},{0.18,0.24},{0.30,0.20},{0.25,0.18},{0.18,0.32},{0.35,0.30},{0.35,0.35},{0.25,0.40}},
+    Marauder={{0.16,0.20},{0.20,0.18},{0.25,0.22},{0.22,0.25},{0.20,0.25},{0.25,0.30},{0.25,0.30},{0.20,0.22},{0.25,0.35}},
+    Apprentice={{0.25,0.20},{0.16,0.25},{0.28,0.22},{0.30,0.20},{0.20,0.30},{0.35,0.30},{0.25,0.30},{0.30,0.30},{0.40,0.30}},
+}
+local legacy={Seer_9_Secondary="Reading",Seer_7="Flame",Marauder_9="Pickpocket",Marauder_6="Theft",Apprentice_9="Threshold",Apprentice_5="Travel"}
+config.AbilityProfiles={};config.AbilityTimings={}
+for pathway,rows in pairs(families) do
+    for index,row in ipairs(rows) do
+        local sequence=10-index
+        for choice,family in ipairs(row) do
+            local id=pathway.."_"..sequence..(if choice==2 then "_Secondary" else "")
+            local profile=legacy[id] or id
+            local source=config.CastProfiles[family]
+            if not source then
+                local pose=poses[family]
+                source={CastWindup={AnimationId="",Pose={Root=pose[1],LeftShoulder=pose[2],RightShoulder=pose[3]}},
+                    CastRelease={AnimationId="",Pose={Root=pose[1],LeftShoulder=pose[2],RightShoulder=pose[3]}}}
+            end
+            local wind=table.clone(source.CastWindup)
+            local cast=table.clone(source.CastRelease)
+            cast.Duration=release[pathway][index][choice]
+            config.CastProfiles[profile]={CastWindup=wind,CastRelease=cast}
+            config.AbilityProfiles[id]=profile
+            config.AbilityTimings[id]={Windup=if sequence<=4 then 1.5 else 0.5,Release=cast.Duration,Family=family}
+        end
+    end
+end
+return freeze(config)

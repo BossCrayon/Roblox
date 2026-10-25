@@ -3,7 +3,7 @@
 local C: any=require(game:GetService("ReplicatedStorage").Shared.VfxConfig)
 local Blocks={}
 Blocks.Names={"RingBurst","RisingMotes","ThreadBeam","DoorFrame","StarBurst","GlitchFlicker","GroundRune","ImpactFlash","ScreenEdgePulse","ShockwaveRing","AfterimageTrail"}
-Blocks.AbilityNames={"SigilStencil"}
+Blocks.AbilityNames={"SigilStencil","CardFan","PaperFold","VeilRibbon","ContourEcho"}
 local TAU=math.pi*2
 local function take(handle: any,class: string,parent: Instance?): any
     local object=handle:Acquire(class,parent)
@@ -38,6 +38,7 @@ local function reserve(name: string,c: any,detail: number,low: boolean,opts: any
     elseif name=="GlitchFlicker" then n=4
     elseif name=="ImpactFlash" then n=2
     elseif name=="ThreadBeam" then n=1
+    elseif name=="VeilRibbon" then n=if low then c.LowCount else c.Count
     elseif name=="SigilStencil" then
         for _,path in ipairs(stencil(c,low,opts or {})) do n+=math.max(0,#path-1) end
     end
@@ -45,8 +46,11 @@ local function reserve(name: string,c: any,detail: number,low: boolean,opts: any
     local trail=if name=="AfterimageTrail" and not low then 1 else 0
     local afterHead=if name=="AfterimageTrail" then 1 else 0
     local host=if name=="ScreenEdgePulse" then 0 else 1
+    local pieces=0
+    if name=="CardFan" then pieces=if low then c.LowCount else c.Count
+    elseif name=="PaperFold" or name=="ContourEcho" then pieces=if low then #c.LowPieces else #c.Pieces end
     local emitter=if name=="RisingMotes" and C.Particle.Texture~="" then 1 else 0
-    return {Part=host+motes+afterHead,Attachment=n*2+trail*2,Beam=n,Trail=trail,ParticleEmitter=emitter},segments,motes
+    return {Part=host+motes+afterHead+pieces,Attachment=n*2+trail*2,Beam=n,Trail=trail,ParticleEmitter=emitter},segments,motes
 end
 function Blocks.new(service: any,callbacks: any?): any
     return setmetatable({Service=service,Callbacks=callbacks or {},LastPulse=nil},{__index=Blocks})
@@ -67,6 +71,7 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
     if opts.Width or opts.Height then
         c=table.clone(c);c.Width=opts.Width or c.Width;c.Height=opts.Height or c.Height
     end
+    if opts.Radius then c=table.clone(c);c.Radius=opts.Radius end
     local costs,segments,motes=reserve(name,c,detail,low,opts)
     local h=opts.Lease or self.Service:Begin(name,position,tier or 1,c.Priority,costs)
     if not h then return nil end
@@ -85,7 +90,50 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
         host.CFrame=if typeof(opts.Frame)=="CFrame" then opts.Frame else CFrame.new(position)
     end
     local update: (number,number,number)->() = function() end
-    if name=="SigilStencil" then
+    if name=="CardFan" or name=="PaperFold" or name=="ContourEcho" then
+        local pieces={}
+        local count=costs.Part-1
+        for i=1,count do
+            local part=take(h,"Part",nil)
+            part.Color=if name=="ContourEcho" then p.Primary else c.Color
+            part.Material=Enum.Material.SmoothPlastic
+            local shape=nil
+            if name~="CardFan" then shape=c.Pieces[if low then c.LowPieces[i] else i] end
+            part.Size=if shape then point(shape[4],shape[5],shape[6])*scale else c.Size*scale
+            table.insert(pieces,{Part=part,Shape=shape})
+        end
+        update=function(_dt: number,age: number,t: number)
+            local fade=c.Alpha+(1-c.Alpha)*alpha(age,c.Duration,common.FadeStart)
+            for i,entry in ipairs(pieces) do
+                local offset: Vector3
+                local rotation=CFrame.identity
+                if name=="CardFan" then
+                    local index=i-(count+1)/2
+                    offset=point(index*c.Offset,0,0)*scale
+                    rotation=CFrame.Angles(0,0,math.rad(index*c.Spread))
+                else
+                    local shape=entry.Shape
+                    offset=point(shape[1],shape[2],shape[3])*scale
+                    if name=="PaperFold" and opts.Break and not h.ReducedMotion then
+                        local direction=if offset.Magnitude>common.MinimumLength then offset.Unit else Vector3.yAxis
+                        offset+=direction*t*c.BreakDistance*scale
+                    elseif name=="ContourEcho" and not h.ReducedMotion then offset+=Vector3.xAxis*t*c.Drift*scale end
+                end
+                entry.Part.CFrame=host.CFrame*CFrame.new(offset)*rotation;entry.Part.Transparency=fade
+            end
+        end
+    elseif name=="VeilRibbon" then
+        local lines={}
+        for _=1,costs.Beam do table.insert(lines,segment(h,host,c.Width*scale,p.Primary)) end
+        update=function(_dt: number,age: number,_t: number)
+            local fade=c.Alpha+(1-c.Alpha)*alpha(age,c.Duration,common.FadeStart)
+            for i,line in ipairs(lines) do
+                local side=if i%2==0 then 1 else -1
+                setLine(line,point(side*c.Offset*scale,-c.Height*scale/2,0),point(side*c.Offset*scale,c.Height*scale/2,0),fade)
+                line.Beam.CurveSize0=c.Curve*scale;line.Beam.CurveSize1=-c.Curve*scale
+            end
+        end
+    elseif name=="SigilStencil" then
         local paths=stencil(c,low,opts)
         local lines={}
         for _,path in ipairs(paths) do
@@ -239,6 +287,10 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
         end
     end
     local wrapped=function(dt: number,age: number,t: number)
+        if host and opts.MoveTo and name~="SigilStencil" then
+            local fraction=if h.ReducedMotion then 1 else t
+            host.CFrame=(opts.Frame or CFrame.new(position))+(opts.MoveTo-position)*fraction
+        end
         if host and opts.Follow then
             if not opts.Follow.Parent then h:Finish();return end
             host.CFrame=CFrame.new(opts.Follow.Position+(opts.Offset or Vector3.zero))*(if opts.Frame then opts.Frame.Rotation else CFrame.identity)

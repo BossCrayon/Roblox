@@ -75,6 +75,11 @@
     "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/CameraFeel"
   },
   {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/Choreography.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/Choreography"
+  },
+  {
     "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/EffectBlocks.lua",
     "script_class": "ModuleScript",
     "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/EffectBlocks"

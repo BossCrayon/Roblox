@@ -223,7 +223,11 @@ return function(data: any,Domain: any,loadEffects: any,loadWorld: any,VisualEven
     f.Root.Position=vec(0/0,0,0)
     check(not f.Effect:Validate(f.Player,f.State,data.Abilities.Seer_9,f.Input),"Reject non-finite caster positions")
     local scene=fixture(data.Abilities.Seer_8)
+    local outcomePackets={}
     local actualWorld=World.new(data,domain,{[scene.Player]=scene.State},{FireAllClients=function() end})
+    actualWorld.FX.FireAllClients=function(_self,packet) table.insert(outcomePackets,packet) end
+    actualWorld.FiniteVector=scene.World.FiniteVector
+    actualWorld.Visuals=VisualEvents.new(actualWorld,{},function() return 1000 end)
     actualWorld.Entities[scene.Enemy.Model]=scene.Enemy
     local hp=scene.Humanoid.Health
     scene.State.Statuses.Invulnerable={ExpiresAt=200}
@@ -234,15 +238,21 @@ return function(data: any,Domain: any,loadEffects: any,loadWorld: any,VisualEven
     scene.State.Statuses.Invulnerable=nil;scene.State.Statuses.Substitute={ExpiresAt=200}
     actualWorld:DamagePlayer(scene.Player,9999,scene.Enemy,102)
     check(scene.Humanoid.Health>0 and scene.State.Statuses.Substitute==nil,"Paper substitute consumes one lethal hit")
+    check(outcomePackets[#outcomePackets].Kind=="VisualTrigger" and outcomePackets[#outcomePackets].Trigger=="SubstituteTriggered","Paper burst evidence comes only from actual lethal substitute consumption")
     scene.State.Statuses.Invulnerable=nil
     actualWorld:DamagePlayer(scene.Player,9999,scene.Enemy,103)
     check(scene.Humanoid.Health==0,"Consumed substitute cannot prevent a second lethal hit")
     scene=fixture(data.Abilities.Seer_1)
     actualWorld=World.new(data,domain,{[scene.Player]=scene.State},{FireAllClients=function() end})
+    outcomePackets={}
+    actualWorld.FX.FireAllClients=function(_self,packet) table.insert(outcomePackets,packet) end
+    actualWorld.FiniteVector=scene.World.FiniteVector
+    actualWorld.Visuals=VisualEvents.new(actualWorld,{},function() return 1000 end)
     scene.Enemy.Statuses.Grafted={Owner=scene.Player,ExpiresAt=200}
     hp=scene.Humanoid.Health
     actualWorld:DamagePlayer(scene.Player,40,scene.Enemy,100)
     check(scene.Humanoid.Health==hp and scene.Enemy.Humanoid.Health==9960,"Grafting reflects actual hostile damage")
+    check(outcomePackets[#outcomePackets].Trigger=="GraftReflected","Reflected-hit presentation requires real server reflection")
     check(scene.State.Profile.Digestion==5,"A completed reflected attack earns graft acting progress")
     scene=fixture(data.Abilities.Marauder_8)
     actualWorld=World.new(data,domain,{[scene.Player]=scene.State},{FireAllClients=function() end})

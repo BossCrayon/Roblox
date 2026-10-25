@@ -30,8 +30,8 @@ parts=['# Phase B — full copy-ready code\n',
        f'[EXISTING] These {len(manifest)} complete scripts include new modules, changed integrations and reused framework dependencies. '
        'Apply to the existing Mysteries foundation with Play stopped; replace matching scripts and create Folder parents. '
        'For a blank place use docs/FULL_SOURCE.md. The built studio/Mysteries.rbxlx already contains everything.\n',
-       '[EXISTING] Six dedicated packages plus generic pathway cues for the other 48 abilities are implemented in source. '
-       'Rendered quality and engine/device performance require Studio checks. [PROPOSED] Full bespoke choreography for the remaining abilities is deferred. '
+       '[EXISTING] This historical Phase B export includes current C–E integration updates. All 54 abilities now have dedicated recipes; '
+       'use docs/PHASE_CDE_VFX_CODE.md for the current handoff. Studio rendering and engine/device performance remain unverified. '
        '[NEEDS NEW ASSET] Optional original uploaded audio/animation polish; every supplied slot remains 0/empty.\n',
        '| File | Class | Exact Explorer path |\n|---|---|---|']
 for entry in manifest:

@@ -2,8 +2,10 @@
 -- Original, cosmetic choreography. Only server-authored ability packets enter Event.
 local Shared=game:GetService("ReplicatedStorage").Shared
 local C=require(Shared.VfxConfig)
+local Anim=require(Shared.AnimConfig)
 local VfxService=require(script.Parent.VfxService)
 local Status=require(script.Parent.StatusPresentation)
+local Choreography=require(script.Parent.Choreography)
 local Families={Seer=require(script.Parent.PathwayEffects.Seer),Marauder=require(script.Parent.PathwayEffects.Marauder),Apprentice=require(script.Parent.PathwayEffects.Apprentice)}
 local Ability={}
 local function finite(n: any): boolean return type(n)=="number" and n==n and math.abs(n)<math.huge end
@@ -12,7 +14,7 @@ local function point(p: any): boolean
 end
 function Ability.new(service: any,blocks: any,data: any,callbacks: any): any
     local self: any=setmetatable({Service=service,Blocks=blocks,Data=data,Callbacks=callbacks,Records={},Previews={},LocalPath=nil,
-        Status=Status.new(service,callbacks.Clock)},{__index=Ability})
+        Status=Status.new(service,callbacks.Clock,blocks),LastCue=0,LastGateCue=0},{__index=Ability})
     return self
 end
 function Ability.Frame(self: any,position: Vector3): CFrame
@@ -27,9 +29,11 @@ function Ability.Layers(self: any,a: any,e: any): (any,number)
     end
     local profile=self.Service:Profile()
     local context={Layer=layer,Frame=function(position: Vector3) return self:Frame(position) end,Simplified=profile.Low or profile.Mobile}
+    context=Choreography.Extend(a,e,context)
     if e.Phase=="Begin" then
         local at=e.Position+Vector3.yAxis*C.Ability.HandHeight
-        local glyph=if a.PathwayId=="Seer" then C.Ability.EyeGlyph elseif a.PathwayId=="Marauder" then C.Ability.TheftGlyph else C.Ability.DoorGlyph
+        local family=Anim.AbilityTimings[a.Id] and Anim.AbilityTimings[a.Id].Family
+        local glyph=C.Ability.WindupGlyphs[family] or (if a.PathwayId=="Seer" then C.Ability.EyeGlyph elseif a.PathwayId=="Marauder" then C.Ability.TheftGlyph else C.Ability.DoorGlyph)
         local lowGlyph=if a.PathwayId=="Seer" then C.Ability.LowEyeGlyph elseif a.PathwayId=="Marauder" then glyph else C.Ability.LowDoorGlyph
         local root=e.Character and (e.Character.PrimaryPart or e.Character:FindFirstChild("HumanoidRootPart"))
         return {layer("SigilStencil",at,{Frame=self:Frame(at),Glyph=glyph,LowGlyph=lowGlyph,Scale=C.Ability.WindupScale,
@@ -65,6 +69,12 @@ function Ability.Valid(self: any,e: any): any
         if not finite(e.EndsAt) or e.EndsAt<e.At or e.EndsAt-e.At>C.Lifetime.Maximum then return nil end
     elseif e.Phase=="Result" then
         if not point(e.Origin) or not point(e.Destination) or type(e.Outcome)~="string" then return nil end
+        if e.Radius~=nil and (not finite(e.Radius) or e.Radius<0 or e.Radius>C.Safety.PositionLimit) then return nil end
+        if e.Affected then
+            if type(e.Affected)~="table" or #e.Affected>C.Protocol.MaxAffected then return nil end
+            for _,item in ipairs(e.Affected) do if type(item)~="table" or not point(item.Position) then return nil end end
+        end
+        if (e.Gates or e.Echo) and (not finite(e.ExpiresAt) or e.ExpiresAt-self.Callbacks.Clock()>C.Protocol.MaxStatusLife) then return nil end
     elseif e.Phase=="Reveal" then
         if e.Owner~=self.Callbacks.LocalUserId or type(e.Targets)~="table" or #e.Targets>C.Protocol.MaxReveals or not finite(e.ExpiresAt) then return nil end
         for _,target in ipairs(e.Targets) do if type(target)~="table" or not point(target.Position) then return nil end end
@@ -89,6 +99,7 @@ function Ability.Record(self: any,e: any): any
     return record
 end
 function Ability.Event(self: any,e: any): boolean
+    if e.Kind=="StatusVisual" or e.Kind=="GateRemoval" or e.Kind=="VisualTrigger" or e.Kind=="GateSnapshot" or e.Kind=="EchoSnapshot" then return self:Auxiliary(e) end
     local player=self:Valid(e)
     if not player then return false end
     local record=self:Record(e)
@@ -115,6 +126,8 @@ function Ability.Event(self: any,e: any): boolean
     if record.Completed then return false end
     self:Stop(record);record.Completed=true;record.At=e.At
     if e.Phase=="Cancel" then return true end
+    if e.Gates then self.Status:Gate(e) end
+    if e.Echo then self.Status:Echo(e) end
     local visible=self.Service:Visible(e.Position) or self.Service:Visible(e.Origin) or self.Service:Visible(e.Destination)
     if not visible then return true end
     local controller=self.Callbacks.Controller(player.Character)
@@ -128,7 +141,7 @@ end
 function Ability.Update(self: any,state: any)
     local path=if state and state.Ready then tostring(state.PathwayId)..":"..tostring(state.Sequence) else nil
     if self.LocalPath~=path or not state or state.Dead or not state.Ready then
-        self.Status:Clear()
+        self.Status:ClearLocal(self.Callbacks.LocalUserId)
         local record=self.Records[self.Callbacks.LocalUserId]
         if record then self:Stop(record);record.Completed=true;if record.Result then record.Result:Finish() end end
         local finishing={}
@@ -136,6 +149,44 @@ function Ability.Update(self: any,state: any)
         for _,handle in ipairs(finishing) do handle:Finish() end
     end
     self.LocalPath=path
+end
+function Ability.Auxiliary(self: any,e: any): boolean
+    if not finite(e.Owner) or not finite(e.At) then return false end
+    local age=self.Callbacks.Clock()-e.At
+    if age>C.Protocol.MaxAge or age< -C.Protocol.FutureTolerance then return false end
+    if e.Kind=="GateSnapshot" or e.Kind=="EchoSnapshot" then
+        if not point(e.Position) or not finite(e.ExpiresAt) or e.ExpiresAt<=self.Callbacks.Clock()
+            or e.ExpiresAt-self.Callbacks.Clock()>C.Protocol.MaxStatusLife then return false end
+        if e.Kind=="GateSnapshot" and (e.AbilityId=="Apprentice_5_Secondary" or e.AbilityId=="Apprentice_1") then self.Status:Gate(e);return true end
+        if e.Kind=="EchoSnapshot" and e.AbilityId=="Seer_3" then self.Status:Echo(e);return true end
+        return false
+    end
+    if e.Kind=="StatusVisual" then
+        if not point(e.Position) or not finite(e.Revision) or not finite(e.ExpiresAt) or (e.Action~="Set" and e.Action~="Remove") then return false end
+        if e.Action=="Set" and (e.ExpiresAt<=self.Callbacks.Clock() or e.ExpiresAt-self.Callbacks.Clock()>C.Protocol.MaxStatusLife) then return false end
+        if e.Count~=nil and (not finite(e.Count) or e.Count<0) then return false end
+        if e.Required~=nil and (not finite(e.Required) or e.Required<1 or e.Required%1~=0) then return false end
+        if e.Action=="Set" and e.Owner==self.Callbacks.LocalUserId and self.LocalPath
+            and e.PathwayId~=string.match(self.LocalPath,"^[^:]+") then return false end
+        return self.Status:Event(e,self.Callbacks.LocalUserId)
+    end
+    if not finite(e.CueId) or e.CueId<1 or e.CueId%1~=0 then return false end
+    if e.Kind=="GateRemoval" then
+        if e.CueId<=self.LastGateCue then return false end
+        self.LastGateCue=e.CueId;self.Status:RemoveGates(e.Owner);return true
+    end
+    local expected={SubstituteTriggered="Seer_7_Secondary",GraftReflected="Seer_1",PayloadTriggered="Marauder_2_Secondary"}
+    if e.CueId<=self.LastCue or expected[e.Trigger]~=e.AbilityId or not point(e.Position) or not point(e.Origin)
+        or not finite(e.Tier) or e.Tier<1 or e.Tier>#C.Tier or e.Tier%1~=0 then return false end
+    local player=self.Callbacks.Player(e.Owner)
+    if not player or player.Character~=e.Character then return false end
+    self.LastCue=e.CueId
+    local event=table.clone(e);event.Phase="Result";event.Destination=e.Origin
+    local layers,duration=self:Layers(self.Data.Abilities[e.AbilityId],event)
+    local handle=self.Blocks:Compose(layers,e.Tier,C.Hit.Priority,duration)
+    if handle then handle.CasterId=e.Owner;handle.Character=e.Character end
+    if handle and self.Callbacks.Audio then self.Callbacks.Audio("Trigger."..e.Trigger) end
+    return true
 end
 function Ability.Step(self: any)
     local now=self.Callbacks.Clock()
@@ -154,12 +205,13 @@ function Ability.Step(self: any)
     for _,handle in ipairs(finishing) do handle:Finish() end
     for i=#self.Previews,1,-1 do if not self.Previews[i].Active then table.remove(self.Previews,i) end end
 end
-function Ability.Preview(self: any,id: string,variant: string,origin: Vector3,destination: Vector3,target: Instance?,phase: string?): any
+function Ability.Preview(self: any,id: string,variant: string,origin: Vector3,destination: Vector3,target: Instance?,phase: string?,trigger: string?): any
     local a=self.Data.Abilities[id]
     if not a then return nil end
     local now=self.Callbacks.Clock()
     local event={Phase=phase or "Result",Position=if a.Target=="NPC" then destination else origin,Origin=origin,Destination=if a.Target=="NPC" then origin else destination,
-        Outcome=variant,Target=target,Tier=VfxService.PowerTier(a.UnlockSequence),EndsAt=now+a.CastTimeSeconds}
+        Outcome=variant,Target=target,Tier=VfxService.PowerTier(a.UnlockSequence),EndsAt=now+a.CastTimeSeconds,Preview=true,Trigger=trigger,
+        Radius=C.Ability.PreviewRadius,Affected={{Target=target,Position=destination}},Echo=if id=="Seer_3" then target else nil}
     local layers,duration=self:Layers(a,event)
     local handle=self.Blocks:Compose(layers,event.Tier,C.Composition.Priority,duration)
     if handle then table.insert(self.Previews,handle) end

@@ -1,5 +1,7 @@
 # Phase B — pathway cues and six dedicated ability packages
 
+[EXISTING] Historical milestone notes below describe Phase B. Phases C–E now provide dedicated recipes for all 54 abilities; use [the current coverage and Studio checklist](PHASE_CDE_VFX.md) and [current full-code handoff](PHASE_CDE_VFX_CODE.md). References below to remaining/deferred packages describe the earlier milestone.
+
 [EXISTING] Phase B is implemented in source and included in `studio/Mysteries.rbxlx`. This means code exists; rendered appearance and real-device performance still need the Studio tests below. No assets were uploaded. Balance, damage, costs, target eligibility, cast durations, travel rules, admin authorization and persistence semantics remain unchanged.
 
 [EXISTING] All 54 selected abilities now use pathway-shaped completion cues instead of neutral expanding spheres. Six have dedicated compositions and cast-pose profiles. [PROPOSED] Full bespoke choreography for the remaining 48 remains Phases C–E; the finished world/HUD/enemy redesign remains later work. Canon metadata remains [UNVERIFIED]. Every new shape and pose is original art direction, not a verified depiction from the novel.

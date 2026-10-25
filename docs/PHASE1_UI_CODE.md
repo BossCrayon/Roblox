@@ -2,7 +2,7 @@
 
 All 17 production Luau files are supplied in full, including later admin-control updates. Create Folder parents, keep every existing unchanged module, and **replace** same-name scripts rather than running duplicate Bootstrap/Mysteries entrypoints. Install while Play is stopped. Theme is deliberately first. The complete built place is `studio/Mysteries.rbxlx`.
 
-This UI source export includes later integrations. Install the current framework from docs/PHASE_B_VFX_CODE.md, or use docs/FULL_SOURCE.md for a blank place. The reference concept images were not received; the UI follows the Art Bible. Permanent label replacement and map redesign remain later phases.
+This UI source export includes later integrations. Install the current framework from docs/PHASE_CDE_VFX_CODE.md, or use docs/FULL_SOURCE.md for a blank place. The reference concept images were not received; the UI follows the Art Bible. Permanent label replacement and map redesign remain later phases.
 
 | File | Class | Explorer path |
 |---|---|---|
@@ -58,7 +58,7 @@ return freeze({
         Pulse=0.5,Reveal=5,LoadingHint=8,CastPulse=0.18},
     Sound={Hover={Id=0,Volume=0.12},Click={Id=0,Volume=0.18},Confirm={Id=0,Volume=0.22},
         Reject={Id=0,Volume=0.18},JournalOpen={Id=0,Volume=0.15},Advance={Id=0,Volume=0.28},
-        Hit={Id=0,Volume=0.16},Abilities={},MaxPlaying=8,AbilityVolume=0.4,MinPitch=0.5,MaxPitch=2},
+        Hit={Id=0,Volume=0.16},Abilities={["Trigger.SubstituteTriggered"]=0,["Trigger.GraftReflected"]=0,["Trigger.PayloadTriggered"]=0},MaxPlaying=8,AbilityVolume=0.4,MinPitch=0.5,MaxPitch=2},
     Camera={MinZoom=8,MaxZoom=32},
     CameraFeel={SmallStuds=0.10,MajorStuds=0.22,SmallDegrees=0.25,MajorDegrees=0.55,
         SmallDuration=0.12,MajorDuration=0.22,FovKick=1.8,MaxFovKick=2.5,FovMin=1,FovMax=120,
@@ -70,6 +70,8 @@ return freeze({
         LegacyLife=0.5,LegacyStart=1,LegacyEnd=7,LegacyAlpha=0.25,RevealPriority=3,
         GrayscaleSaturation=-1,AnimationViewDistance=120},
     AbilityUI={StoredSize=14,StoredPad=3,StoredSymbol="◆",StoredPrefix="Stored: ",CastGrace=1,PowerNames={ArcBolt="Arc Bolt"}},
+    StatusUI={Width=160,Height=28,TextSize=13,Max=4,MobileMax=2,Distance=40,OffsetStuds=3.8,BackgroundAlpha=0.1,
+        Priorities={Controlled=100,Threaded=95,Parasite=90,Payload=85,Stasis=80,Grafted=75,Substitute=70},RequiredThreads=3},
     TestRoom={Width=420,Height=540,Margin=12,Header=48,Row=44,Gap=8,Pad=12,StatusHeight=54,
         PreviewDistance=14,PreviewHeight=-2,PreviewSpacing=8,TargetOffset=8,
         FloorSize={32,0.15,26,2,3,1},HeadSize=1.5,HeadHeight=2.2,FloorAlpha=0.25,FloorOffset=-3,ButtonColumns=3,
@@ -544,13 +546,16 @@ function Hud.new(parent: Instance,data: any,callbacks: any): any
         stored.Name="StoredPower";stored.TextColor3=T.Colors.Bronze;stored.Visible=false;stored.TextXAlignment=Enum.TextXAlignment.Center
         stored.Size=UDim2.fromOffset(T.AbilityUI.StoredSize,T.AbilityUI.StoredSize)
         stored.Position=UDim2.new(1,-T.AbilityUI.StoredSize-T.AbilityUI.StoredPad,0,T.AbilityUI.StoredPad)
+        local recorded=Kit.Text(face,"",T.Type.Small,T.Fonts.Number)
+        recorded.Name="RecordedCharges";recorded.TextColor3=T.Colors.Teal;recorded.Visible=false
+        recorded.Size=stored.Size;recorded.Position=stored.Position;recorded.TextXAlignment=Enum.TextXAlignment.Center
         for segment=1,T.Layout.Hotbar.Segments do
             local angle=(segment-1)/T.Layout.Hotbar.Segments*math.pi*2-math.pi/2
             table.insert(segments,Kit.New("Frame",face,{Name="CooldownSegment",BorderSizePixel=0,BackgroundColor3=T.Colors.Gold,
                 AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromScale(0.5+math.cos(angle)*T.Layout.Hotbar.RingRadius,0.5+math.sin(angle)*T.Layout.Hotbar.RingRadius),
                 Size=UDim2.fromOffset(T.Layout.Hotbar.SegmentWidth,T.Layout.Hotbar.SegmentHeight),Rotation=math.deg(angle)+90,Visible=false}))
         end
-        self.Slots[i]={Card=card,Face=face,Glyph=glyph,Seal=seal,EmptyGlyph=emptyGlyph,KeyBadge=badge,Key=key,Cost=cost,Countdown=countdown,Segments=segments,Stored=stored,Id=false}
+        self.Slots[i]={Card=card,Face=face,Glyph=glyph,Seal=seal,EmptyGlyph=emptyGlyph,KeyBadge=badge,Key=key,Cost=cost,Countdown=countdown,Segments=segments,Stored=stored,Recorded=recorded,Id=false}
         local function show()
             if callbacks.Touch then return end
             local id=self.State and self.State.Loadout and self.State.Loadout[i]
@@ -644,6 +649,8 @@ function Hud.Render(self: any,state: any,receivedAt: number)
     for i,slot in ipairs(self.Slots) do
         local id=state.Loadout[i];local a=id and self.Data.Abilities[id]
         slot.Stored.Visible=id=="Marauder_6" and type(state.StolenPower)=="string"
+        slot.Recorded.Visible=a~=nil and a.PathwayId=="Apprentice" and (a.Operation.Kind=="Record" or a.Operation.Kind=="Release") and (state.RecordedCharges or 0)>0
+        slot.Recorded.Text=tostring(state.RecordedCharges or 0)
         if slot.Id~=id then
             slot.Id=id;Kit.Clear(slot.Glyph)
             slot.Seal.Visible=not a;slot.KeyBadge.Visible=a~=nil;slot.Cost.Text=if a then "✦ "..tostring(a.SpiritualityCost) else ""
@@ -809,6 +816,9 @@ function Menus.Render(self: any)
         self.Confirm.Size=UDim2.new(0.5,-T.Layout.Modal.Gap/2,1,0);cancel.Size=self.Confirm.Size
         self:UpdatePreview()
     elseif self.Tab=="Journal" then
+        if type(state.RecordedPowerId)=="string" and (state.RecordedCharges or 0)>0 then
+            self:TextRow("Recorded: "..(T.AbilityUI.PowerNames[state.RecordedPowerId] or state.RecordedPowerId).." · "..state.RecordedCharges.." uses remaining.")
+        end
         if type(state.StolenPower)=="string" then
             self:TextRow(T.AbilityUI.StoredPrefix..(T.AbilityUI.PowerNames[state.StolenPower] or state.StolenPower).." · use Ability Theft again to release it.")
         end
@@ -1432,7 +1442,8 @@ function Presentation.Update(self: any,state: any)
     end
 end
 function Presentation.Event(self: any,event: any)
-    if event.Kind=="AbilityVisual" then self.Abilities:Event(event);return end
+    if event.Kind=="AbilityVisual" or event.Kind=="StatusVisual" or event.Kind=="VisualTrigger" or event.Kind=="GateRemoval"
+        or event.Kind=="GateSnapshot" or event.Kind=="EchoSnapshot" then self.Abilities:Event(event);return end
     if not self.VFX:Visible(event.Position) then return end
     if event.Kind=="Damage" then
         self.Hits:Hit(event)
@@ -1500,6 +1511,10 @@ function Presentation.StopDemoAnimation(self: any)
     self.Demo=false
     local controller=self:LocalController()
     if controller then controller:Stop();controller.AutoState=nil;controller.AutoLocomotion=true end
+end
+function Presentation.PreviewTrigger(self: any,id: string,trigger: string,origin: Vector3,destination: Vector3,target: Instance?)
+    self:StopDemoAnimation()
+    self.Abilities:Preview(id,"Confirmed",origin,destination,target,"Result",trigger)
 end
 function Presentation.Destroy(self: any)
     self.Abilities:Destroy();self.Camera:Destroy();self.VFX:Destroy()
@@ -1663,7 +1678,8 @@ stateEvent.OnClientEvent:Connect(function(update: any)
     if update.Dead and menus.Root.Visible then menus:Close() end
 end)
 effectEvent.OnClientEvent:Connect(function(event: any)
-    if type(event)~="table" or typeof(event.Position)~="Vector3" or type(event.Kind)~="string" then return end
+    if type(event)~="table" or type(event.Kind)~="string" then return end
+    if event.Kind~="GateRemoval" and typeof(event.Position)~="Vector3" then return end
     presentation:Event(event)
 end)
 UserInputService.InputBegan:Connect(function(input: InputObject,processed: boolean)
@@ -1881,13 +1897,17 @@ function World.DamagePlayer(self: World, player: Player,amount: number,source: a
     if s.Statuses.Shielded then amount*=0.35 end
     if source.Statuses.Grafted and source.Statuses.Grafted.Owner==player then
         if self:Damage(source,amount,player,now) then
+            if self.Visuals then self.Visuals:Trigger(player,"GraftReflected","Seer_1",source.Root.Position,source.Model) end
             self.Domain:Act(s,"GraftEncounterResolved","graft:"..source.Serial..":"..tostring(math.floor(now)),now)
         end
         return
     end
     if s.Statuses.Substitute and hum.Health<=amount then
         s.Statuses.Substitute=nil;hum.Health=math.max(1,hum.MaxHealth*0.2)
-        self:Buff(s,"Invulnerable",2,now);self:Effect(hum.RootPart and hum.RootPart.Position or Vector3.zero,"Substitute",player)
+        self:Buff(s,"Invulnerable",2,now)
+        local position=hum.RootPart and hum.RootPart.Position or Vector3.zero
+        if self.Visuals then self.Visuals:Trigger(player,"SubstituteTriggered","Seer_7_Secondary",position,player.Character)
+        else self:Effect(position,"Substitute",player) end
         return
     end
     hum:TakeDamage(amount);s.Health=hum.Health
@@ -2004,6 +2024,7 @@ function World.Step(self: World, dt: number,now: number)
                     local payload=e.Statuses.Payload
                     if payload and payload.Owner then
                         e.Statuses.Payload=nil;self:Damage(e,payload.Power,payload.Owner,now)
+                        if self.Visuals then self.Visuals:Trigger(payload.Owner,"PayloadTriggered","Marauder_2_Secondary",e.Root.Position,model) end
                     end
                     self:DamagePlayer(nearest,self.Data.Runtime.NPCMeleeDamagePerTier*e.Power,e,now)
                     if e.Tier<=4 and not self:Has(e,"Silenced",now) then self.Domain:DrainSanity(self.States[nearest],3,now) end
@@ -2103,7 +2124,7 @@ local function notify(player: Player,text: string)
     if player.Parent then stateEvent:FireClient(player,{Message=string.sub(text,1,data.Runtime.MaxMessageLength)}) end
 end
 local world=World.new(data,domain,states,fx)
-local visualEvents=VisualEvents.new(world,VfxConfig.Protocol,function() return workspace:GetServerTimeNow() end)
+local visualEvents=VisualEvents.new(world,VfxConfig.Protocol,function() return workspace:GetServerTimeNow() end,VfxConfig.Status)
 world.Visuals=visualEvents
 local effects=Effects.new(world,domain,notify)
 world:Build()
@@ -2129,7 +2150,7 @@ local function sendState(player: Player)
         Digestion=p.Digestion,ActingProgress=p.ActingProgress,Health=s.Health,MaxHealth=s.Stats.Health,
         Spirituality=s.Spirituality,MaxSpirituality=s.Stats.Spirituality,Sanity=s.Sanity,Mode=s.Mode,
         Gold=p.Gold,WishCredits=p.WishCredits,Inventory=Domain.Copy(p.Inventory),Loadout=Domain.Copy(p.AbilityLoadout),
-        Cooldowns=cooldowns,Statuses=statuses,Dead=s.Dead,RecordedCharges=s.RecordedPower and s.RecordedPower.Charges or 0,StolenPower=s.StolenPower or false,
+        Cooldowns=cooldowns,Statuses=statuses,Dead=s.Dead,RecordedCharges=s.RecordedPower and s.RecordedPower.Charges or 0,RecordedPowerId=s.RecordedPower and s.RecordedPower.Id or false,StolenPower=s.StolenPower or false,
         Casting=s.Pending and s.Pending.Id or false,CastRemaining=s.Pending and math.max(0,s.Pending.EndsAt-now) or 0,CastSerial=s.CastSerial,VisualToken=s.VisualToken or 0})
 end
 local function bindCharacter(player: Player,character: Model)
@@ -2240,7 +2261,7 @@ Players.PlayerRemoving:Connect(releasePlayer)
 for _,player in ipairs(Players:GetPlayers()) do loadPlayer(player) end
 intent.OnServerEvent:Connect(function(player: Player,action: any,payload: any)
     if closing or type(action)~="string" or #action>12 or not limiter:Allow(player,os.clock()) then return end
-    if action=="Sync" then sendState(player);return end
+    if action=="Sync" then sendState(player);visualEvents:Sync(player);return end
     local s=states[player]
     if not s or not s.Ready or s.Dead or type(payload)~="table" then return end
     local now=os.clock()
@@ -2360,7 +2381,7 @@ task.spawn(function()
                 end)
             end
         end
-        world:Step(math.min(dt,1),now);effects:Step(now);visualEvents:Step()
+        world:Step(math.min(dt,1),now);effects:Step(now);visualEvents:Step(now)
         if now>=nextState then
             nextState=now+data.Runtime.StateIntervalSeconds
             for player in pairs(states) do if player.Parent then sendState(player) end end

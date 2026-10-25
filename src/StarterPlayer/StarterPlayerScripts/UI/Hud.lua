@@ -74,13 +74,16 @@ function Hud.new(parent: Instance,data: any,callbacks: any): any
         stored.Name="StoredPower";stored.TextColor3=T.Colors.Bronze;stored.Visible=false;stored.TextXAlignment=Enum.TextXAlignment.Center
         stored.Size=UDim2.fromOffset(T.AbilityUI.StoredSize,T.AbilityUI.StoredSize)
         stored.Position=UDim2.new(1,-T.AbilityUI.StoredSize-T.AbilityUI.StoredPad,0,T.AbilityUI.StoredPad)
+        local recorded=Kit.Text(face,"",T.Type.Small,T.Fonts.Number)
+        recorded.Name="RecordedCharges";recorded.TextColor3=T.Colors.Teal;recorded.Visible=false
+        recorded.Size=stored.Size;recorded.Position=stored.Position;recorded.TextXAlignment=Enum.TextXAlignment.Center
         for segment=1,T.Layout.Hotbar.Segments do
             local angle=(segment-1)/T.Layout.Hotbar.Segments*math.pi*2-math.pi/2
             table.insert(segments,Kit.New("Frame",face,{Name="CooldownSegment",BorderSizePixel=0,BackgroundColor3=T.Colors.Gold,
                 AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromScale(0.5+math.cos(angle)*T.Layout.Hotbar.RingRadius,0.5+math.sin(angle)*T.Layout.Hotbar.RingRadius),
                 Size=UDim2.fromOffset(T.Layout.Hotbar.SegmentWidth,T.Layout.Hotbar.SegmentHeight),Rotation=math.deg(angle)+90,Visible=false}))
         end
-        self.Slots[i]={Card=card,Face=face,Glyph=glyph,Seal=seal,EmptyGlyph=emptyGlyph,KeyBadge=badge,Key=key,Cost=cost,Countdown=countdown,Segments=segments,Stored=stored,Id=false}
+        self.Slots[i]={Card=card,Face=face,Glyph=glyph,Seal=seal,EmptyGlyph=emptyGlyph,KeyBadge=badge,Key=key,Cost=cost,Countdown=countdown,Segments=segments,Stored=stored,Recorded=recorded,Id=false}
         local function show()
             if callbacks.Touch then return end
             local id=self.State and self.State.Loadout and self.State.Loadout[i]
@@ -174,6 +177,8 @@ function Hud.Render(self: any,state: any,receivedAt: number)
     for i,slot in ipairs(self.Slots) do
         local id=state.Loadout[i];local a=id and self.Data.Abilities[id]
         slot.Stored.Visible=id=="Marauder_6" and type(state.StolenPower)=="string"
+        slot.Recorded.Visible=a~=nil and a.PathwayId=="Apprentice" and (a.Operation.Kind=="Record" or a.Operation.Kind=="Release") and (state.RecordedCharges or 0)>0
+        slot.Recorded.Text=tostring(state.RecordedCharges or 0)
         if slot.Id~=id then
             slot.Id=id;Kit.Clear(slot.Glyph)
             slot.Seal.Visible=not a;slot.KeyBadge.Visible=a~=nil;slot.Cost.Text=if a then "✦ "..tostring(a.SpiritualityCost) else ""

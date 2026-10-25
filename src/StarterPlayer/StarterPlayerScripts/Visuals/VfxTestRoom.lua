@@ -60,8 +60,32 @@ function TestRoom.new(parent: Instance,presentation: any,callbacks: any): any
         if id=="Apprentice_9" then target=self.PreviewDoor end
         if mode=="HiddenOrigin" then origin=camera.CFrame.Position-camera.CFrame.LookVector*T.TestRoom.PreviewDistance
         elseif mode=="DistantArrival" then destination=camera.CFrame.Position+camera.CFrame.LookVector*(V.Quality.MaximumDistance+T.TestRoom.PreviewBeyond) end
-        presentation:PreviewAbility(id,variant,origin,destination,target,cancel)
+        if mode=="SubstituteTriggered" or mode=="GraftReflected" or mode=="PayloadTriggered" then
+            presentation:PreviewTrigger(id,mode,origin,destination,target)
+        else presentation:PreviewAbility(id,variant,origin,destination,target,cancel) end
     end
+    local catalog={}
+    for id in pairs(Data.Abilities) do table.insert(catalog,id) end
+    local pathwayOrder={Seer=1,Marauder=2,Apprentice=3}
+    table.sort(catalog,function(left: string,right: string)
+        local a,b=Data.Abilities[left],Data.Abilities[right]
+        if a.PathwayId~=b.PathwayId then return pathwayOrder[a.PathwayId]<pathwayOrder[b.PathwayId] end
+        return if a.UnlockSequence==b.UnlockSequence then left<right else a.UnlockSequence>b.UnlockSequence
+    end)
+    local selected=1
+    local picker: any
+    local function updatePicker()
+        local ability=Data.Abilities[catalog[selected]]
+        picker.Text="Preview "..selected.."/"..#catalog.." · "..ability.PathwayId.." "..ability.UnlockSequence.." · "..ability.Name
+    end
+    picker=row("",function() abilityPreview(catalog[selected],"Confirmed") end)
+    picker.TextSize=T.Type.Small;picker.TextWrapped=true;updatePicker()
+    row("Next ability →",function() selected=selected%#catalog+1;updatePicker() end)
+    row("← Previous ability",function() selected=(selected-2)%#catalog+1;updatePicker() end)
+    row("Cancel selected windup",function() abilityPreview(catalog[selected],"Confirmed",true) end)
+    row("Paper substitute · confirmed trigger",function() abilityPreview("Seer_7_Secondary","Confirmed",false,"SubstituteTriggered") end)
+    row("Graft · confirmed reflection",function() abilityPreview("Seer_1","Confirmed",false,"GraftReflected") end)
+    row("Payload · confirmed trigger",function() abilityPreview("Marauder_2_Secondary","Confirmed",false,"PayloadTriggered") end)
     for _,id in ipairs(V.Ability.Pilots) do
         row("Ability · "..Data.Abilities[id].Name,function() abilityPreview(id,if id=="Marauder_9" then "Taken" elseif id=="Marauder_6" then "Captured" else "Confirmed") end)
     end
@@ -70,9 +94,11 @@ function TestRoom.new(parent: Instance,presentation: any,callbacks: any): any
     row("Travel · origin behind camera",function() abilityPreview("Apprentice_5","Confirmed",false,"HiddenOrigin") end)
     row("Travel · arrival beyond 120 studs",function() abilityPreview("Apprentice_5","Confirmed",false,"DistantArrival") end)
     for _,id in ipairs({"Seer_1","Marauder_1","Apprentice_1"}) do
-        row("Generic fallback · "..Data.Abilities[id].PathwayId.." tier 3",function() abilityPreview(id,"Confirmed") end)
+        row("Tier 3 package · "..Data.Abilities[id].PathwayId.." tier 3",function() abilityPreview(id,"Confirmed") end)
     end
-    for _,name in ipairs(Blocks.Names) do
+    local primitiveNames=table.clone(Blocks.Names)
+    for _,name in ipairs(Blocks.AbilityNames) do table.insert(primitiveNames,name) end
+    for _,name in ipairs(primitiveNames) do
         for tier=1,#require(Shared.VfxConfig).Tier do
             row(name.." · Tier "..tier,function()
                 if not self.Stage then self:StageAtCamera() end

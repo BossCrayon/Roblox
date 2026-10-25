@@ -35,7 +35,7 @@ for file in files:
     manifest.append(dict(file=file,script_class=kind,explorer_path=path))
 parts=['# Phase 1 — complete copy/paste code\n',
        f'All {len(files)} production Luau files are supplied in full, including later admin-control updates. Create Folder parents, keep every existing unchanged module, and **replace** same-name scripts rather than running duplicate Bootstrap/Mysteries entrypoints. Install while Play is stopped. Theme is deliberately first. The complete built place is `studio/Mysteries.rbxlx`.\n',
-       'This UI source export includes later integrations. Install the current framework from docs/PHASE_B_VFX_CODE.md, or use docs/FULL_SOURCE.md for a blank place. The reference concept images were not received; the UI follows the Art Bible. Permanent label replacement and map redesign remain later phases.\n',
+       'This UI source export includes later integrations. Install the current framework from docs/PHASE_CDE_VFX_CODE.md, or use docs/FULL_SOURCE.md for a blank place. The reference concept images were not received; the UI follows the Art Bible. Permanent label replacement and map redesign remain later phases.\n',
        '| File | Class | Explorer path |\n|---|---|---|']
 for entry in manifest:parts.append('| `'+entry['file']+'` | '+entry['script_class']+' | `'+entry['explorer_path']+'` |')
 for entry in manifest:

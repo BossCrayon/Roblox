@@ -108,6 +108,9 @@ function Menus.Render(self: any)
         self.Confirm.Size=UDim2.new(0.5,-T.Layout.Modal.Gap/2,1,0);cancel.Size=self.Confirm.Size
         self:UpdatePreview()
     elseif self.Tab=="Journal" then
+        if type(state.RecordedPowerId)=="string" and (state.RecordedCharges or 0)>0 then
+            self:TextRow("Recorded: "..(T.AbilityUI.PowerNames[state.RecordedPowerId] or state.RecordedPowerId).." · "..state.RecordedCharges.." uses remaining.")
+        end
         if type(state.StolenPower)=="string" then
             self:TextRow(T.AbilityUI.StoredPrefix..(T.AbilityUI.PowerNames[state.StolenPower] or state.StolenPower).." · use Ability Theft again to release it.")
         end

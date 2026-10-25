@@ -54,6 +54,10 @@ local function buff(self: any,c: any,op: any,now: number)
     if op.Status then self.World:Buff(c.State,op.Status,op.Duration or 10,now) end
 end
 local function power(c: any,op: any): number return c.Ability.BasePower*(op.Power or 1) end
+local function affected(c: any,e: any)
+    c.VisualAffected=c.VisualAffected or {}
+    table.insert(c.VisualAffected,{Target=e.Model,Position=e.Root.Position})
+end
 local function teleport(self: any,c: any,position: Vector3): boolean
     local safe=self.World:SafeDestination(c.Player,position)
     if not safe or not c.Player.Character then return false end
@@ -175,6 +179,7 @@ handlers.Command=function(self: any,c: any,op: any,now: number)
     local foes=self.World:Targets(c.Entity.Root.Position,45,1,c.Player)
     if not foes[1] then return false,"No hostile target near the marionette" end
     self.World:Damage(foes[1],power(c,op),c.Player,now)
+    affected(c,foes[1])
     return true,"Marionette strike"
 end
 handlers.Exchange=function(self: any,c: any,op: any,now: number)
@@ -187,11 +192,13 @@ handlers.Exchange=function(self: any,c: any,op: any,now: number)
 end
 handlers.Area=function(self: any,c: any,op: any,now: number)
     local radius=math.max(10,c.Ability.RadiusStuds)
+    c.VisualRadius=radius
     local enemies=self.World:Targets(c.Position,radius,c.Ability.MaxTargets,c.Player)
     if #enemies==0 then return false,"No enemies in the area" end
     for _,e in ipairs(enemies) do
         if self.World:LineOfSight(c.Position,e.Root.Position,c.Player.Character,e.Model) then
             self.World:Damage(e,power(c,op),c.Player,now)
+            affected(c,e)
             if op.Status then self.World:Status(e,op.Status,op.Duration or 5,now,c.Player,power(c,op)*0.15) end
         end
     end
@@ -206,6 +213,7 @@ handlers.Echo=function(self: any,c: any,op: any,now: number)
     if not safe then return false,"Cannot summon here" end
     local e=self.World:Spawn(safe,c.State.Profile.Sequence,c.Player,now+(op.Duration or 20))
     e.IsEcho=true;c.State.ArchiveRead=false
+    c.VisualEcho=e.Model;c.VisualExpires=e.ExpiresAt
     return true,"Past echo summoned"
 end
 handlers.Recall=function(self: any,c: any,op: any,now: number)
@@ -228,9 +236,10 @@ handlers.Wish=function(self: any,c: any,op: any,now: number)
     return true,"Recovery wish fulfilled"
 end
 handlers.Graft=function(self: any,c: any,op: any,now: number)
+    c.VisualRadius=math.max(15,c.Ability.RadiusStuds)
     local enemies=self.World:Targets(c.Position,math.max(15,c.Ability.RadiusStuds),c.Ability.MaxTargets,c.Player)
     if #enemies==0 then return false,"No hostile attacks to graft" end
-    for _,e in ipairs(enemies) do self.World:Status(e,"Grafted",op.Duration or 10,now,c.Player) end
+    for _,e in ipairs(enemies) do self.World:Status(e,"Grafted",op.Duration or 10,now,c.Player);affected(c,e) end
     return true,"Hostile attacks grafted back to their source",false
 end
 handlers.Theft=function(self: any,c: any,op: any,now: number)
@@ -349,6 +358,7 @@ handlers.Portal=function(self: any,c: any,op: any,now: number)
         table.insert(gate.Parts,p)
     end
     self.Gates[c.Player]=gate
+    c.VisualGates=gate.Parts;c.VisualExpires=gate.EndsAt
     return true,"Linked spatial gates created"
 end
 handlers.CloseSpace=function(self: any,c: any,op: any,now: number)
@@ -359,6 +369,7 @@ handlers.CloseSpace=function(self: any,c: any,op: any,now: number)
 end
 function Effects.RemoveGates(self: Effects, player: Player)
     local gate=self.Gates[player]
+    if gate and self.World.Visuals then self.World.Visuals:RemoveGates(player) end
     if gate then for _,p in ipairs(gate.Parts) do p:Destroy() end end
     self.Gates[player]=nil
 end

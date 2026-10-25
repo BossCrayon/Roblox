@@ -251,6 +251,11 @@ return function(data: any,load: any,sharedNode: any)
     check(hud.Slots[1].Stored.Visible,"Confirmed stolen power has a persistent slot badge")
     visualState.StolenPower=false;hud:Render(visualState,now)
     check(not hud.Slots[1].Stored.Visible,"Release clears stored-power badge from snapshot")
+    visualState.Loadout={[1]="Apprentice_6_Secondary"};visualState.RecordedCharges=3;visualState.RecordedPowerId="ArcBolt"
+    hud:Render(visualState,now)
+    check(hud.Slots[1].Recorded.Visible and hud.Slots[1].Recorded.Text=="3","Recorded releases show actual charge count")
+    visualState.RecordedCharges=0;hud:Render(visualState,now)
+    check(not hud.Slots[1].Recorded.Visible,"Depleted recordings clear their charge badge")
     hud:SetVisualCast({Phase="Begin",AbilityId="Marauder_6",EndsAt=now+0.5,Token=1})
     check(hud.Cast.Visible and hud.CastText.Text=="Ability Theft","Accepted visual event starts HUD without waiting for snapshot")
     visualState.Casting="Marauder_6";visualState.VisualToken=1;visualState.CastRemaining=0.3

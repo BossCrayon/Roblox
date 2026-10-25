@@ -167,13 +167,17 @@ function World.DamagePlayer(self: World, player: Player,amount: number,source: a
     if s.Statuses.Shielded then amount*=0.35 end
     if source.Statuses.Grafted and source.Statuses.Grafted.Owner==player then
         if self:Damage(source,amount,player,now) then
+            if self.Visuals then self.Visuals:Trigger(player,"GraftReflected","Seer_1",source.Root.Position,source.Model) end
             self.Domain:Act(s,"GraftEncounterResolved","graft:"..source.Serial..":"..tostring(math.floor(now)),now)
         end
         return
     end
     if s.Statuses.Substitute and hum.Health<=amount then
         s.Statuses.Substitute=nil;hum.Health=math.max(1,hum.MaxHealth*0.2)
-        self:Buff(s,"Invulnerable",2,now);self:Effect(hum.RootPart and hum.RootPart.Position or Vector3.zero,"Substitute",player)
+        self:Buff(s,"Invulnerable",2,now)
+        local position=hum.RootPart and hum.RootPart.Position or Vector3.zero
+        if self.Visuals then self.Visuals:Trigger(player,"SubstituteTriggered","Seer_7_Secondary",position,player.Character)
+        else self:Effect(position,"Substitute",player) end
         return
     end
     hum:TakeDamage(amount);s.Health=hum.Health
@@ -290,6 +294,7 @@ function World.Step(self: World, dt: number,now: number)
                     local payload=e.Statuses.Payload
                     if payload and payload.Owner then
                         e.Statuses.Payload=nil;self:Damage(e,payload.Power,payload.Owner,now)
+                        if self.Visuals then self.Visuals:Trigger(payload.Owner,"PayloadTriggered","Marauder_2_Secondary",e.Root.Position,model) end
                     end
                     self:DamagePlayer(nearest,self.Data.Runtime.NPCMeleeDamagePerTier*e.Power,e,now)
                     if e.Tier<=4 and not self:Has(e,"Silenced",now) then self.Domain:DrainSanity(self.States[nearest],3,now) end
