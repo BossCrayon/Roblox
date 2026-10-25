@@ -25,6 +25,11 @@
     "explorer_path": "ReplicatedStorage/Shared/GameData"
   },
   {
+    "file": "src/ReplicatedStorage/Shared/MotionTracks.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ReplicatedStorage/Shared/MotionTracks"
+  },
+  {
     "file": "src/ReplicatedStorage/Shared/PathwayData.lua",
     "script_class": "ModuleScript",
     "explorer_path": "ReplicatedStorage/Shared/PathwayData"

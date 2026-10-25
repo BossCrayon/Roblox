@@ -264,6 +264,7 @@ return freeze({
 -- Degrees and studs below describe rendered joints only; no root physics are changed.
 local freeze=require(script.Parent.Freeze)
 local T=require(script.Parent.Theme)
+local MotionTracks=require(script.Parent.MotionTracks)
 type Pose={[string]: CFrame}
 local function frame(y: number,pitch: number,yaw: number,roll: number): CFrame
     return CFrame.new(0,y,0)*CFrame.Angles(math.rad(pitch),math.rad(yaw),math.rad(roll))
@@ -813,6 +814,34 @@ for name,profile in pairs(config.CastProfiles) do
                 entry.AnticipationPose=accent(entry.AnticipationPose)
             end
         end
+    end
+end
+-- Sample the same authored accents used by the editable Blender motion studies.
+for name,profile in pairs(config.CastProfiles) do
+    if name=="Potion" then continue end
+    local family=if MotionTracks[name] then name elseif string.find(name,"Marauder") or name=="Theft" or name=="Pickpocket" then "Marauder"
+        elseif string.find(name,"Apprentice") or name=="Travel" or name=="Threshold" then "Apprentice" else "Seer"
+    local track=MotionTracks[family]
+    local entry=profile.CastRelease
+    if not entry then continue end
+    local base=entry.Procedural or releaseCurve
+    entry.Procedural=function(spec: any,time: number,speed: number): Pose
+        local result=base(spec,time,speed)
+        local progress=math.clamp(time/math.max(spec.Duration,0.01),0,1)
+        for i=2,#track do
+            local a,b=track[i-1],track[i]
+            if progress<=b.Time then
+                local t=(progress-a.Time)/(b.Time-a.Time)
+                t=t*t*(3-2*t)
+                for role,angles in pairs(a.Pose) do
+                    local other=b.Pose[role]
+                    result[role]=(result[role] or CFrame.identity)*frame(0,
+                        angles[1]+(other[1]-angles[1])*t,angles[2]+(other[2]-angles[2])*t,angles[3]+(other[3]-angles[3])*t)
+                end
+                break
+            end
+        end
+        return result
     end
 end
 return freeze(config)
