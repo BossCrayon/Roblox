@@ -90,7 +90,8 @@ function Domain.NewState(self: Domain, profile: any, now: number): any
         Sanity=p.Sanity,Mode=if p.Sanity==0 then "Madness" else "Normal",MadnessUntil=now+10,
         Cooldowns={},GlobalUntil=0,LastCast=-100,LastCombat=-100,Pending=nil,CastSerial=0,
         ObjectiveLast={},SeenEvents={},SeenOrder={},Statuses={},Dead=false,Ready=true,
-        RecordedPower=nil,StolenPower=nil,LastMelee=-100,LastRitual=-100}
+        RecordedPower=nil,StolenPower=nil,LastMelee=-100,LastRitual=-100,
+        Running=true,MeleeCombo=0,UltimateStage=false}
 end
 function Domain.Snapshot(self: Domain, s: any): any
     local p=copy(s.Profile)
@@ -117,6 +118,99 @@ function Domain.Equip(self: Domain, s: any, slot: any, id: any): (boolean,string
     end
     s.Profile.AbilityLoadout[slot]=id
     return true,"Ability equipped"
+end
+function Domain.CanMove(self: Domain, s: any, now: number): (boolean,string?)
+    if not s or not s.Ready or s.Dead or s.Mode~="Normal" then return false,"You cannot move right now" end
+    if s.Pending then return false,"Finish casting first" end
+    for id,st in pairs(s.Statuses or {}) do
+        if st.ExpiresAt>now then
+            local def=self.Data.StatusEffects[id]
+            if def and (def.MoveMultiplier==0 or def.BlocksAttacks) then
+                return false,"Movement is restricted by "..id
+            end
+        end
+    end
+    return true,nil
+end
+function Domain.MoveSpeed(self: Domain, s: any, now: number): number
+    local r=self.Data.Runtime
+    local running=s.Running~=false
+    local base=if running
+        then math.clamp((r.RunSpeedBase or 16)+s.Stats.Agility*(r.AgilityRunScale or 0.25),r.RunSpeedBase or 16,r.MaxRunSpeed or 42)
+        else math.clamp((r.WalkSpeedBase or 11.5)+s.Stats.Agility*(r.AgilityWalkScale or 0.14),r.WalkSpeedBase or 11.5,r.MaxWalkSpeed or 24)
+    local myth=s.Statuses and s.Statuses.MythicalForm
+    if myth and myth.ExpiresAt>now and r.Ultimate then
+        base=math.min(r.MaxRunSpeed or 42,base+(r.Ultimate.SpeedBonus or 4))
+    end
+    local mult=1
+    for id,st in pairs(s.Statuses or {}) do
+        if st.ExpiresAt>now then
+            local def=self.Data.StatusEffects[id]
+            if def and type(def.MoveMultiplier)=="number" then mult=math.min(mult,def.MoveMultiplier) end
+        end
+    end
+    return base*mult
+end
+function Domain.ToggleRun(self: Domain, s: any, running: any?): (boolean,string)
+    if not s or not s.Ready or s.Dead or s.Mode~="Normal" then return false,"Cannot change pace now" end
+    if type(running)=="boolean" then s.Running=running else s.Running=s.Running==false end
+    return true,if s.Running then "Running pace" else "Measured walk"
+end
+function Domain.BeginDash(self: Domain, s: any, now: number): (boolean,number,string)
+    local ok,reason=self:CanMove(s,now)
+    if not ok then return false,0,reason or "Cannot dash now" end
+    if now<(s.Cooldowns.Dash or 0) then return false,0,"Dash is cooling down" end
+    local r=self.Data.Runtime
+    local mult=1
+    for id,st in pairs(s.Statuses or {}) do
+        if st.ExpiresAt>now then
+            local def=self.Data.StatusEffects[id]
+            if def and type(def.MoveMultiplier)=="number" then mult=math.min(mult,def.MoveMultiplier) end
+        end
+    end
+    local dist=(r.DashDistance or 14)*mult
+    if dist<=0 then return false,0,"Movement is immobilized" end
+    s.Cooldowns.Dash=now+(r.DashCooldown or 2.2)
+    return true,dist,"Dash"
+end
+function Domain.PowerMultiplier(self: Domain, s: any, now: number): number
+    local u=self.Data.Runtime and self.Data.Runtime.Ultimate
+    local myth=s and s.Statuses and s.Statuses.MythicalForm
+    if u and myth and myth.ExpiresAt>now then
+        return if myth.Stage=="Complete" then (u.CompletePowerMultiplier or 1.35) else (u.IncompletePowerMultiplier or 1.2)
+    end
+    return 1
+end
+function Domain.ActivateUltimate(self: Domain, s: any, now: number): (boolean,string,any?)
+    local u=self.Data.Runtime and self.Data.Runtime.Ultimate
+    if not u or not s or not s.Ready or s.Dead or s.Mode~="Normal" or s.Pending then return false,"Cannot manifest Mythical Creature Form now",nil end
+    local p=s.Profile
+    if not p.PathwayId or type(p.Sequence)~="number" or p.Sequence>u.UnlockSequence then
+        return false,"Mythical Creature Form unlocks at Sequence 4 (Saint)",nil
+    end
+    if s.Statuses.MythicalForm and s.Statuses.MythicalForm.ExpiresAt>now then
+        return false,"Mythical Creature Form is already active",nil
+    end
+    if now<(s.Cooldowns.Ultimate or 0) then return false,"Mythical Creature Form is cooling down",nil end
+    if s.Spirituality<u.SpiritualityCost then return false,"Not enough spirituality",nil end
+    if s.Sanity<=self.Data.Progression.Sanity.BlockAdvancementAtOrBelow then
+        return false,"Recover your sanity before manifesting your Mythical Creature Form",nil
+    end
+    local stage=if p.Sequence<=u.CompleteSequence then "Complete" else "Incomplete"
+    local duration=if stage=="Complete" then u.CompleteDuration else u.IncompleteDuration
+    local sanityCost=if stage=="Complete" then u.CompleteSanityCost else u.IncompleteSanityCost
+    s.Spirituality-=u.SpiritualityCost
+    s.LastCast=now; s.LastCombat=now
+    self:DrainSanity(s,sanityCost,now)
+    if s.Mode~="Normal" then
+        return false,"Mythical manifestation overwhelmed your sanity",nil
+    end
+    s.Cooldowns.Ultimate=now+u.CooldownSeconds
+    s.Statuses.MythicalForm={ExpiresAt=now+duration,Stage=stage,PathwayId=p.PathwayId}
+    s.UltimateStage=stage
+    local form=u.Forms[p.PathwayId] or u.Forms.Seer
+    local title=if stage=="Complete" then form.CompleteTitle else form.IncompleteTitle
+    return true,title,{Stage=stage,Duration=duration,Form=form}
 end
 function Domain.DrainSanity(self: Domain, s: any, amount: number, now: number)
     if amount<=0 or s.Mode=="LostControl" then return end
@@ -151,7 +245,7 @@ function Domain.Drink(self: Domain, s: any, id: any, now: number): (boolean,stri
     p.Digestion=0; p.ActingProgress=0; p.ObjectiveProgress={}
     s.Stats=self:Stats(p); p.Stats=copy(s.Stats)
     s.Health=s.Stats.Health; s.Spirituality=s.Stats.Spirituality
-    s.ObjectiveLast={}; s.SeenEvents={}; s.SeenOrder={}; s.Statuses={}
+    s.ObjectiveLast={}; s.SeenEvents={}; s.SeenOrder={}; s.Statuses={}; s.UltimateStage=false
     self:AutoEquip(s)
     return true,"Advanced to "..self.Data.Pathways[p.PathwayId].Sequences[p.Sequence].Name
 end
@@ -199,18 +293,35 @@ function Domain.Tick(self: Domain, s: any, dt: number, now: number)
     if not s.Ready then return end
     dt=math.clamp(dt,0,2)
     for key,status in pairs(s.Statuses) do if status.ExpiresAt<=now then s.Statuses[key]=nil end end
-    if s.Mode=="Madness" and now>=s.MadnessUntil then s.Mode="LostControl"; s.Health=0 end
+    local myth=s.Statuses.MythicalForm
+    if myth and myth.ExpiresAt>now then
+        s.UltimateStage=myth.Stage or "Incomplete"
+        if s.UltimateStage=="Incomplete" and not s.Dead and s.Mode=="Normal" then
+            local u=self.Data.Runtime and self.Data.Runtime.Ultimate
+            local drain=u and u.IncompleteSanityDrainPerSecond or 1.2
+            self:DrainSanity(s,drain*dt,now)
+            if s.Mode~="Normal" then
+                s.Statuses.MythicalForm=nil
+                s.UltimateStage=false
+            end
+        end
+    else
+        s.UltimateStage=false
+    end
+    if s.Mode=="Madness" and now>=s.MadnessUntil then s.Mode="LostControl"; s.Health=0; s.Statuses.MythicalForm=nil; s.UltimateStage=false end
     if not s.Dead and s.Mode=="Normal" then
         if now-s.LastCast>=2 then
             local combat=if now-s.LastCombat<5 then self.Data.Progression.Spirituality.CombatRegenMultiplier else 1
             s.Spirituality=math.min(s.Stats.Spirituality,s.Spirituality+s.Stats.SpiritualityRegen*dt*combat)
         end
-        s.Sanity=math.min(100,s.Sanity+self.Data.Progression.Sanity.RecoveryPerSecond*dt)
+        if not (s.Statuses.MythicalForm and s.UltimateStage=="Incomplete") then
+            s.Sanity=math.min(100,s.Sanity+self.Data.Progression.Sanity.RecoveryPerSecond*dt)
+        end
     end
 end
 function Domain.Recover(self: Domain, s: any): (boolean,string)
     if s.Mode=="Normal" and s.Sanity>=100 then return false,"You are already well" end
-    s.Mode="Normal"; s.Sanity=100; s.Statuses={}; s.Pending=nil
+    s.Mode="Normal"; s.Sanity=100; s.Statuses={}; s.Pending=nil; s.UltimateStage=false
     s.Profile.Digestion=math.max(0,s.Profile.Digestion-self.Data.Progression.Sanity.RecoveryDigestionPenalty)
     return true,"Stabilized; 20 digestion sacrificed"
 end

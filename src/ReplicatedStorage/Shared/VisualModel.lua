@@ -39,4 +39,32 @@ end
 function Model.Cooldown(state: any,id: string,elapsed: number): number
     return math.max(0,((state and state.Cooldowns and state.Cooldowns[id]) or 0)-math.max(0,elapsed))
 end
+function Model.Ultimate(data: any,state: any,elapsed: number): any
+    local u=data and data.Runtime and data.Runtime.Ultimate
+    if not u or not state or not state.Ready or not state.PathwayId or type(state.Sequence)~="number" then
+        return {Unlocked=false,Stage=false,Name="Mythical Form",Title="Unlocks at Sequence 4 (Saint)",Active=false,Remaining=0,Duration=10,Cooldown=0,Cost=u and u.SpiritualityCost or 45}
+    end
+    local form=u.Forms[state.PathwayId] or u.Forms.Seer
+    local unlocked=state.Sequence<=u.UnlockSequence
+    local stage=if not unlocked then false elseif state.Sequence<=u.CompleteSequence then "Complete" else "Incomplete"
+    local duration=if stage=="Complete" then u.CompleteDuration else u.IncompleteDuration
+    local remaining=if state.UltimateStage then math.max(0,(state.UltimateRemaining or 0)-math.max(0,elapsed)) else 0
+    local active=unlocked and remaining>0
+    local cd=Model.Cooldown(state,"Ultimate",elapsed)
+    local title=if not unlocked then form.Name.." · Locked until Sequence 4 (Saint)"
+        elseif stage=="Complete" then form.CompleteTitle
+        else form.IncompleteTitle
+    return {
+        Unlocked=unlocked,
+        Stage=stage,
+        Name=form.Name,
+        Title=title,
+        Active=active,
+        Remaining=remaining,
+        Duration=duration,
+        Cooldown=cd,
+        Cost=u.SpiritualityCost,
+        SanityCost=if stage=="Complete" then u.CompleteSanityCost else u.IncompleteSanityCost,
+    }
+end
 return table.freeze(Model)

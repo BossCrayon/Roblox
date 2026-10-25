@@ -74,6 +74,44 @@ return function(data: any,Domain: any,SessionStore: any,RateLimiter: any)
     check(not domain:Equip(s,0,"Seer_9"),"Invalid slot")
     check(not domain:Equip(s,1,"Marauder_9"),"Foreign ability rejected")
     check(not domain:Equip(s,1,"Seer_1"),"Locked tier rejected")
+    -- Walk/run toggle, directional dash, and Mythical Creature Form ultimate validation.
+    local moveState=domain:NewState(domain:Default(),0)
+    domain:Drink(moveState,"Seer_Potion_9",0)
+    local runSpeed=domain:MoveSpeed(moveState,0)
+    check(moveState.Running==true and runSpeed>data.Runtime.WalkSpeedBase,"Default running speed scales with Agility")
+    local okToggleWalk=domain:ToggleRun(moveState)
+    check(okToggleWalk and moveState.Running==false and domain:MoveSpeed(moveState,0)<runSpeed,"Ctrl toggle switches to slower walk speed")
+    local okToggleRun=domain:ToggleRun(moveState)
+    check(okToggleRun and moveState.Running==true and domain:MoveSpeed(moveState,0)==runSpeed,"Ctrl toggle restores run speed")
+    local okDash,dashDist=domain:BeginDash(moveState,10)
+    check(okDash and dashDist==data.Runtime.DashDistance and moveState.Cooldowns.Dash==10+data.Runtime.DashCooldown,"Dash sets server cooldown")
+    check(not moveState.Statuses.Invulnerable,"Dash never grants automatic invulnerability")
+    local okRepeat,_repeatDist,dashReason=domain:BeginDash(moveState,10.5)
+    check(not okRepeat and string.find(dashReason,"cooling down",1,true)~=nil,"Dash cooldown enforced")
+    moveState.Statuses.Stasis={ExpiresAt=25}
+    check(not domain:CanMove(moveState,20) and domain:MoveSpeed(moveState,20)==0,"Movement-blocking status zeroes speed")
+    local blockedDash=domain:BeginDash(moveState,20)
+    check(not blockedDash,"Dash blocked while immobilized")
+    moveState.Statuses.Stasis=nil
+    local lockUlt,lockMsg=domain:ActivateUltimate(moveState,30)
+    check(not lockUlt and string.find(lockMsg or "","Sequence 4",1,true)~=nil,"Ultimate locked at Sequences 9–5")
+    moveState.Profile.Sequence=4;moveState.Stats=domain:Stats(moveState.Profile);moveState.Spirituality=moveState.Stats.Spirituality;moveState.Sanity=100
+    local saintUlt,saintTitle,saintMeta=domain:ActivateUltimate(moveState,40)
+    check(saintUlt and saintMeta and saintMeta.Stage=="Incomplete" and moveState.UltimateStage=="Incomplete","Sequence 4–3 unlocks Incomplete Saint manifestation")
+    check(saintMeta.Form.Name=="Worms of Spirit" and string.find(saintTitle,"Spirit Worms",1,true)~=nil,"Seer ultimate form names Worms of Spirit")
+    check(moveState.Statuses.MythicalForm~=nil and domain:PowerMultiplier(moveState,41)==data.Runtime.Ultimate.IncompletePowerMultiplier,"Incomplete form applies power multiplier")
+    local sanityAfterActivation=moveState.Sanity
+    domain:Tick(moveState,2,42)
+    check(moveState.Sanity<sanityAfterActivation,"Incomplete Saint form drains sanity continuously while active")
+    domain:Tick(moveState,1,60)
+    check(moveState.UltimateStage==false and moveState.Statuses.MythicalForm==nil,"Ultimate clears stage on expiry")
+    moveState.Profile.Sequence=2;moveState.Stats=domain:Stats(moveState.Profile);moveState.Spirituality=moveState.Stats.Spirituality;moveState.Sanity=100;moveState.Cooldowns.Ultimate=nil
+    local angelUlt,_angelTitle,angelMeta=domain:ActivateUltimate(moveState,100)
+    check(angelUlt and angelMeta and angelMeta.Stage=="Complete" and moveState.UltimateStage=="Complete","Sequence 2–1 unlocks Complete Angel form")
+    check(domain:PowerMultiplier(moveState,101)==data.Runtime.Ultimate.CompletePowerMultiplier,"Complete Angel form applies full power multiplier")
+    local angelSanity=moveState.Sanity
+    domain:Tick(moveState,2,102)
+    check(moveState.Sanity>=angelSanity,"Complete Angel form does not suffer ongoing incomplete sanity drain")
     s.Profile.Gold=100
     check(domain:BuyNextPotion(s)==false,"No duplicate next potion purchase")
     s.Profile.Inventory.Seer_Potion_8=0
@@ -151,5 +189,5 @@ return function(data: any,Domain: any,SessionStore: any,RateLimiter: any)
     local lowState=domain:NewState(domain:Default(),0)
     domain:DrainSanity(highState,50,0);domain:DrainSanity(lowState,50,0)
     check(highState.Sanity>lowState.Sanity,"Resistance reduces mental damage")
-    print("PASS: "..checks.." server-domain assertions (all pathways 9→1, resources, cast rules, locks, retries, corrupt saves)")
+    print("PASS: "..checks.." server-domain assertions (all pathways 9→1, resources, cast rules, movement, ultimates, locks, retries, corrupt saves)")
 end

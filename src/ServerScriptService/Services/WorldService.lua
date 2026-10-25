@@ -119,6 +119,7 @@ function World.DamagePlayer(self: World, player: Player,amount: number,source: a
         return
     end
     if s.Statuses.Shielded then amount*=0.35 end
+    if s.Statuses.MythicalForm then amount*=0.75 end
     if source.Statuses.Grafted and source.Statuses.Grafted.Owner==player then
         if self:Damage(source,amount,player,now) then
             if self.Visuals then self.Visuals:Trigger(player,"GraftReflected","Seer_1",source.Root.Position,source.Model) end

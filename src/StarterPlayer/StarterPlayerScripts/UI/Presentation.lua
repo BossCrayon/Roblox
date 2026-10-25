@@ -92,6 +92,59 @@ function Presentation.Event(self: any,event: any)
         self.Hits:Hit(event)
         if self.Callbacks.Damage then self.Callbacks.Damage(event) end
         if event.Owner==Players.LocalPlayer.UserId then self.Camera:Kick(1);self.Camera:HitStop() end
+    elseif event.Kind=="Melee" then
+        local ownerPlayer=if type(event.Owner)=="number" then Players:GetPlayerByUserId(event.Owner) else nil
+        local character=if typeof(event.Character)=="Instance" and event.Character:IsA("Model") then event.Character elseif ownerPlayer then ownerPlayer.Character else nil
+        local controller=self:Controller(character)
+        local profile=if event.Combo==2 then "MeleeLeft" else "MeleeRight"
+        if controller then controller:Play("CastRelease",nil,nil,profile) end
+        local palette=if T.CharacterArt.Trim[event.PathwayId] then event.PathwayId else "Seer"
+        local origin=if typeof(event.Origin)=="Vector3" then event.Origin else event.Position
+        local dir=if typeof(event.Direction)=="Vector3" and event.Direction.Magnitude>0.01 then event.Direction.Unit else Vector3.new(0,0,-1)
+        local side=Vector3.new(-dir.Z,0,dir.X)
+        local sign=if event.Combo==2 then -1 else 1
+        local arcStart=origin+dir*2.1+side*(sign*C.Melee.SwingArcOffset)+Vector3.new(0,0.45*sign,0)
+        local arcEnd=origin+dir*4.2-side*(sign*C.Melee.SwingArcOffset)-Vector3.new(0,0.35*sign,0)
+        local specs: {any}={
+            {Name="ThreadBeam",Position=arcStart,Palette=palette,Options={TargetPosition=arcEnd,Scale=C.Melee.SwingScale}},
+            {Name="AfterimageTrail",Position=origin+dir*1.4,Palette=palette,Options={TargetPosition=origin+dir*3.6,Scale=C.Melee.SwingScale}},
+        }
+        if event.Target then
+            table.insert(specs,{Name="ImpactFlash",Position=event.Position,Palette=palette,Options={Scale=C.Melee.ImpactScale}})
+            table.insert(specs,{Name="RingBurst",Position=event.Position,Palette=palette,Options={Scale=C.Melee.ImpactScale}})
+        end
+        self.Blocks:Compose(specs,1,C.Composition.Priority,C.Melee.SwingLife)
+    elseif event.Kind=="Dash" then
+        local ownerPlayer=if type(event.Owner)=="number" then Players:GetPlayerByUserId(event.Owner) else nil
+        local character=ownerPlayer and ownerPlayer.Character
+        local controller=self:Controller(character)
+        if controller then controller:Play("Dodge") end
+        local palette=if T.CharacterArt.Trim[event.PathwayId] then event.PathwayId else "Seer"
+        local origin=if typeof(event.Origin)=="Vector3" then event.Origin else event.Position
+        local dest=if typeof(event.Destination)=="Vector3" then event.Destination else event.Position
+        local dashSpecs: {any}={
+            {Name="AfterimageTrail",Position=origin,Palette=palette,Options={TargetPosition=dest,Scale=C.Dash.Scale}},
+            {Name="RingBurst",Position=origin,Palette=palette,Options={Scale=C.Dash.Scale*0.82}},
+        }
+        self.Blocks:Compose(dashSpecs,1,C.Composition.Priority,C.Dash.Life)
+    elseif event.Kind=="UltimateVisual" then
+        local ownerPlayer=if type(event.Owner)=="number" then Players:GetPlayerByUserId(event.Owner) else nil
+        local character=if typeof(event.Character)=="Instance" and event.Character:IsA("Model") then event.Character elseif ownerPlayer then ownerPlayer.Character else nil
+        local palette=if T.CharacterArt.Trim[event.PathwayId] then event.PathwayId else "Seer"
+        local controller=self:Controller(character)
+        if controller then controller:Play("CastRelease",nil,nil,"Ultimate"..palette) end
+        if event.Owner==Players.LocalPlayer.UserId then self.Camera:Kick(3) end
+        local scale=if event.Stage=="Complete" then C.Ultimate.CompleteScale else C.Ultimate.IncompleteScale
+        local stencil=if palette=="Seer" then "Worm" elseif palette=="Marauder" then "Clock" else "Arch"
+        local motif=if palette=="Seer" then "VeilRibbon" elseif palette=="Marauder" then "GlitchFlicker" else "DoorFrame"
+        local ultSpecs: {any}={
+            {Name="GroundRune",Position=event.Position,Palette=palette,Options={Scale=scale,Stencil=stencil}},
+            {Name="SigilStencil",Position=event.Position+Vector3.new(0,2.2,0),Palette=palette,Options={Scale=scale,Stencil=stencil}},
+            {Name=motif,Position=event.Position,Palette=palette,Options={Scale=scale}},
+            {Name="RisingMotes",Position=event.Position,Palette=palette,Options={Scale=scale}},
+            {Name="ScreenEdgePulse",Position=event.Position,Palette=palette,Options={Scale=scale}},
+        }
+        self.Blocks:Compose(ultSpecs,3,C.Composition.Priority+1,C.Ultimate.Life)
     elseif event.Kind=="VoiceProfile" then self:Audio(event.Hook,event.Pitch)
     elseif event.Kind=="Reveal" and typeof(event.Target)=="Instance" then
         -- Compatibility for old server reveal packets; current servers send private batches.

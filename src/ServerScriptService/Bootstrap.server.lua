@@ -75,7 +75,7 @@ local function applyStats(player: Player,s: any,refill: boolean)
     if not hum then return end
     hum.MaxHealth=s.Stats.Health
     if refill then hum.Health=s.Stats.Health else hum.Health=math.min(hum.Health,hum.MaxHealth) end
-    hum.WalkSpeed=math.clamp(16+s.Stats.Agility*0.25,16,42)
+    hum.WalkSpeed=domain:MoveSpeed(s,os.clock())
     s.Health=hum.Health
 end
 local function sendState(player: Player)
@@ -87,11 +87,16 @@ local function sendState(player: Player)
     for id,expiry in pairs(s.Cooldowns) do if expiry>now then cooldowns[id]=expiry-now end end
     for id,st in pairs(s.Statuses) do if st.ExpiresAt>now then table.insert(statuses,id) end end
     table.sort(statuses)
+    local myth=s.Statuses.MythicalForm
+    local mythActive=myth and myth.ExpiresAt>now
+    local mythStage=if mythActive then (myth.Stage or "Incomplete") else false
+    local mythRemaining=if mythActive then math.max(0,myth.ExpiresAt-now) else 0
     local character=player.Character
     if character then
         character:SetAttribute("MysteriesPathway",p.PathwayId or "")
         character:SetAttribute("MysteriesSequence",p.Sequence or 9)
         character:SetAttribute("MysteriesDisguised",s.Statuses.Disguised~=nil)
+        character:SetAttribute("MysteriesMythicalForm",mythStage or "")
     end
     stateEvent:FireClient(player,{Ready=true,Developer=isDeveloper(player),
         DeveloperInfo=if isDeveloper(player) then {SessionOnly=sessionOnly,Mode=s.Mode,Ready=s.Ready} else nil,PathwayId=p.PathwayId,Sequence=p.Sequence,
@@ -99,6 +104,7 @@ local function sendState(player: Player)
         Spirituality=s.Spirituality,MaxSpirituality=s.Stats.Spirituality,Sanity=s.Sanity,Mode=s.Mode,
         Gold=p.Gold,WishCredits=p.WishCredits,Inventory=Domain.Copy(p.Inventory),Loadout=Domain.Copy(p.AbilityLoadout),
         Cooldowns=cooldowns,Statuses=statuses,Dead=s.Dead,RecordedCharges=s.RecordedPower and s.RecordedPower.Charges or 0,RecordedPowerId=s.RecordedPower and s.RecordedPower.Id or false,StolenPower=s.StolenPower or false,
+        Running=s.Running~=false,UltimateStage=mythStage,UltimateRemaining=mythRemaining,
         Casting=s.Pending and s.Pending.Id or false,CastRemaining=s.Pending and math.max(0,s.Pending.EndsAt-now) or 0,CastSerial=s.CastSerial,VisualToken=s.VisualToken or 0})
 end
 local function bindCharacter(player: Player,character: Model)
@@ -111,7 +117,8 @@ local function bindCharacter(player: Player,character: Model)
         while player.Parent and character==player.Character and states[player] and not states[player].Ready do task.wait(0.1) end
         local s=states[player]
         if not s or not s.Ready or player.Character~=character then return end
-        s.Dead=false;s.Pending=nil;s.Statuses={};s.RecordedPower=nil;s.StolenPower=nil;s.DisguiseUntil=nil;s.OriginalDisplayName=nil
+        s.Dead=false;s.Pending=nil;s.Statuses={};s.RecordedPower=nil;s.StolenPower=nil;s.DisguiseUntil=nil;s.OriginalDisplayName=nil;s.UltimateStage=false
+        character:SetAttribute("MysteriesMythicalForm","")
         s.Health=s.Stats.Health;s.Spirituality=s.Stats.Spirituality
         s.LastPosition=root.Position;s.LastPositionAt=os.clock();s.TeleportGraceUntil=os.clock()+3
         applyStats(player,s,true)
@@ -122,7 +129,8 @@ local function bindCharacter(player: Player,character: Model)
         hum.Died:Connect(function()
             local current=states[player]
             if current and player.Character==character then
-                current.Dead=true;domain:CancelCast(current,false);current.Statuses={}
+                current.Dead=true;domain:CancelCast(current,false);current.Statuses={};current.UltimateStage=false
+                character:SetAttribute("MysteriesMythicalForm","")
                 effects:RemoveGates(player);world:Cleanup(player)
             end
         end)
@@ -142,6 +150,7 @@ world.OnInteraction=function(player: Player,action: string)
         return
     elseif action=="Recover" then
         ok,message=domain:Recover(s);s.FailureApplied=false
+        applyStats(player,s,false)
     elseif action=="Cipher" then
         if s.Mode=="Normal" and s.Statuses.CipherSight and s.Statuses.CipherSight.ExpiresAt>now then
             ok=domain:Act(s,"CipherSolved","archive:"..tostring(now),now)
@@ -252,6 +261,54 @@ intent.OnServerEvent:Connect(function(player: Player,action: any,payload: any)
     elseif action=="Equip" then
         if type(payload.Id)~="string" or #payload.Id>80 then return end
         local _,message=domain:Equip(s,payload.Slot,payload.Id);notify(player,message)
+    elseif action=="ToggleRun" then
+        local ok=domain:ToggleRun(s,payload.Running)
+        if ok then applyStats(player,s,false) end
+    elseif action=="Dash" then
+        local root=world:Root(player);local hum=world:Humanoid(player)
+        if not root or not world:FiniteVector(root.Position) or not hum or hum.Health<=0 then return end
+        local ok,distance,reason=domain:BeginDash(s,now)
+        if not ok then notify(player,reason);return end
+        local dir=Vector3.new(root.CFrame.LookVector.X,0,root.CFrame.LookVector.Z)
+        if world:FiniteVector(payload.Direction) then
+            local cand=Vector3.new(payload.Direction.X,0,payload.Direction.Z)
+            if cand.Magnitude>0.05 then dir=cand.Unit end
+        end
+        if dir.Magnitude<=0.05 then dir=Vector3.new(0,0,-1) else dir=dir.Unit end
+        local origin=root.Position
+        local destination=origin
+        for _,fraction in ipairs({1,0.75,0.5,0.25}) do
+            local candidate=origin+dir*(distance*fraction)
+            if world:LineOfSight(origin,candidate,player.Character,nil) then
+                local safe=world:SafeDestination(player,candidate)
+                if safe then destination=safe;break end
+            end
+        end
+        if (destination-origin).Magnitude>0.5 and player.Character then
+            s.TeleportGraceUntil=now+(data.Runtime.DashGraceSeconds or 0.75)
+            s.LastPosition=destination
+            player.Character:PivotTo(CFrame.new(destination)*root.CFrame.Rotation)
+            root.AssemblyLinearVelocity=Vector3.zero
+        end
+        fx:FireAllClients({Kind="Dash",Position=destination,Origin=origin,Destination=destination,
+            PathwayId=s.Profile.PathwayId or "Seer",Owner=player.UserId,Character=player.Character,At=workspace:GetServerTimeNow()})
+    elseif action=="Ultimate" then
+        local root=world:Root(player);local hum=world:Humanoid(player)
+        if not root or not world:FiniteVector(root.Position) or not hum or hum.Health<=0 then return end
+        local ok,message,info=domain:ActivateUltimate(s,now)
+        if not ok or not info then notify(player,message);sendState(player);return end
+        applyStats(player,s,false)
+        local u=data.Runtime.Ultimate
+        local mult=domain:PowerMultiplier(s,now)
+        for _,e in ipairs(world:Targets(root.Position,u.PulseRadius,6,player)) do
+            if world:LineOfSight(root.Position,e.Root.Position,player.Character,e.Model) then
+                world:Damage(e,u.PulseBaseDamage*mult,player,now)
+                if info.Form.Status then world:Status(e,info.Form.Status,info.Form.StatusDuration or 4,now,player,u.PulseBaseDamage*0.2) end
+            end
+        end
+        fx:FireAllClients({Kind="UltimateVisual",Position=root.Position,PathwayId=s.Profile.PathwayId,Stage=info.Stage,
+            Owner=player.UserId,Character=player.Character,At=workspace:GetServerTimeNow()})
+        notify(player,message)
     elseif action=="Cast" then
         if type(payload.Id)~="string" or #payload.Id>80 then return end
         local a=data.Abilities[payload.Id]
@@ -266,18 +323,28 @@ intent.OnServerEvent:Connect(function(player: Player,action: any,payload: any)
     elseif action=="Melee" then
         local root=world:Root(player)
         if not root or not world:FiniteVector(root.Position) or s.Mode~="Normal" or s.Pending or now-s.LastMelee<data.Runtime.MeleeCooldown then return end
+        local canMove=domain:CanMove(s,now)
+        if not canMove then return end
         s.LastMelee=now;s.LastCombat=now
+        s.MeleeCombo=((s.MeleeCombo or 0)%2)+1
         local direction=root.CFrame.LookVector
         if world:FiniteVector(payload.Position) and (payload.Position-root.Position).Magnitude>0.1 then direction=(payload.Position-root.Position).Unit end
+        local hitModel: Instance?=nil
+        local hitPos=root.Position+direction*3
+        local mult=domain:PowerMultiplier(s,now)
         for _,e in ipairs(world:Targets(root.Position,data.Runtime.MeleeRange,8,player)) do
             local delta=e.Root.Position-root.Position
             if delta.Magnitude<0.1 or delta.Unit:Dot(direction)>0.25 then
                 if world:LineOfSight(root.Position,e.Root.Position,player.Character,e.Model) then
-                    world:Damage(e,s.Stats.Strength*data.Runtime.MeleePowerMultiplier,player,now);break
+                    if world:Damage(e,s.Stats.Strength*data.Runtime.MeleePowerMultiplier*mult,player,now) then
+                        hitModel=e.Model;hitPos=e.Root.Position
+                    end
+                    break
                 end
             end
         end
-        world:Effect(root.Position+direction*3,"Melee",player)
+        fx:FireAllClients({Kind="Melee",Position=hitPos,Origin=root.Position,Direction=direction,
+            Combo=s.MeleeCombo,PathwayId=s.Profile.PathwayId or "Seer",Owner=player.UserId,Character=player.Character,Target=hitModel})
     end
     sendState(player)
 end)
@@ -291,10 +358,11 @@ task.spawn(function()
             domain:Tick(s,dt,now)
             local root=world:Root(player);local hum=world:Humanoid(player)
             if root and hum and hum.Health>0 then
+                hum.WalkSpeed=domain:MoveSpeed(s,now)
                 -- Horizontal movement guard; server-authorized travel has an explicit grace window.
                 if s.LastPosition and now>(s.TeleportGraceUntil or 0) then
                     local horizontal=Vector3.new(root.Position.X-s.LastPosition.X,0,root.Position.Z-s.LastPosition.Z).Magnitude
-                    if horizontal>hum.WalkSpeed*math.min(dt,2)*2+8 then
+                    if horizontal>math.max(16,hum.WalkSpeed)*math.min(dt,2)*2+8 then
                         root.CFrame=CFrame.new(s.LastPosition);domain:CancelCast(s,false)
                     end
                 end

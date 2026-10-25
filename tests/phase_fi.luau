@@ -59,7 +59,7 @@ return function(data: any,load: any,shared: any,e: any)
     end
     check(#tags.MysticDoor==4 and #tags.FlameAnchor>=24,"Practice doors and real arena flame anchors remain tagged")
     check(lighting.ClockTime==T.World.Lighting.ClockTime,"Native lighting uses the Art Bible profile")
-    -- Player outfits: all pathways/sequences, R6/R15 and disguise cleanup.
+    -- Player outfits: all pathways/sequences, R6/R15, Incomplete/Complete Mythical Creature Forms, and disguise cleanup.
     local Service=load("Client/Visuals/VfxService",env);local Blocks=load("Client/Visuals/EffectBlocks",env)
     local service=Service.new();local blocks=Blocks.new(service)
     local Outfit=load("Client/Visuals/CharacterArt",env);local outfits=Outfit.new(service,blocks)
@@ -78,13 +78,28 @@ return function(data: any,load: any,shared: any,e: any)
             for seq=9,1,-1 do
                 local character=player.Character
                 character:SetAttribute("MysteriesPathway",path);character:SetAttribute("MysteriesSequence",seq)
+                character:SetAttribute("MysteriesMythicalForm","")
                 outfits:Step(0.3)
-                local record=outfits.Records[character];check(record~=nil,"Outfit exists for every pathway/sequence and both rigs")
+                local record=outfits.Records[character];check(record~=nil and record.Mythical=="","Outfit exists for every pathway/sequence and both rigs")
                 local count=0
                 for _,part in ipairs(record.Model:GetDescendants()) do
                     if part:IsA("BasePart") then count+=1;check(not part.CanCollide and not part.CanQuery and part.Massless,"Outfit cannot change collision/aiming/rig mass") end
                 end
                 check(count<=T.CharacterArt.MaxParts and torso.Color==original,"Outfit cap preserves original body appearance data")
+                if seq<=4 then
+                    for _,stage in ipairs({"Incomplete","Complete"}) do
+                        character:SetAttribute("MysteriesMythicalForm",stage);outfits:Step(0.3)
+                        local mythRecord=outfits.Records[character]
+                        check(mythRecord~=nil and mythRecord.Mythical==stage,"Mythical Creature Form builds for "..path.." "..stage)
+                        local mythCount=0
+                        for _,part in ipairs(mythRecord.Model:GetDescendants()) do
+                            if part:IsA("BasePart") then mythCount+=1;check(not part.CanCollide and not part.CanQuery and part.Massless,"Mythical Creature parts stay massless and non-colliding") end
+                        end
+                        check(mythCount<=T.CharacterArt.MaxParts and torso.Color==original,"Mythical Creature assembly respects MaxParts and preserves body color")
+                    end
+                    character:SetAttribute("MysteriesMythicalForm","");outfits:Step(0.3)
+                    check(outfits.Records[character].Mythical=="","Expiring Mythical Creature Form restores base Victorian outfit")
+                end
                 character:SetAttribute("MysteriesDisguised",true);outfits:Step(0.3)
                 check(not outfits.Records[character],"Disguise removes cosmetic outfit without interfering with server identity")
                 character:SetAttribute("MysteriesDisguised",false)
@@ -180,5 +195,5 @@ return function(data: any,load: any,shared: any,e: any)
         check(report.Active==0 and report.Reserved==0,"Drain returns local test reservations to zero")
     end
     probe:Cancel();service:Destroy()
-    print("PASS: "..checks.." F-I world/outfit/enemy/telegraph/stress assertions (engine stand-ins; no rendering)")
+    print("PASS: "..checks.." F-I world/outfit/mythical-form/enemy/telegraph/stress assertions (engine stand-ins; no rendering)")
 end

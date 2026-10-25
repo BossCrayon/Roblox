@@ -77,11 +77,39 @@ end
 local function melee()
     if not modal and state and state.Ready and not state.Dead then send("Melee",aim()) end
 end
+local function dashDirection(): Vector3
+    local character=player.Character
+    local hum=character and character:FindFirstChildOfClass("Humanoid")
+    if hum and hum.MoveDirection.Magnitude>0.05 then
+        local flat=Vector3.new(hum.MoveDirection.X,0,hum.MoveDirection.Z)
+        if flat.Magnitude>0.05 then return flat.Unit end
+    end
+    local root=character and character:FindFirstChild("HumanoidRootPart")
+    if root and root:IsA("BasePart") then
+        local look=Vector3.new(root.CFrame.LookVector.X,0,root.CFrame.LookVector.Z)
+        if look.Magnitude>0.05 then return look.Unit end
+    end
+    local camera=workspace.CurrentCamera
+    if camera then
+        local look=Vector3.new(camera.CFrame.LookVector.X,0,camera.CFrame.LookVector.Z)
+        if look.Magnitude>0.05 then return look.Unit end
+    end
+    return Vector3.new(0,0,-1)
+end
+local function dash()
+    if not modal and state and state.Ready and not state.Dead then send("Dash",{Direction=dashDirection()}) end
+end
+local function ultimate()
+    if not modal and state and state.Ready and not state.Dead then send("Ultimate",{}) end
+end
+local function toggleRun()
+    if not modal and state and state.Ready and not state.Dead then send("ToggleRun",{}) end
+end
 local feedback=Feedback.new(safeRoot,data,function(active: boolean)
     cinematic=active
     if hud then hud.Wordmark.Visible=not active and not promptUI.Root.Visible;hud.Pathway.Visible=not active and not zoneTitle and not promptUI.Root.Visible end
 end)
-hud=Hud.new(safeRoot,data,{Cast=cast,Melee=melee,Touch=UserInputService.TouchEnabled,TouchAim=touchAim,ReducedMotion=function() return menus and menus.ReducedMotion end,Journal=function(tab: string)
+hud=Hud.new(safeRoot,data,{Cast=cast,Melee=melee,Dash=dash,Ultimate=ultimate,ToggleRun=toggleRun,Touch=UserInputService.TouchEnabled,TouchAim=touchAim,ReducedMotion=function() return menus and menus.ReducedMotion end,Journal=function(tab: string)
     if roomModal then return end
     if menus.Root.Visible and menus.Tab==tab and menus.View=="Page" then menus:Close() else menus:Open(tab) end
 end})
@@ -177,8 +205,11 @@ UserInputService.InputBegan:Connect(function(input: InputObject,processed: boole
         if menus.Root.Visible then menus:Close();return end
     end
     if modal then return end
-    -- E belongs to an active prompt, preventing a simultaneous slot-2 cast.
+    -- E belongs to an active prompt, preventing any simultaneous shortcut conflict.
     if promptUI.Current and input.KeyCode==promptUI.Current.KeyboardKeyCode then return end
+    if input.KeyCode==T.Input.SprintLeft or input.KeyCode==T.Input.SprintRight then toggleRun();return end
+    if input.KeyCode==T.Input.Dash then dash();return end
+    if input.KeyCode==T.Input.Ultimate then ultimate();return end
     if input.UserInputType==Enum.UserInputType.MouseButton1 then melee();return end
     for i,key in ipairs(T.Input.Keys) do if input.KeyCode==key then cast(i);return end end
 end)

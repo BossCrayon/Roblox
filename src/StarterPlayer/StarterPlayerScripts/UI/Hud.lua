@@ -41,12 +41,49 @@ function Hud.new(parent: Instance,data: any,callbacks: any): any
     self.Collapse.BackgroundTransparency=1
     self.Journal=Kit.Button(self.Root,"Journal [B]",function() callbacks.Journal("Journal") end)
     self.Strike=Kit.Button(self.Root,"Strike",function() callbacks.Melee() end)
+    self.Dash=Kit.Button(self.Root,"Dash [Q]",function() if callbacks.Dash then callbacks.Dash() end end)
+    self.Dash.Name="DashButton"
+    self.Sprint=Kit.Button(self.Root,"Run [Ctrl]",function() if callbacks.ToggleRun then callbacks.ToggleRun() end end)
+    self.Sprint.Name="SprintButton"
     self.Hotbar=Kit.Panel(self.Root,"AbilityHotbar")
     self.Cards=Kit.New("Frame",self.Hotbar,{BackgroundTransparency=1,Size=UDim2.fromScale(1,1)})
     self.CardPadding=Kit.Padding(self.Cards,T.Layout.Desktop.BarPad)
     self.CardList=Kit.List(self.Cards,T.Layout.Desktop.SlotGap,true)
     self.Tooltip=Kit.Panel(self.Root,"AbilityTooltip");self.Tooltip.Visible=false
     self.TooltipText=Kit.Text(self.Tooltip,"",T.Type.Small);self.TooltipText.Size=UDim2.new(1,-T.Layout.Modal.Gap*2,1,0);self.TooltipText.Position=UDim2.fromOffset(T.Layout.Modal.Gap,0)
+    -- Mythical Creature Ultimate button [R]
+    self.UltimateCard=Kit.New("Frame",self.Root,{Name="UltimateSlot",BackgroundTransparency=1})
+    self.UltimateFace=Kit.Button(self.UltimateCard,"",function() if callbacks.Ultimate then callbacks.Ultimate() end end)
+    self.UltimateFace.Name="Ultimate";Kit.New("UIAspectRatioConstraint",self.UltimateFace,{AspectRatio=1})
+    self.UltimateGlyph=Kit.New("Frame",self.UltimateFace,{Name="Icon",BackgroundTransparency=1,AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromScale(0.5,0.5)})
+    self.UltimateSeal=Kit.New("Frame",self.UltimateFace,{Name="LockedSeal",BackgroundTransparency=1,Size=UDim2.fromScale(1,1)})
+    self.UltimateEmptyGlyph=Kit.Glyph(self.UltimateSeal,"Seal",T.Layout.Desktop.Slot*T.Layout.Hotbar.SealSize,T.Colors.Muted)
+    self.UltimateEmptyGlyph.AnchorPoint=Vector2.new(0.5,0.5);self.UltimateEmptyGlyph.Position=UDim2.fromScale(0.5,0.5)
+    self.UltimateBadge=Kit.Panel(self.UltimateFace,"KeyBadge")
+    self.UltimateKey=Kit.Text(self.UltimateBadge,T.Input.UltimateName,T.Type.Micro,T.Fonts.Number);self.UltimateKey.Size=UDim2.fromScale(1,1);self.UltimateKey.TextXAlignment=Enum.TextXAlignment.Center
+    self.UltimateCost=Kit.Text(self.UltimateCard,T.AbilityUI.UltimateLocked,T.Type.Micro,T.Fonts.Number);self.UltimateCost.TextColor3=T.Colors.Muted;self.UltimateCost.TextXAlignment=Enum.TextXAlignment.Center
+    self.UltimateCountdown=Kit.Text(self.UltimateFace,"",T.Type.Number,T.Fonts.Number);self.UltimateCountdown.AnchorPoint=Vector2.new(0.5,0.5);self.UltimateCountdown.Position=UDim2.fromScale(0.5,0.5);self.UltimateCountdown.BackgroundColor3=T.Colors.Ink;self.UltimateCountdown.BackgroundTransparency=T.Style.PanelFade;self.UltimateCountdown.Visible=false
+    self.UltimateSegments={}
+    for segment=1,T.Layout.Hotbar.Segments do
+        local angle=(segment-1)/T.Layout.Hotbar.Segments*math.pi*2-math.pi/2
+        table.insert(self.UltimateSegments,Kit.New("Frame",self.UltimateFace,{Name="CooldownSegment",BorderSizePixel=0,BackgroundColor3=T.Colors.Gold,
+            AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromScale(0.5+math.cos(angle)*T.Layout.Hotbar.RingRadius,0.5+math.sin(angle)*T.Layout.Hotbar.RingRadius),
+            Size=UDim2.fromOffset(T.Layout.Hotbar.SegmentWidth,T.Layout.Hotbar.SegmentHeight),Rotation=math.deg(angle)+90,Visible=false}))
+    end
+    local function showUltimateTooltip()
+        if callbacks.Touch or not self.State then return end
+        local ult=Model.Ultimate(data,self.State,os.clock()-self.ReceivedAt)
+        local summary=ult.Name.." ["..T.Input.UltimateName.."] · "..ult.Title
+        if not ult.Unlocked then
+            summary..=" · Unlocks at Sequence 4 (Incomplete Saint) and Sequence 2 (Complete Angel)"
+        else
+            summary..=" · "..tostring(ult.Cost).." spirituality · "..string.format("%.0fs",ult.Duration).." duration"
+        end
+        self.TooltipText.Text=summary
+        self.Tooltip.Visible=true
+    end
+    self.UltimateFace.MouseEnter:Connect(showUltimateTooltip);self.UltimateFace.SelectionGained:Connect(showUltimateTooltip)
+    self.UltimateFace.MouseLeave:Connect(function() self.Tooltip.Visible=false end);self.UltimateFace.SelectionLost:Connect(function() self.Tooltip.Visible=false end)
     for i=1,T.Layout.Hotbar.Slots do
         local card=Kit.New("Frame",self.Cards,{Name="Slot"..i,BackgroundTransparency=1,LayoutOrder=i})
         local face=Kit.Button(card,"",function() callbacks.Cast(i) end)
@@ -93,7 +130,7 @@ function Hud.new(parent: Instance,data: any,callbacks: any): any
             local id=self.State and self.State.Loadout and self.State.Loadout[i]
             local a=id and data.Abilities[id]
             if a then
-                local summary=a.Name.." · "..tostring(a.SpiritualityCost).." spirituality · "..string.format("%.0fs CD",a.CooldownSeconds)
+                local summary=a.Name.." ["..T.Input.KeyNames[i].."] · "..tostring(a.SpiritualityCost).." spirituality · "..string.format("%.0fs CD",a.CooldownSeconds)
                 if a.Id=="Marauder_6" and self.State.StolenPower then
                     summary..=" · "..T.AbilityUI.StoredPrefix..(T.AbilityUI.PowerNames[self.State.StolenPower] or tostring(self.State.StolenPower))
                 elseif a.PathwayId=="Apprentice" and (a.Operation.Kind=="Record" or a.Operation.Kind=="Release") and (self.State.RecordedCharges or 0)>0 then
@@ -119,6 +156,7 @@ function Hud.Resize(self: any,layout: any)
     if self.Collapsed==nil then self.Collapsed=layout.DefaultCollapsed end
     local p,l=layout.Profile,T.Layout
     Kit.Rect(self.Resources,layout.Resources);Kit.Rect(self.Wordmark,layout.Wordmark);Kit.Rect(self.Journal,layout.Journal);Kit.Rect(self.Hotbar,layout.Hotbar);Kit.Rect(self.Cast,layout.Cast)
+    Kit.Rect(self.UltimateCard,layout.Ultimate);Kit.Rect(self.Dash,layout.Dash);Kit.Rect(self.Sprint,layout.Sprint)
     self.Wordmark.TextSize=p.HeadingSize
     self.Journal.Text=if layout.Name=="Phone" or layout.Name=="Landscape" then "B" else "Journal [B]"
     self.ResourcePadding.PaddingTop=UDim.new(0,p.PanelPad);self.ResourcePadding.PaddingBottom=UDim.new(0,p.PanelPad)
@@ -146,18 +184,28 @@ function Hud.Resize(self: any,layout: any)
     self.Objective.Position=UDim2.fromOffset(l.Pathway.Pad,l.Pathway.ObjectiveTop);self.Objective.Size=UDim2.new(1,-l.Pathway.Pad*2,0,p.PathwayHeight-l.Pathway.ObjectiveTop-l.Pathway.Pad);self.Objective.TextSize=T.Type.Small
     self.CardPadding.PaddingLeft=UDim.new(0,p.BarPad);self.CardPadding.PaddingRight=UDim.new(0,p.BarPad)
     self.CardPadding.PaddingTop=UDim.new(0,l.Hotbar.Top);self.CardPadding.PaddingBottom=UDim.new(0,0);self.CardList.Padding=UDim.new(0,p.SlotGap)
+    local badge=if layout.Name=="Phone" or layout.Name=="Landscape" then l.Hotbar.KeyPhone else l.Hotbar.KeySize
     for _,slot in ipairs(self.Slots) do
         slot.Card.Size=UDim2.fromOffset(p.Slot,p.HotbarHeight-l.Hotbar.Top)
         slot.Face.Size=UDim2.fromOffset(p.Slot,p.Slot)
         slot.Glyph.Size=UDim2.fromScale(l.Hotbar.GlyphFraction,l.Hotbar.GlyphFraction);slot.Glyph.AnchorPoint=Vector2.new(0.5,0.5);slot.Glyph.Position=UDim2.fromScale(0.5,0.5)
         slot.EmptyGlyph.Size=UDim2.fromOffset(p.Slot*l.Hotbar.SealSize,p.Slot*l.Hotbar.SealSize)
         slot.KeyBadge.Position=UDim2.fromOffset(l.Hotbar.KeyPad,l.Hotbar.KeyPad)
-        local badge=if layout.Name=="Phone" or layout.Name=="Landscape" then l.Hotbar.KeyPhone else l.Hotbar.KeySize
         slot.KeyBadge.Size=UDim2.fromOffset(badge,badge)
         slot.Cost.Position=UDim2.fromOffset(0,p.Slot+l.Hotbar.CostPad);slot.Cost.Size=UDim2.fromOffset(p.Slot,l.Hotbar.CostHeight)
         slot.Countdown.Size=UDim2.fromOffset(p.Slot-l.Modal.Gap,l.Hotbar.CountdownHeight)
         slot.Id=false
     end
+    self.UltimateFace.Position=UDim2.fromOffset(0,l.Hotbar.Top)
+    self.UltimateFace.Size=UDim2.fromOffset(p.Slot,p.Slot)
+    self.UltimateGlyph.Size=UDim2.fromScale(l.Hotbar.GlyphFraction,l.Hotbar.GlyphFraction)
+    self.UltimateEmptyGlyph.Size=UDim2.fromOffset(p.Slot*l.Hotbar.SealSize,p.Slot*l.Hotbar.SealSize)
+    self.UltimateBadge.Position=UDim2.fromOffset(l.Hotbar.KeyPad,l.Hotbar.KeyPad)
+    self.UltimateBadge.Size=UDim2.fromOffset(badge,badge)
+    self.UltimateCost.Position=UDim2.fromOffset(0,l.Hotbar.Top+p.Slot+l.Hotbar.CostPad)
+    self.UltimateCost.Size=UDim2.fromOffset(p.Slot,l.Hotbar.CostHeight)
+    self.UltimateCountdown.Size=UDim2.fromOffset(p.Slot-l.Modal.Gap,l.Hotbar.CountdownHeight)
+    self.UltimateSkinKey=nil
     self.Tooltip.Size=UDim2.fromOffset(math.min(l.Hotbar.TooltipWidth,layout.Width-p.Margin*2),l.Hotbar.TooltipHeight)
     self.Tooltip.AnchorPoint=Vector2.new(0.5,1);self.Tooltip.Position=UDim2.fromOffset(layout.Hotbar.X+layout.Hotbar.W/2,layout.Hotbar.Y-l.Hotbar.TooltipGap)
     self.Strike.Visible=self.Callbacks.Touch
@@ -171,7 +219,12 @@ function Hud.Render(self: any,state: any,receivedAt: number)
         self.SkinPath=state.PathwayId
         Kit.Skin(self.Pathway,state.PathwayId)
         Kit.Skin(self.Hotbar,state.PathwayId)
+        Kit.Skin(self.UltimateFace,state.PathwayId,true)
+        Kit.Skin(self.Dash,state.PathwayId,true)
+        Kit.Skin(self.Sprint,state.PathwayId,true)
         local skin=T.Skins[state.PathwayId] or T.Skins.Seer
+        self.UltimateFace.BackgroundColor3=skin.Backing
+        for _,segment in ipairs(self.UltimateSegments) do segment.BackgroundColor3=skin.Accent end
         for _,slot in ipairs(self.Slots) do
             Kit.Skin(slot.Face,state.PathwayId,true)
             slot.Face.BackgroundColor3=skin.Backing
@@ -195,6 +248,21 @@ function Hud.Render(self: any,state: any,receivedAt: number)
         self.Objective.Text="Open the journal to drink your first potion."
     end
     Kit.Tween(self.DigestionFill,T.Timing.Fill,{Size=UDim2.fromScale(math.clamp(state.Digestion/100,0,1),1)})
+    local ult=Model.Ultimate(self.Data,state,0)
+    local ultSkinKey=tostring(state.PathwayId)..":"..tostring(ult.Unlocked)..":"..tostring(ult.Stage)
+    if self.UltimateSkinKey~=ultSkinKey and self.Layout then
+        self.UltimateSkinKey=ultSkinKey
+        Kit.Clear(self.UltimateGlyph)
+        self.UltimateSeal.Visible=not ult.Unlocked
+        if ult.Unlocked then
+            local skin=T.Skins[state.PathwayId] or T.Skins.Seer
+            local icon=Kit.Glyph(self.UltimateGlyph,skin.UltimateGlyph or "Worm",self.Layout.Profile.Slot*T.Layout.Hotbar.GlyphFraction,Kit.PathColor(state.PathwayId))
+            icon.Size=UDim2.fromScale(1,1)
+        end
+    end
+    local running=state.Running~=false
+    self.Sprint.Text=(if running then T.AbilityUI.RunLabel else T.AbilityUI.WalkLabel).." ["..T.Input.SprintName.."]"
+    self.Sprint.TextColor3=if running then Kit.PathColor(state.PathwayId) else T.Colors.Muted
     for i,slot in ipairs(self.Slots) do
         local id=state.Loadout[i];local a=id and self.Data.Abilities[id]
         slot.Stored.Visible=id=="Marauder_6" and type(state.StolenPower)=="string"
@@ -243,6 +311,21 @@ function Hud.Step(self: any,now: number)
         slot.Countdown.Text=if remaining>0 then string.format("%.1f",remaining) else ""
         for i,segment in ipairs(slot.Segments) do segment.Visible=i<=n end
     end
+    local ult=Model.Ultimate(self.Data,state,elapsed)
+    local ultTotal=math.max(1,self.Data.Runtime.Ultimate and self.Data.Runtime.Ultimate.CooldownSeconds or 45)
+    local ultSegs=if ult.Active then math.ceil(math.clamp(ult.Remaining/math.max(1,ult.Duration),0,1)*T.Layout.Hotbar.Segments)
+        elseif ult.Unlocked then math.ceil(math.clamp(ult.Cooldown/ultTotal,0,1)*T.Layout.Hotbar.Segments) else 0
+    for i,segment in ipairs(self.UltimateSegments) do segment.Visible=i<=ultSegs end
+    self.UltimateCountdown.Visible=ult.Active or ult.Cooldown>0
+    self.UltimateCountdown.Text=if ult.Active then string.format("%.1f",ult.Remaining) elseif ult.Cooldown>0 then string.format("%.0f",ult.Cooldown) else ""
+    self.UltimateCost.Text=if not ult.Unlocked then T.AbilityUI.UltimateLocked elseif ult.Active then ult.Stage elseif ult.Stage=="Complete" then T.AbilityUI.UltimateComplete else T.AbilityUI.UltimatePartial
+    self.UltimateCost.TextColor3=if not ult.Unlocked then T.Colors.Muted elseif ult.Active then Kit.PathColor(state.PathwayId) else T.Colors.Spirituality
+    for _,child in ipairs(self.UltimateFace:GetChildren()) do
+        if child:IsA("UIStroke") then child.Transparency=if not ult.Unlocked then 0.65 elseif ult.Active then T.Skins.ReadyAlpha else T.Style.BorderAlpha end
+    end
+    local dashRem=Model.Cooldown(state,"Dash",elapsed)
+    self.Dash.Text=if dashRem>0 then string.format("Dash %.1fs",dashRem) else T.AbilityUI.DashReady.." ["..T.Input.DashName.."]"
+    self.Dash.TextColor3=if dashRem>0 then T.Colors.Muted else T.Colors.Text
     local visual=self.VisualCast
     if visual and workspace:GetServerTimeNow()>visual.EndsAt+T.AbilityUI.CastGrace then self.VisualCast=nil;visual=nil end
     local stale=(self.FinishedVisualToken or 0)>0 and (state.VisualToken or 0)<=(self.FinishedVisualToken or 0)

@@ -34,13 +34,26 @@ function Layout.Resolve(theme: any,width: number,height: number,touch: boolean):
     if name=="Landscape" then
         notice=rectangle(bar.X,math.max(0,bar.Y-l.Notice.CompactHeight-l.Modal.Gap),math.min(bar.W,action.X-l.Actions.Gap-bar.X),l.Notice.CompactHeight)
     end
+    local ultW=p.Slot+p.BarPad*2
+    local ultimate=rectangle(bar.X+bar.W+l.Hotbar.UltimateGap,bar.Y,ultW,bar.H)
+    if ultimate.X+ultimate.W>width-p.Margin then
+        ultimate=rectangle(math.max(p.Margin,action.X-l.Hotbar.UltimateGap-ultW),action.Y,ultW,l.Actions.Height)
+    end
+    local auxW=math.max(48,math.min(l.Hotbar.AuxWidth,math.floor((bar.W-l.Hotbar.AuxGap)/2)))
+    local dashRect=rectangle(math.max(p.Margin,bar.X-l.Hotbar.UltimateGap-auxW*2-l.Hotbar.AuxGap),bar.Y+(bar.H-l.Hotbar.AuxHeight)/2,auxW,l.Hotbar.AuxHeight)
+    local sprintRect=rectangle(dashRect.X+auxW+l.Hotbar.AuxGap,dashRect.Y,auxW,l.Hotbar.AuxHeight)
+    if dashRect.X<=p.Margin or Layout.Intersects(dashRect,pathway,l.Modal.Gap) then
+        local rowY=if touch then action.Y else math.max(p.Margin,bar.Y-l.Hotbar.AuxHeight-l.Hotbar.AuxGap)
+        dashRect=rectangle(bar.X,rowY,auxW,l.Hotbar.AuxHeight)
+        sprintRect=rectangle(bar.X+auxW+l.Hotbar.AuxGap,rowY,auxW,l.Hotbar.AuxHeight)
+    end
     return {Name=name,Profile=p,Width=width,Height=height,Resources=resources,Hotbar=bar,Pathway=pathway,
         CanExpand=expandedFits,DefaultCollapsed=touch or name=="Phone" or not expandedFits,
         Wordmark=wordmark,
         Journal=rectangle(width-p.Margin-p.JournalButton[1],p.Margin,p.JournalButton[1],p.JournalButton[2]),
         Modal=rectangle((width-modalW)/2,(height-modalH)/2,modalW,modalH),
         Confirm=rectangle((width-confirmW)/2,(height-confirmH)/2,confirmW,confirmH),
-        Notice=notice,Action=action,
+        Notice=notice,Action=action,Ultimate=ultimate,Dash=dashRect,Sprint=sprintRect,
         Cast=rectangle(bar.X+(bar.W-l.Cast.Width)/2,math.max(0,math.min(height/2+l.Cast.CenterOffset,bar.Y-l.Cast.Height-l.Modal.Gap)),l.Cast.Width,l.Cast.Height),
         Advance=rectangle(p.Margin,l.Advance.Top,width-p.Margin*2,l.Advance.Height)}
 end

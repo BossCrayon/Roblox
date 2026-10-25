@@ -12,6 +12,28 @@ local function still(entry: any,_time: number,_speed: number): Pose
     for role,value in pairs(entry.Pose) do result[role]=frame(value[1],value[2],value[3],value[4]) end
     return result
 end
+local function lerpPose(a: any,b: any,t: number): Pose
+    local result: Pose={}
+    for role,va in pairs(a) do
+        local vb=b and b[role] or {0,0,0,0}
+        result[role]=frame(va[1]+(vb[1]-va[1])*t,va[2]+(vb[2]-va[2])*t,va[3]+(vb[3]-va[3])*t,va[4]+(vb[4]-va[4])*t)
+    end
+    return result
+end
+local function releaseCurve(entry: any,time: number,_speed: number): Pose
+    if not entry.FollowPose then return still(entry,time,_speed) end
+    local progress=math.clamp(time/math.max(0.01,entry.Duration),0,1)
+    if entry.AnticipationPose and progress<0.24 then
+        return lerpPose(entry.AnticipationPose,entry.Pose,progress/0.24)
+    elseif progress<0.62 then
+        local t=if entry.AnticipationPose then (progress-0.24)/0.38 else progress/0.62
+        return lerpPose(entry.Pose,entry.FollowPose,t)
+    end
+    local recovery=(progress-0.62)/0.38
+    return lerpPose(entry.FollowPose,entry.RecoveryPose or {
+        Root={0,0,0,0},Waist={0,0,0,0},Neck={0,0,0,0},LeftShoulder={0,0,0,0},RightShoulder={0,0,0,0},LeftHip={0,0,0,0},RightHip={0,0,0,0},
+    },recovery*0.65)
+end
 local function breathe(entry: any,time: number,_speed: number): Pose
     local wave=math.sin(time*math.pi*2/entry.Period)
     return {Root=frame(wave*entry.Rise,0,0,0),Waist=frame(0,wave*0.35,0,0),Neck=frame(0,wave*entry.Nod,0,0)}
@@ -41,15 +63,55 @@ local function pose7(root,waist,neck,leftArm,rightArm,leftHip,rightHip)
         RightHip=rightHip or {0,0,0,0},
     }
 end
-local config={
+local config: any={
     Spring={Frequency=8,MaxStep=0.1},
     Blend={Default=0.12,MinFade=0.016,MaxFade=2,WeightEpsilon=0.001,MaxWeight=1,ReducedScale=0.3},
-    Locomotion={MinSpeed=0.1,RunSpeed=18,SpeedReference=16,MaxSpeedRatio=1.5,LandingVelocity=-3},
+    Locomotion={MinSpeed=0.1,RunSpeed=14,SpeedReference=16,MaxSpeedRatio=1.5,LandingVelocity=-3},
     Safety={MaxPause=0.08,MaxFrameDelta=0.1,AssetLoadGrace=1.5,MaxAssetSpeed=2,MinAssetSpeed=0.1},
     CastProfiles={
         Potion={CastRelease={AnimationId="",Duration=T.Ritual.DrinkTime,Pose=pose7(
             {0,-3,0,0},{0,-2,0,0},{0,-10,0,0},{0,-16,0,-8},{0,-112,0,12},{0,-2,0,0},{0,2,0,0}
         )}},
+        MeleeRight={
+            CastRelease={
+                AnimationId="",Duration=0.40,Procedural=releaseCurve,
+                AnticipationPose=pose7({-0.05,6,-24,-4},{0,5,-18,-3},{0,-4,18,0},{0,-28,14,-14},{0,-92,-28,28},{0,-12,0,0},{0,12,0,0}),
+                Pose=pose7({0.03,-8,26,4},{0,-6,22,4},{0,4,-18,0},{0,18,-12,-18},{0,-58,28,-22},{0,12,0,0},{0,-12,0,0}),
+                FollowPose=pose7({-0.02,-4,32,3},{0,-4,26,2},{0,2,-22,0},{0,24,-16,-20},{0,-32,38,-30},{0,8,0,0},{0,-8,0,0}),
+            },
+        },
+        MeleeLeft={
+            CastRelease={
+                AnimationId="",Duration=0.40,Procedural=releaseCurve,
+                AnticipationPose=pose7({-0.05,6,24,4},{0,5,18,3},{0,-4,-18,0},{0,-92,28,-28},{0,-28,-14,14},{0,12,0,0},{0,-12,0,0}),
+                Pose=pose7({0.03,-8,-26,-4},{0,-6,-22,-4},{0,4,18,0},{0,-58,-28,22},{0,18,12,18},{0,-12,0,0},{0,12,0,0}),
+                FollowPose=pose7({-0.02,-4,-32,-3},{0,-4,-26,-2},{0,2,22,0},{0,-32,-38,30},{0,24,16,20},{0,-8,0,0},{0,8,0,0}),
+            },
+        },
+        UltimateSeer={
+            CastRelease={
+                AnimationId="",Duration=0.62,Procedural=releaseCurve,
+                AnticipationPose=pose7({-0.06,8,0,0},{0,6,0,0},{0,-10,0,0},{0,-54,24,-12},{0,-54,-24,12},{0,-8,0,0},{0,8,0,0}),
+                Pose=pose7({0.06,-10,0,0},{0,-8,0,0},{0,14,0,0},{0,-108,-22,-34},{0,-108,22,34},{0,6,0,0},{0,-6,0,0}),
+                FollowPose=pose7({0.02,-4,0,0},{0,-3,0,0},{0,6,0,0},{0,-76,-18,-26},{0,-76,18,26},{0,4,0,0},{0,-4,0,0}),
+            },
+        },
+        UltimateMarauder={
+            CastRelease={
+                AnimationId="",Duration=0.62,Procedural=releaseCurve,
+                AnticipationPose=pose7({-0.05,6,-14,-4},{0,5,-10,-3},{0,-6,10,0},{0,-68,16,-14},{0,-84,-18,20},{0,-8,0,0},{0,8,0,0}),
+                Pose=pose7({0.05,-8,14,4},{0,-6,10,3},{0,8,-10,0},{0,-96,-14,-24},{0,-112,18,32},{0,8,0,0},{0,-8,0,0}),
+                FollowPose=pose7({0.02,-4,6,2},{0,-3,4,0},{0,4,-4,0},{0,-64,-12,-18},{0,-82,14,22},{0,4,0,0},{0,-4,0,0}),
+            },
+        },
+        UltimateApprentice={
+            CastRelease={
+                AnimationId="",Duration=0.62,Procedural=releaseCurve,
+                AnticipationPose=pose7({-0.04,6,0,0},{0,5,0,0},{0,-8,0,0},{0,-64,20,-16},{0,-64,-20,16},{0,-6,0,0},{0,6,0,0}),
+                Pose=pose7({0.06,-8,0,0},{0,-6,0,0},{0,12,0,0},{0,-102,-24,-36},{0,-102,24,36},{0,8,0,0},{0,-8,0,0}),
+                FollowPose=pose7({0.02,-3,0,0},{0,-2,0,0},{0,4,0,0},{0,-74,-18,-28},{0,-74,18,28},{0,4,0,0},{0,-4,0,0}),
+            },
+        },
         Pickpocket={
             CastWindup={AnimationId="",Pose=pose7({0,4,9,-3},{0,3,6,-2},{0,-2,-6,0},{0,-14,4,-8},{0,-48,-8,12},{0,-8,0,0},{0,8,0,0})},
             CastRelease={AnimationId="",Duration=0.16,Pose=pose7({0,-2,-6,0},{0,-2,-4,0},{0,2,4,0},{0,-10,0,-6},{0,-24,-16,6},{0,4,0,0},{0,-4,0,0})},
@@ -94,7 +156,7 @@ local config={
             Duration=0.22,FadeIn=0.045,FadeOut=0.14,Pose=pose7({-0.14,9,0,0},{0,5,0,0},{0,-5,0,0},{0,10,0,-7},{0,10,0,7},{0,12,0,0},{0,-12,0,0})},
         CastWindup={AnimationId="",Procedural=still,Priority=4,AssetPriority=Enum.AnimationPriority.Action2,Loop=true,
             Duration=0.38,FadeIn=0.12,FadeOut=0.08,Pose=pose7({0,-4,-7,0},{0,0,-4,0},{0,2,7,0},{0,-28,-12,-18},{0,-45,8,18},{0,-4,0,0},{0,4,0,0})},
-        CastRelease={AnimationId="",Procedural=still,Priority=5,AssetPriority=Enum.AnimationPriority.Action3,Loop=false,
+        CastRelease={AnimationId="",Procedural=releaseCurve,Priority=5,AssetPriority=Enum.AnimationPriority.Action3,Loop=false,
             Duration=0.3,FadeIn=0.05,FadeOut=0.17,Pose=pose7({0,6,6,0},{0,0,4,0},{0,-3,-6,0},{0,-48,-12,-14},{0,-72,12,14},{0,5,0,0},{0,-5,0,0})},
         HitReact={AnimationId="",Procedural=still,Priority=6,AssetPriority=Enum.AnimationPriority.Action3,Loop=false,
             Duration=0.24,FadeIn=0.04,FadeOut=0.15,Pose=pose7({0,-9,0,-4},{0,-5,0,-2},{0,5,0,3},{0,-9,0,-5},{0,-9,0,5},{0,4,0,0},{0,-4,0,0})},
@@ -400,12 +462,28 @@ local release: {[string]: {{number}}}={
 }
 local legacy={Seer_9_Secondary="Reading",Seer_7="Flame",Marauder_9="Pickpocket",Marauder_6="Theft",Apprentice_9="Threshold",Apprentice_5="Travel"}
 config.AbilityProfiles={};config.AbilityTimings={};config.GestureOrigins={}
+local function makeFollow(w: any,r: any): {[string]: {number}}
+    local out: {[string]: {number}}={}
+    for role,rv in pairs(r) do
+        local wv=w[role] or {0,0,0,0}
+        out[role]={
+            rv[1]*0.55,
+            rv[2]+(rv[2]-wv[2])*0.18,
+            rv[3]+(rv[3]-wv[3])*0.18,
+            rv[4]+(rv[4]-wv[4])*0.18,
+        }
+    end
+    return out
+end
 for family,spec in pairs(choreography) do
+    local follow=makeFollow(spec.W,spec.R)
     if not config.CastProfiles[family] then
         config.CastProfiles[family]={
             CastWindup={AnimationId="",Pose=spec.W},
-            CastRelease={AnimationId="",Duration=0.22,Pose=spec.R},
+            CastRelease={AnimationId="",Duration=0.22,Pose=spec.R,FollowPose=follow},
         }
+    else
+        config.CastProfiles[family].CastRelease.FollowPose=follow
     end
 end
 for pathway,rows in pairs(families) do
@@ -417,7 +495,7 @@ for pathway,rows in pairs(families) do
             local spec=choreography[family]
             local source=config.CastProfiles[family] or {
                 CastWindup={AnimationId="",Pose=spec.W},
-                CastRelease={AnimationId="",Pose=spec.R},
+                CastRelease={AnimationId="",Pose=spec.R,FollowPose=makeFollow(spec.W,spec.R)},
             }
             local wind=table.clone(source.CastWindup)
             local cast=table.clone(source.CastRelease)

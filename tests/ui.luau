@@ -22,16 +22,19 @@ return function(data: any,load: any,sharedNode: any)
     local Layout=load("VisualLayout",{})
     local Model=load("VisualModel",{})
     local Access=load("Server/Domain/VisualAccess",{})
+    check(#T.Input.KeyNames==6 and T.Input.KeyNames[1]=="1" and T.Input.KeyNames[6]=="6","Equipped skills bind to 1–6")
+    check(T.Input.UltimateName=="R" and T.Input.DashName=="Q" and T.Input.SprintName=="Ctrl","Ultimate, Dash, and Walk/Run bindings match specification")
     local cases={{1920,1044,false},{1280,684,false},{1024,732,false},{834,1150,true},{768,988,true},{390,760,true},{320,484,true},{844,310,true},{640,280,true}}
     for _,c in ipairs(cases) do
         local l=Layout.Resolve(T,c[1],c[2],c[3])
-        for _,r in ipairs({l.Resources,l.Hotbar,l.Wordmark,l.Journal,l.Modal,l.Confirm}) do
+        for _,r in ipairs({l.Resources,l.Hotbar,l.Ultimate,l.Dash,l.Sprint,l.Wordmark,l.Journal,l.Modal,l.Confirm}) do
             check(r.X>=0 and r.Y>=0 and r.X+r.W<=c[1] and r.Y+r.H<=c[2],"Layout within safe root: "..c[1].."x"..c[2])
         end
-        check(l.Profile.Slot>=44,"Touch targets stay usable")
+        check(l.Profile.Slot>=44 and l.Ultimate.W>=44 and l.Ultimate.H>=44 and l.Dash.W>=44 and l.Dash.H>=44 and l.Sprint.W>=44 and l.Sprint.H>=44,"Touch targets stay >= 44px")
         check(not Layout.Intersects(l.Resources,l.Hotbar),"Vitals and hotbar do not overlap")
         check(not Layout.Intersects(l.Resources,l.Wordmark),"Vitals and masthead do not overlap: "..c[1].."x"..c[2])
         check(not Layout.Intersects(l.Hotbar,l.Journal),"Journal stays clear of hotbar")
+        check(not Layout.Intersects(l.Dash,l.Sprint),"Dash and Sprint buttons do not overlap")
         if c[3] then
             check(not Layout.Intersects(l.Action,l.Hotbar),"Strike stays clear of hotbar")
             check(not Layout.Intersects(l.Action,l.Notice),"Strike stays clear of notices")
@@ -63,11 +66,20 @@ return function(data: any,load: any,sharedNode: any)
     check(not Access.AltarValid(ticket,100,8,"Seer",8,12),"Sequence changes invalidate old preview")
     check(not Access.AltarValid(ticket,100,0/0,"Seer",9,12),"NaN distance rejected")
     local state={Ready=true,PathwayId=false,Sequence=false,Digestion=0,ActingProgress=0,Health=100,MaxHealth=100,
-        Spirituality=50,MaxSpirituality=50,Sanity=100,Mode="Normal",Gold=0,WishCredits=0,Dead=false,Casting=false,
+        Spirituality=50,MaxSpirituality=50,Sanity=100,Mode="Normal",Gold=0,WishCredits=0,Dead=false,Casting=false,Running=true,
+        UltimateStage=false,UltimateRemaining=0,
         Inventory={Seer_Potion_9=1,Marauder_Potion_9=1,Apprentice_Potion_9=1},Loadout={},Cooldowns={}}
     check(Model.Potion(data,state,"Seer_Potion_9",false).Allowed,"Starter preview usable")
     check(not Model.Potion(data,state,nil,true).Allowed,"Uninitiated cannot buy next potion")
     state.PathwayId="Seer";state.Sequence=9
+    check(not Model.Ultimate(data,state,0).Unlocked,"Ultimate locked at Sequence 9")
+    state.Sequence=4
+    local ult4=Model.Ultimate(data,state,0)
+    check(ult4.Unlocked and ult4.Stage=="Incomplete" and ult4.Name=="Worms of Spirit","Sequence 4 unlocks Incomplete Worms of Spirit")
+    state.Sequence=2
+    local ult2=Model.Ultimate(data,state,0)
+    check(ult2.Unlocked and ult2.Stage=="Complete","Sequence 2 unlocks Complete Mythical Creature Form")
+    state.Sequence=9
     check(not Model.Potion(data,state,"Marauder_Potion_9",false).Allowed,"UI never offers pathway switching")
     state.Inventory.Seer_Potion_8=1
     check(not Model.Potion(data,state,"Seer_Potion_8",false).Allowed,"Early drinking disabled")
@@ -158,13 +170,17 @@ return function(data: any,load: any,sharedNode: any)
     local root=object("Frame")
     local requests={}
     local function send(action,payload) table.insert(requests,{Action=action,Payload=payload}) end
-    local hud=Hud.new(root,data,{Cast=function() end,Melee=function() end,Journal=function() end,Touch=false})
+    local dashed=0;local ultTriggered=0;local runToggled=0
+    local hud=Hud.new(root,data,{Cast=function() end,Melee=function() end,Dash=function() dashed+=1 end,Ultimate=function() ultTriggered+=1 end,ToggleRun=function() runToggled+=1 end,Journal=function() end,Touch=false})
     local menus=Menus.new(root,data,{Intent=send,Modal=function() end,ReducedMotion=function() end})
     local dev=Developer.new(root,send)
     local feedback=Feedback.new(root,data,function() end)
     local layout=Layout.Resolve(T,viewport.X,viewport.Y,false)
     hud:Resize(layout);menus:Resize(layout);dev:Resize(layout);feedback:Resize(layout)
     hud:Render(state,now);menus:Update(state);feedback:Update(state);dev:Update(state)
+    hud.Dash.Activated:Fire();hud.UltimateFace.Activated:Fire();hud.Sprint.Activated:Fire()
+    check(dashed==1 and ultTriggered==1 and runToggled==1,"HUD Dash, Ultimate, and Walk/Run buttons invoke callbacks")
+    check(hud.UltimateCost.Text==T.AbilityUI.UltimateLocked,"Sequence 9 shows locked ultimate label")
     check(not dev.Root.Visible and not dev.Allowed,"No public developer panel")
     check(not dev.ToggleButton.Visible,"Admin button hidden from ordinary players")
     dev:Toggle();check(not dev.Root.Visible,"F8 component cannot open without server permission")
