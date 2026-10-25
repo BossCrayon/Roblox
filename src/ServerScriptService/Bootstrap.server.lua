@@ -87,6 +87,12 @@ local function sendState(player: Player)
     for id,expiry in pairs(s.Cooldowns) do if expiry>now then cooldowns[id]=expiry-now end end
     for id,st in pairs(s.Statuses) do if st.ExpiresAt>now then table.insert(statuses,id) end end
     table.sort(statuses)
+    local character=player.Character
+    if character then
+        character:SetAttribute("MysteriesPathway",p.PathwayId or "")
+        character:SetAttribute("MysteriesSequence",p.Sequence or 9)
+        character:SetAttribute("MysteriesDisguised",s.Statuses.Disguised~=nil)
+    end
     stateEvent:FireClient(player,{Ready=true,Developer=isDeveloper(player),
         DeveloperInfo=if isDeveloper(player) then {SessionOnly=sessionOnly,Mode=s.Mode,Ready=s.Ready} else nil,PathwayId=p.PathwayId,Sequence=p.Sequence,
         Digestion=p.Digestion,ActingProgress=p.ActingProgress,Health=s.Health,MaxHealth=s.Stats.Health,
@@ -237,7 +243,11 @@ intent.OnServerEvent:Connect(function(player: Player,action: any,payload: any)
     elseif action=="Drink" then
         if type(payload.Id)~="string" or #payload.Id>80 then return end
         local ok,message=domain:Drink(s,payload.Id,now)
-        if ok then applyStats(player,s,true);world:Cleanup(player);effects:RemoveGates(player) end
+        if ok then
+            applyStats(player,s,true);world:Cleanup(player);effects:RemoveGates(player)
+            local root=world:Root(player)
+            if root then fx:FireClient(player,{Kind="PotionConfirmed",Position=root.Position,PathwayId=s.Profile.PathwayId,At=workspace:GetServerTimeNow()}) end
+        end
         notify(player,message)
     elseif action=="Equip" then
         if type(payload.Id)~="string" or #payload.Id>80 then return end

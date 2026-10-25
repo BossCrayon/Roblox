@@ -22,3 +22,9 @@ Corrections from existing lore knowledge, still pending direct source verificati
 Additional entries such as Realm of Mysteries, Energy Theft, Hidden Destiny Payload, Temporal Delay, Passage Sense, and Spatial Seal are **gameplay proposals**, not certified canonical technique names. Primary/secondary labels organize a minimal foundation, not an exhaustive catalog of every sequence's powers. Unlisted powers can be added in the data during subsequent authorized phases.
 
 All targeting, numeric budgets, acting objectives, stat multipliers, and failure probabilities are original gameplay design. Recording/stealing powers in later phases must use explicit server allowlists; they do not authorize arbitrary cross-pathway powers. No novel passages, art, music, or third-party game assets are included.
+
+## F–I original art additions
+
+[EXISTING] Gasworks Court, Ashen Depot, Masked Conservatory, Silent Cloister, Broken Observatory and Sanctum of Seals are original game district names. Lamplight Ruffian, Veiled Penitent, Brass-Masked Prowler, Cloister Apparition, Bound Astronomer and Warden of the Last Arch are original enemy designs. None is asserted to be a canon location, creature or named character.
+
+[EXISTING] Coats, top hats, veils, bronze mechanisms, door arches and seals express the Art Bible's canon-inspired Victorian mood. Exact clothing, choreography, proportions, phase cues and combat silhouettes are original gameplay/art interpretations. All existing unverified ability placement/scope metadata remains [UNVERIFIED].

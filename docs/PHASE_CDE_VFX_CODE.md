@@ -1,8 +1,8 @@
 # Phases C–E — full copy-ready code
 
-[EXISTING] These 25 complete scripts include new modules, changed integrations and reused framework dependencies. Apply to the existing Mysteries foundation with Play stopped; replace matching scripts and create Folder parents. For a blank place use docs/FULL_SOURCE.md. The built studio/Mysteries.rbxlx already contains everything.
+[EXISTING] These 29 complete scripts include new modules, changed integrations and reused framework dependencies. Apply to the existing Mysteries foundation with Play stopped; replace matching scripts and create Folder parents. For a blank place use docs/FULL_SOURCE.md. The built studio/Mysteries.rbxlx already contains everything.
 
-[EXISTING] All 54 abilities have explicit procedural compositions and cast-pose profiles, retaining the twelve-state framework and eleven original primitives. Studio rendering and engine/device performance remain unverified. [PROPOSED] Phases F–I remain future work. [NEEDS NEW ASSET] Optional original uploaded audio/animation polish; every supplied slot remains 0/empty.
+[EXISTING] All 54 abilities have explicit procedural compositions and cast-pose profiles, retaining the twelve-state framework and eleven original primitives. This historical export includes later integration updates; install docs/PHASE_FI_VISUALS_CODE.md for the complete current F–I code. Studio rendering and engine/device performance remain unverified. [NEEDS NEW ASSET] Optional original uploaded audio/animation polish; every supplied slot remains 0/empty.
 
 | File | Class | Exact Explorer path |
 |---|---|---|
@@ -21,16 +21,20 @@
 | `src/StarterPlayer/StarterPlayerScripts/Visuals/AbilityPresentation.lua` | ModuleScript | `StarterPlayer/StarterPlayerScripts/Visuals/AbilityPresentation` |
 | `src/StarterPlayer/StarterPlayerScripts/Visuals/AnimationController.lua` | ModuleScript | `StarterPlayer/StarterPlayerScripts/Visuals/AnimationController` |
 | `src/StarterPlayer/StarterPlayerScripts/Visuals/CameraFeel.lua` | ModuleScript | `StarterPlayer/StarterPlayerScripts/Visuals/CameraFeel` |
+| `src/StarterPlayer/StarterPlayerScripts/Visuals/CharacterArt.lua` | ModuleScript | `StarterPlayer/StarterPlayerScripts/Visuals/CharacterArt` |
 | `src/StarterPlayer/StarterPlayerScripts/Visuals/Choreography.lua` | ModuleScript | `StarterPlayer/StarterPlayerScripts/Visuals/Choreography` |
 | `src/StarterPlayer/StarterPlayerScripts/Visuals/EffectBlocks.lua` | ModuleScript | `StarterPlayer/StarterPlayerScripts/Visuals/EffectBlocks` |
+| `src/StarterPlayer/StarterPlayerScripts/Visuals/EnemyPresentation.lua` | ModuleScript | `StarterPlayer/StarterPlayerScripts/Visuals/EnemyPresentation` |
 | `src/StarterPlayer/StarterPlayerScripts/Visuals/HitPresentation.lua` | ModuleScript | `StarterPlayer/StarterPlayerScripts/Visuals/HitPresentation` |
 | `src/StarterPlayer/StarterPlayerScripts/Visuals/MotionSpring.lua` | ModuleScript | `StarterPlayer/StarterPlayerScripts/Visuals/MotionSpring` |
 | `src/StarterPlayer/StarterPlayerScripts/Visuals/PathwayEffects/Apprentice.lua` | ModuleScript | `StarterPlayer/StarterPlayerScripts/Visuals/PathwayEffects/Apprentice` |
 | `src/StarterPlayer/StarterPlayerScripts/Visuals/PathwayEffects/Marauder.lua` | ModuleScript | `StarterPlayer/StarterPlayerScripts/Visuals/PathwayEffects/Marauder` |
 | `src/StarterPlayer/StarterPlayerScripts/Visuals/PathwayEffects/Seer.lua` | ModuleScript | `StarterPlayer/StarterPlayerScripts/Visuals/PathwayEffects/Seer` |
+| `src/StarterPlayer/StarterPlayerScripts/Visuals/PerformanceProbe.lua` | ModuleScript | `StarterPlayer/StarterPlayerScripts/Visuals/PerformanceProbe` |
 | `src/StarterPlayer/StarterPlayerScripts/Visuals/StatusPresentation.lua` | ModuleScript | `StarterPlayer/StarterPlayerScripts/Visuals/StatusPresentation` |
 | `src/StarterPlayer/StarterPlayerScripts/Visuals/VfxService.lua` | ModuleScript | `StarterPlayer/StarterPlayerScripts/Visuals/VfxService` |
 | `src/StarterPlayer/StarterPlayerScripts/Visuals/VfxTestRoom.lua` | ModuleScript | `StarterPlayer/StarterPlayerScripts/Visuals/VfxTestRoom` |
+| `src/StarterPlayer/StarterPlayerScripts/Visuals/WorldPresentation.lua` | ModuleScript | `StarterPlayer/StarterPlayerScripts/Visuals/WorldPresentation` |
 
 ## src/ReplicatedStorage/Shared/Theme.lua
 
@@ -50,7 +54,59 @@ return freeze({
         Danger=rgb("E17986"),Health=rgb("B94A61"),Spirituality=rgb("71B9DA"),Sanity=rgb("AD96DD"),
         Fog=rgb("A8ADB7"),DeepPurple=rgb("41334F"),Black=rgb("0C0E12"),Crimson=rgb("9F3148"),Bronze=rgb("B88A5A"),
         Teal=rgb("4AB7BA"),Silver=rgb("C6D0D9"),Starlight=rgb("EEF7FF"),White=rgb("FFFFFF"),
-        Hit=rgb("E17986"),Warm=rgb("FFD39A"),ClearTint=rgb("FFFFFF"),MadnessTint=rgb("F0B4C3"),LostTint=rgb("AA82B4")},
+        Stone=rgb("68615D"),Wood=rgb("42342D"),Iron=rgb("2B3037"),Mist=rgb("8B96A4"),Hit=rgb("E17986"),Warm=rgb("FFD39A"),ClearTint=rgb("FFFFFF"),MadnessTint=rgb("F0B4C3"),LostTint=rgb("AA82B4")},
+    Skins={
+        Seer={Accent=rgb("C6A56B"),Backing=rgb("25202F"),Glyph="Thread",Name="Veiled cards",Rotation=-5},
+        Marauder={Accent=rgb("B88A5A"),Backing=rgb("191B22"),Glyph="Split",Name="Split ledger",Rotation=7},
+        Apprentice={Accent=rgb("C6D0D9"),Backing=rgb("172A30"),Glyph="Door",Name="Threshold folio",Rotation=0},
+        Spine=3,Inset=5,CornerLength=0.2,Ornament=18,OrnamentAlpha=0.55,ReadyTime=0.55,ReadyAlpha=0.12,
+    },
+    Ritual={DrinkTime=0.9,Pose="Potion",DigestionTime=1.4,DigestionText="Acting recognised · +",SanityText="Your thoughts are fraying",MadnessText="Hold to your identity",LostText="Control lost · seek Stabilization"},
+    World={
+        Kit={GroundDepth=4,HubDepth=0.1,RoadDepth=0.12,PavementDepth=0.2,ArenaDepth=0.18,Reflectance=0.04,
+            SpawnSize={12,1,12},FoundationDepth=0.2,JambWidth=0.7,JambDepth=1.5,ArchDepth=1,ArchThickness=0.5,ArchAngle=35,
+            Window={3,5,0.15},Cabinet={2,8,3},Shelf={2.1,0.15,3.1},Desk={6,3,3},DeskRim={6.3,0.2,3.3},
+            Bottle={0.65,1.2,0.65},Stopper={0.3,0.3,0.3},Book={1.1,0.3,1.5},LampPost=0.3,LampGlass={0.8,1.2,0.8},LampCap={1,0.2,1},
+            Buttress={2,12,2},HighButtress={2,20,2},DistantPier={3,30,3},DistantCrown={43,3,3},Exposure={50,12,50},
+            PracticeDoor={4,7,0.5},PracticeJamb={0.5,8,1},ClockFaceDepth=0.3,ClockHandWidth=0.18,ClockHandDepth=0.1},
+        Scan=1,Ground=800,Hub=96,Road=20,Pavement=4,ArenaRadius=238,ArenaSizes={[9]={96,112},[7]={96,112},[5]={120,120},[4]={120,120},[2]={144,144},[1]={144,144}},
+        Building={Width=28,Depth=28,Height=28,Storey=12,Wall=1,DoorWidth=8,DoorHeight=11,RoofHeight=4},
+        Tower={Height=64,Width=12,ClockSize=8,Hands={2.5,1.7}},
+        Lamp={Height=9,Spacing=24,Range=18,Brightness=1.8,DesktopMax=8,LowMax=3,MaxDistance=120,Flicker=0.04,Period=3.8,Tick=0.25},
+        Services={{Name="Potion Altar",Action="Buy",X=-34,Z=-64,Glyph="Bottle"},{Name="Stabilization",Action="Recover",X=34,Z=-64,Glyph="Seal"},
+            {Name="Hidden Archive",Action="Archive",X=-34,Z=64,Glyph="Book"},{Name="Cipher Archive",Action="Cipher",X=34,Z=64,Glyph="Split"}},
+        Zones={[9]="Gasworks Court",[7]="Ashen Depot",[5]="Masked Conservatory",[4]="Silent Cloister",[2]="Broken Observatory",[1]="Sanctum of Seals"},
+        Zone={HubRadius=68,Blend=0.25,Transition=1.2,Enter=0.35,Hold=2,Leave=0.55,Repeat=8,TitleWidth=480,TitleHeight=68,TitleTop=82,
+            HubTint=rgb("D9E2F2"),LowTint=rgb("D3DBE5"),HighTint=rgb("C6C7DE")},
+        Labels={Max=6,Width=156,Height=28,Distance=40,Full=28,Pad=8,Slots={0,-32,32},Offset=3.6,Scan=0.25,TextSize=13},
+        Ambient={Interval=3,DesktopMax=2,MobileMax=1,Life=1.2,Scale=0.18,Priority=0},
+        Lighting={ClockTime=20.25,GeographicLatitude=42,Brightness=2,ExposureCompensation=-0.05,Ambient=rgb("464A55"),OutdoorAmbient=rgb("67717B"),
+            GlobalShadows=true,ShadowSoftness=0.45,EnvironmentDiffuseScale=0.4,EnvironmentSpecularScale=0.55,FogColor=rgb("8B96A4"),FogStart=120,FogEnd=600},
+        Atmosphere={Density=0.32,Offset=0.12,Color=rgb("8B96A4"),Decay=rgb("394253"),Glare=0.08,Haze=1.7},
+        Correction={Brightness=0.02,Contrast=0.1,Saturation=-0.12,TintColor=rgb("D9E2F2")},Bloom={Intensity=0.18,Size=24,Threshold=1.6},
+        Sky={Bk="",Dn="",Ft="",Lf="",Rt="",Up=""},
+    },
+    CharacterArt={MaxPlayers=8,Distance=80,Scan=0.25,MaxParts=10,AuraInterval=4,AuraScale=0.16,
+        Cloth={Seer=rgb("41334F"),Marauder=rgb("0C0E12"),Apprentice=rgb("172A30")},
+        Trim={Seer=rgb("C6A56B"),Marauder=rgb("B88A5A"),Apprentice=rgb("C6D0D9")},
+        Coat={2.15,2.15,1.15},Tail={0.9,1.2,0.2},Brim={2.2,0.12,1.7},Crown={1.4,0.65,1.25},Collar={2.25,0.3,1.2},
+        Pendant={0.28,0.4,0.12},AuraLife=0.8,LapelWidth=0.18,LapelDepth=0.1,LapelFraction=0.65,LapelAngle=15,
+        CapeExtra=0.5,CapeDepth=0.2,CollarSeal={0.45,0.12,0.18},BodyScaleMin=0.8,BodyScaleMax=1.5,CoatClearance=0.1},
+    EnemyArt={Geometry={Coat={2.4,2.8,1.35},Sleeve={0.65,2.7,0.8},Boot={0.85,1.2,1},Mask={1.3,1.6,0.9},
+        Brim={2.4,0.15,1.8},Crown={1.5,0.9,1.2},Ear={0.4,1.3,0.5},Veil={2.2,4,0.18},Arch={0.25,4,0.25},Lintel={3.4,0.25,0.25}},
+        PhaseScale=0.6,PhasePriority=2,MinimumSize=0.05,MinimumLife=0.01,Max=18,MaxParts=12,Distance=120,Scan=0.1,MaxBars=4,MobileBars=2,BarDistance=40,BarWidth=176,BarHeight=40,BarTrack=4,
+        IdlePeriod=3.6,IdleRise=0.035,AttackLean=12,HitLean=8,HitTime=0.2,DeathTime=0.8,WarningLead=0.65,
+        WarningAlpha=0.88,FillAlpha=0.8,GroundOffset=-3.85,GroundThickness=0.04,SpellRadius=2.6,ThreatPriority=5,
+        IntroGap=8,PhaseRatio=0.5,Sound={Intro="Enemy.Intro",Phase="Enemy.Phase",Death="Enemy.Death",Melee="Enemy.Melee",Spell="Enemy.Spell"},
+        Profiles={
+            [9]={Name="Lamplight Ruffian",Scale=1,Width=1,Color=rgb("42342D"),Mask=rgb("B8B4AC"),Motif="Hat"},
+            [7]={Name="Veiled Penitent",Scale=1.1,Width=0.9,Color=rgb("41334F"),Mask=rgb("E9DFC6"),Motif="Veil"},
+            [5]={Name="Brass-Masked Prowler",Scale=1.15,Width=1.4,Color=rgb("2B3037"),Mask=rgb("B88A5A"),Motif="Beast"},
+            [4]={Name="Cloister Apparition",Scale=1.5,Width=0.72,Color=rgb("252C36"),Mask=rgb("A8ADB7"),Motif="Veil"},
+            [2]={Name="Bound Astronomer",Scale=1.8,Width=0.85,Color=rgb("41334F"),Mask=rgb("C6D0D9"),Motif="Seal"},
+            [1]={Name="Warden of the Last Arch",Scale=2.1,Width=1.3,Color=rgb("172A30"),Mask=rgb("C6D0D9"),Motif="Arch"},
+        }},
+    QA={Duration=10,Drain=3,SpawnInterval=0.4,Overfill=4,Samples=600,ReportPrefix="[Mysteries visual QA] ",MaxReports=12,Scale=0.3,Priority=1},
     Layers={HUD=10,Prompt=20,Feedback=30,Modal=50,Developer=60},
     Interaction={ServerDistance=12},
     Fonts={Title=Enum.Font.Antique,Heading=Enum.Font.Merriweather,Body=Enum.Font.Gotham,Number=Enum.Font.GothamMedium},
@@ -66,7 +122,7 @@ return freeze({
         Pulse=0.5,Reveal=5,LoadingHint=8,CastPulse=0.18},
     Sound={Hover={Id=0,Volume=0.12},Click={Id=0,Volume=0.18},Confirm={Id=0,Volume=0.22},
         Reject={Id=0,Volume=0.18},JournalOpen={Id=0,Volume=0.15},Advance={Id=0,Volume=0.28},
-        Hit={Id=0,Volume=0.16},Abilities={["Trigger.SubstituteTriggered"]=0,["Trigger.GraftReflected"]=0,["Trigger.PayloadTriggered"]=0},MaxPlaying=8,AbilityVolume=0.4,MinPitch=0.5,MaxPitch=2},
+        Hit={Id=0,Volume=0.16},Abilities={["Enemy.Intro"]=0,["Enemy.Phase"]=0,["Enemy.Death"]=0,["Enemy.Melee"]=0,["Enemy.Spell"]=0,["Trigger.SubstituteTriggered"]=0,["Trigger.GraftReflected"]=0,["Trigger.PayloadTriggered"]=0},MaxPlaying=8,AbilityVolume=0.4,MinPitch=0.5,MaxPitch=2},
     Camera={MinZoom=8,MaxZoom=32},
     CameraFeel={SmallStuds=0.10,MajorStuds=0.22,SmallDegrees=0.25,MajorDegrees=0.55,
         SmallDuration=0.12,MajorDuration=0.22,FovKick=1.8,MaxFovKick=2.5,FovMin=1,FovMax=120,
@@ -158,6 +214,7 @@ return freeze({
 -- Original, asset-free animation library. Optional uploaded assets override each entry.
 -- Degrees and studs below describe rendered joints only; no root physics are changed.
 local freeze=require(script.Parent.Freeze)
+local T=require(script.Parent.Theme)
 type Pose={[string]: CFrame}
 local function frame(y: number,pitch: number,yaw: number,roll: number): CFrame
     return CFrame.new(0,y,0)*CFrame.Angles(math.rad(pitch),math.rad(yaw),math.rad(roll))
@@ -188,6 +245,7 @@ local config={
     Locomotion={MinSpeed=0.1,RunSpeed=18,SpeedReference=16,MaxSpeedRatio=1.5,LandingVelocity=-3},
     Safety={MaxPause=0.08,MaxFrameDelta=0.1,AssetLoadGrace=1.5,MaxAssetSpeed=2,MinAssetSpeed=0.1},
     CastProfiles={
+        Potion={CastRelease={AnimationId="",Duration=T.Ritual.DrinkTime,Pose={Root={0,-3,0,0},Neck={0,-10,0,0},RightShoulder={0,-112,0,12},LeftShoulder={0,-16,0,-8}}}},
         Pickpocket={CastWindup={AnimationId="",Pose={Root={0,4,9,-3},RightShoulder={0,-48,-8,12}}},
             CastRelease={AnimationId="",Duration=0.16,Pose={Root={0,-2,-6,0},RightShoulder={0,-24,-16,6}}}},
         Travel={CastWindup={AnimationId="",Pose={Root={0,0,0,0},LeftShoulder={0,-52,-8,-16},RightShoulder={0,-52,8,16}}},
@@ -604,6 +662,12 @@ local function sendState(player: Player)
     for id,expiry in pairs(s.Cooldowns) do if expiry>now then cooldowns[id]=expiry-now end end
     for id,st in pairs(s.Statuses) do if st.ExpiresAt>now then table.insert(statuses,id) end end
     table.sort(statuses)
+    local character=player.Character
+    if character then
+        character:SetAttribute("MysteriesPathway",p.PathwayId or "")
+        character:SetAttribute("MysteriesSequence",p.Sequence or 9)
+        character:SetAttribute("MysteriesDisguised",s.Statuses.Disguised~=nil)
+    end
     stateEvent:FireClient(player,{Ready=true,Developer=isDeveloper(player),
         DeveloperInfo=if isDeveloper(player) then {SessionOnly=sessionOnly,Mode=s.Mode,Ready=s.Ready} else nil,PathwayId=p.PathwayId,Sequence=p.Sequence,
         Digestion=p.Digestion,ActingProgress=p.ActingProgress,Health=s.Health,MaxHealth=s.Stats.Health,
@@ -754,7 +818,11 @@ intent.OnServerEvent:Connect(function(player: Player,action: any,payload: any)
     elseif action=="Drink" then
         if type(payload.Id)~="string" or #payload.Id>80 then return end
         local ok,message=domain:Drink(s,payload.Id,now)
-        if ok then applyStats(player,s,true);world:Cleanup(player);effects:RemoveGates(player) end
+        if ok then
+            applyStats(player,s,true);world:Cleanup(player);effects:RemoveGates(player)
+            local root=world:Root(player)
+            if root then fx:FireClient(player,{Kind="PotionConfirmed",Position=root.Position,PathwayId=s.Profile.PathwayId,At=workspace:GetServerTimeNow()}) end
+        end
         notify(player,message)
     elseif action=="Equip" then
         if type(payload.Id)~="string" or #payload.Id>80 then return end
@@ -886,10 +954,6 @@ local function part(parent: Instance,name: string,size: Vector3,position: Vector
     p.TopSurface=Enum.SurfaceType.Smooth; p.BottomSurface=Enum.SurfaceType.Smooth; p.Parent=parent
     return p
 end
-local function label(p: BasePart,text: string)
-    local gui=Instance.new("BillboardGui");gui.Size=UDim2.fromOffset(260,70);gui.StudsOffset=Vector3.new(0,4,0);gui.AlwaysOnTop=false;gui.Parent=p
-    local t=Instance.new("TextLabel");t.Size=UDim2.fromScale(1,1);t.BackgroundTransparency=1;t.Text=text;t.TextColor3=Color3.new(1,1,1);t.TextStrokeTransparency=0.3;t.TextScaled=true;t.Font=Enum.Font.GothamMedium;t.Parent=gui
-end
 function World.new(data: any,domain: any,states: any,effects: RemoteEvent): World
     local folder=Instance.new("Folder");folder.Name="MysteriesWorld";folder.Parent=workspace
     local npcs=Instance.new("Folder");npcs.Name="Enemies";npcs.Parent=folder
@@ -899,49 +963,7 @@ function World.new(data: any,domain: any,states: any,effects: RemoteEvent): Worl
 end
 function World.Build(self: World)
     if not self.Data.Runtime.GenerateDemoWorld then return end
-    part(self.Folder,"TrainingGround",Vector3.new(800,4,800),Vector3.new(0,-2,0),Color3.fromRGB(35,41,49))
-    local spawn=Instance.new("SpawnLocation");spawn.Name="SanctuarySpawn";spawn.Size=Vector3.new(12,1,12);spawn.Position=Vector3.new(0,0.5,0);spawn.Neutral=true;spawn.Duration=0;spawn.Color=Color3.fromRGB(95,153,170);spawn.Parent=self.Folder
-    label(spawn,"SANCTUARY\nChoose a potion in your journal")
-    for _,v in ipairs({{Name="Potion Altar",Action="Buy",Pos=Vector3.new(-12,3,0)},
-        {Name="Stabilization",Action="Recover",Pos=Vector3.new(12,3,0)},
-        {Name="Cipher Archive",Action="Cipher",Pos=Vector3.new(0,3,-16)},
-        {Name="Hidden Archive",Action="Archive",Pos=Vector3.new(0,3,16)}}) do
-        local p=part(self.Folder,v.Name,Vector3.new(3,6,3),v.Pos,Color3.fromRGB(112,100,160))
-        label(p,v.Name)
-        local prompt=Instance.new("ProximityPrompt");prompt.ActionText=if v.Action=="Buy" then "Next potion · 100 gold" else v.Name
-        prompt:SetAttribute("InteractionId",v.Action)
-        prompt.ObjectText=v.Name;prompt.MaxActivationDistance=10;prompt.HoldDuration=0.4;prompt.RequiresLineOfSight=true;prompt.Parent=p
-        prompt.Triggered:Connect(function(player)
-            local root=self:Root(player)
-            if root and (root.Position-p.Position).Magnitude<=12 and self.OnInteraction then self.OnInteraction(player,v.Action) end
-        end)
-    end
-    for i=1,4 do
-        local door=part(self.Folder,"PracticeDoor",Vector3.new(7,9,1),Vector3.new(-35+i*14,4.5,-34),Color3.fromRGB(123,92,62))
-        CollectionService:AddTag(door,"MysticDoor");label(door,"LOCKED PASSAGE")
-    end
-    for x=-168,168,28 do
-        for z=-168,168,28 do
-            if Vector3.new(x,0,z).Magnitude>35 then
-                local p=part(self.Folder,"FlameAnchor",Vector3.new(0.7,2,0.7),Vector3.new(x,1,z),Color3.fromRGB(255,150,70))
-                p.CanCollide=false;p.Material=Enum.Material.Neon;CollectionService:AddTag(p,"FlameAnchor")
-            end
-        end
-    end
-    for index,tier in ipairs(self.Data.Runtime.EnemyTiers) do
-        local angle=(index-1)*math.pi/3
-        local center=Vector3.new(math.cos(angle)*130,0,math.sin(angle)*130)
-        local marker=part(self.Folder,"Arena"..tier,Vector3.new(8,0.3,8),center,Color3.fromRGB(75,65,100))
-        label(marker,"SEQUENCE "..tier.." ENEMIES")
-        if tier<=4 then
-            local zone=part(self.Folder,"WhisperZone",Vector3.new(50,12,50),center+Vector3.new(0,6,0),Color3.fromRGB(90,70,120))
-            zone.Transparency=1;zone.CanCollide=false;zone.CanTouch=false;zone.CanQuery=false
-            zone:SetAttribute("Radius",self.Data.Runtime.ExposureRadius);CollectionService:AddTag(zone,"MysticalExposure")
-        end
-        for offset=1,3 do
-            table.insert(self.Spawns,{Position=center+Vector3.new((offset-2)*12,4,8),Tier=tier,Entity=nil,NextSpawn=0})
-        end
-    end
+    require(script.Parent.WorldArt).Build(self)
 end
 function World.Root(self: World, player: Player): BasePart?
     local c=player.Character
@@ -1058,6 +1080,8 @@ function World.Spawn(self: World, position: Vector3,tier: number,owner: Player?,
     local head=part(model,"Head",Vector3.new(1.8,1.8,1.8),position+Vector3.new(0,2.3,0),Color3.fromRGB(190,170,190));head.Shape=Enum.PartType.Ball;head.CanCollide=false
     local hum=Instance.new("Humanoid");hum.RequiresNeck=false;hum.BreakJointsOnDeath=false
     local t=self.Data.Stats.TierMultipliers[tier];hum.MaxHealth=self.Data.Runtime.NPCHealthPerTier*t;hum.Health=hum.MaxHealth;hum.WalkSpeed=0;hum.Parent=model
+    hum.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None
+    model:SetAttribute("VisualTier",tier);model:SetAttribute("VisualEcho",owner~=nil)
     model.PrimaryPart=root;model.Parent=self.NPCFolder
     CollectionService:AddTag(model,"Enemy");model:SetAttribute("AbilityId","ArcBolt");model:SetAttribute("Omen",math.random(1,4))
     self.Clock+=1
@@ -1074,6 +1098,30 @@ function World.Spawn(self: World, position: Vector3,tier: number,owner: Player?,
         Debris:AddItem(model,2)
     end)
     return e
+end
+-- These attributes describe existing attack eligibility/times; they never reserve or delay a hit.
+function World.Threat(self: World,e: any,nearest: Player?,blocked: boolean,now: number)
+    local model=e.Model
+    local target=nearest and self:Root(nearest)
+    local eligible=target and not blocked and self:LineOfSight(e.Root.Position,target.Position,model,nearest and nearest.Character)
+    local userId=if eligible and nearest then nearest.UserId else 0
+    if model:GetAttribute("VisualThreatUserId")~=userId then model:SetAttribute("VisualThreatUserId",userId) end
+    model:SetAttribute("VisualSpellAllowed",eligible~=nil and eligible~=false and e.Tier<=6 and not self:Has(e,"Silenced",now))
+    if e.VisualMeleeObserved~=e.LastAttack then
+        e.VisualMeleeObserved=e.LastAttack
+        model:SetAttribute("VisualMeleeDue",workspace:GetServerTimeNow()+e.LastAttack+self.Data.Runtime.NPCAttackInterval-now)
+    end
+    local spell=e.LastSpell or -100
+    if e.VisualSpellObserved~=spell then
+        e.VisualSpellObserved=spell
+        model:SetAttribute("VisualSpellDue",workspace:GetServerTimeNow()+spell+self.Data.Runtime.NPCSpellCooldown-now)
+    end
+end
+function World.AttackVisual(self: World,e: any,kind: string)
+    e.VisualAttackSerial=(e.VisualAttackSerial or 0)+1
+    e.Model:SetAttribute("VisualAttackKind",kind)
+    e.Model:SetAttribute("VisualAttackAt",workspace:GetServerTimeNow())
+    e.Model:SetAttribute("VisualAttackSerial",e.VisualAttackSerial)
 end
 function World.Step(self: World, dt: number,now: number)
     for player,s in pairs(self.States) do
@@ -1127,6 +1175,7 @@ function World.Step(self: World, dt: number,now: number)
             if def.MoveMultiplier then speed*=def.MoveMultiplier end
         end
         if e.Owner then
+            self:Threat(e,nil,true,now)
             local foes=self:Targets(e.Root.Position,55,1,e.Owner)
             local foe=foes[1]
             if foe then
@@ -1145,10 +1194,11 @@ function World.Step(self: World, dt: number,now: number)
                 if d<distance and d<range then nearest=player;distance=d end
             end
         end
+        self:Threat(e,nearest,blocked,now)
         if nearest and not blocked then
             local root=self:Root(nearest)
             if root and e.Tier<=6 and distance<self.Data.Runtime.NPCSpellRange and now-(e.LastSpell or -100)>self.Data.Runtime.NPCSpellCooldown and not self:Has(e,"Silenced",now) and self:LineOfSight(e.Root.Position,root.Position,model,nearest.Character) then
-                e.LastSpell=now
+                e.LastSpell=now;self:AttackVisual(e,"Spell")
                 self:DamagePlayer(nearest,self.Data.Runtime.NPCSpellDamagePerTier*e.Power,e,now)
                 self.Domain:DrainSanity(self.States[nearest],2,now)
                 self:Effect(root.Position,"ArcBolt",nil)
@@ -1159,7 +1209,7 @@ function World.Step(self: World, dt: number,now: number)
                     local step=delta.Unit*math.min(delta.Magnitude-4,speed*dt)
                     if (e.Root.Position+step-e.Home).Magnitude<75 then model:PivotTo(model:GetPivot()+Vector3.new(step.X,0,step.Z)) end
                 elseif now-e.LastAttack>=self.Data.Runtime.NPCAttackInterval and self:LineOfSight(e.Root.Position,root.Position,model,nearest.Character) then
-                    e.LastAttack=now
+                    e.LastAttack=now;self:AttackVisual(e,"Melee")
                     local payload=e.Statuses.Payload
                     if payload and payload.Owner then
                         e.Statuses.Payload=nil;self:Damage(e,payload.Power,payload.Owner,now)
@@ -1854,6 +1904,7 @@ local Prompts=require(UI.Prompts)
 local Feedback=require(UI.Feedback)
 local Developer=require(UI.Developer)
 local Presentation=require(UI.Presentation)
+local WorldPresentation=require(script.Parent.Visuals.WorldPresentation)
 local VfxTestRoom=require(script.Parent.Visuals.VfxTestRoom)
 local remotes=ReplicatedStorage:WaitForChild("MysteriesRemotes")
 local intent=remotes:WaitForChild("Intent") :: RemoteEvent
@@ -1872,6 +1923,8 @@ local modal=false
 local menuModal=false
 local roomModal=false
 local cinematic=false
+local worldView: any=nil
+local zoneTitle=false
 local menus: any=nil
 local hud: any=nil
 local presentation: any=nil
@@ -1913,9 +1966,9 @@ local function melee()
 end
 local feedback=Feedback.new(safeRoot,data,function(active: boolean)
     cinematic=active
-    if hud then hud.Wordmark.Visible=not active and not promptUI.Root.Visible;hud.Pathway.Visible=not active and not promptUI.Root.Visible end
+    if hud then hud.Wordmark.Visible=not active and not promptUI.Root.Visible;hud.Pathway.Visible=not active and not zoneTitle and not promptUI.Root.Visible end
 end)
-hud=Hud.new(safeRoot,data,{Cast=cast,Melee=melee,Touch=UserInputService.TouchEnabled,TouchAim=touchAim,Journal=function(tab: string)
+hud=Hud.new(safeRoot,data,{Cast=cast,Melee=melee,Touch=UserInputService.TouchEnabled,TouchAim=touchAim,ReducedMotion=function() return menus and menus.ReducedMotion end,Journal=function(tab: string)
     if roomModal then return end
     if menus.Root.Visible and menus.Tab==tab and menus.View=="Page" then menus:Close() else menus:Open(tab) end
 end})
@@ -1925,6 +1978,7 @@ local function updateModal()
 end
 local function visualSettings(reduced: boolean,low: boolean)
     feedback:SetReducedMotion(reduced)
+    if worldView then worldView:SetSettings(reduced,low) end
     if presentation then presentation:SetSettings(reduced,low) end
     if testRoom then
         testRoom.Reduced=reduced;testRoom.Low=low
@@ -1936,7 +1990,7 @@ menus=Menus.new(safeRoot,data,{Intent=send,Modal=function(open: boolean)
     menuModal=open;updateModal()
 end,ReducedMotion=function(reduced: boolean) visualSettings(reduced,menus.LowGraphics) end,
     LowGraphics=function(low: boolean) visualSettings(menus.ReducedMotion,low) end})
-presentation=Presentation.new(gui,data,{Damage=function(event: any) feedback:Damage(event) end,
+presentation=Presentation.new(gui,data,{Notice=function(text: string) feedback:Tell(text) end,Damage=function(event: any) feedback:Damage(event) end,
     CastVisual=function(event: any) hud:SetVisualCast(event) end,
     ScreenEdgePulse=function() feedback:Flash() end})
 testRoom=VfxTestRoom.new(safeRoot,presentation,{Modal=function(open: boolean) roomModal=open;updateModal() end,
@@ -1948,16 +2002,24 @@ developer=Developer.new(safeRoot,send,if RunService:IsStudio() then function()
     testRoom:Toggle(developer.Allowed);developer.Root.Visible=false
 end else nil)
 promptUI.OnVisibility=function(visible: boolean)
-    hud.Pathway.Visible=not visible and not cinematic;hud.Wordmark.Visible=not visible and not cinematic
+    hud.Pathway.Visible=not visible and not cinematic and not zoneTitle;hud.Wordmark.Visible=not visible and not cinematic
 end
-promptUI.Exclusions={hud.Pathway,hud.Cast,feedback.Notice,feedback.Advance,developer.Root}
+promptUI.Exclusions={hud.Pathway,hud.Cast,feedback.Notice,feedback.Advance,feedback.Acting,feedback.SanityWarning,developer.Root}
+worldView=WorldPresentation.new(safeRoot,presentation,{
+    Modal=function() return modal or cinematic end,
+    Prompt=function() return promptUI.Current end,
+    Exclusions=function() return {hud.Pathway,hud.Cast,promptUI.Root,feedback.Notice,feedback.Advance,feedback.Acting,feedback.SanityWarning,developer.Root,worldView.Compass,worldView.Title} end,
+    Title=function(active: boolean)
+        zoneTitle=active;hud.Pathway.Visible=not active and not cinematic and not promptUI.Root.Visible
+    end,
+})
 local function resize()
     local size=safeRoot.AbsoluteSize
     if size.X<=0 or size.Y<=0 then return end
     local layout=Layout.Resolve(T,size.X,size.Y,UserInputService.TouchEnabled)
     hud:Resize(layout);menus:Resize(layout);feedback:Resize(layout);developer:Resize(layout);promptUI.Layout=layout
-    testRoom:Resize(size.X,size.Y)
-    hud.Wordmark.Visible=not cinematic and not promptUI.Root.Visible;hud.Pathway.Visible=not cinematic and not promptUI.Root.Visible
+    testRoom:Resize(size.X,size.Y);worldView:Resize(layout)
+    hud.Wordmark.Visible=not cinematic and not promptUI.Root.Visible;hud.Pathway.Visible=not cinematic and not promptUI.Root.Visible and not zoneTitle
     if menus.Root.Visible then menus:Render() end
 end
 safeRoot:GetPropertyChangedSignal("AbsoluteSize"):Connect(resize)
@@ -2009,18 +2071,22 @@ UserInputService.InputBegan:Connect(function(input: InputObject,processed: boole
 end)
 local accumulator=0
 RunService.Heartbeat:Connect(function(dt: number)
-    presentation:Step(dt);testRoom:Step(dt)
+    presentation:Step(dt);testRoom:Step(dt);worldView:Step(dt)
     accumulator+=dt
     if accumulator<T.Timing.Step then return end
     accumulator=0
     local now=os.clock()
     hud:Step(now);menus:Step(now);feedback:Step(now)
     feedback.Notice.Visible=now<(feedback.NoticeUntil or 0) and not hud.Cast.Visible and not cinematic and not modal
-    hud.Wordmark.Visible=not cinematic and not promptUI.Root.Visible and not feedback.Notice.Visible and not hud.Cast.Visible
+    hud.Wordmark.Visible=false -- the zone compass occupies the Art Bible's top-center strip.
+    feedback.Acting.Position=UDim2.fromOffset(hud.Layout.Pathway.X,hud.Layout.Pathway.Y+hud.Pathway.AbsoluteSize.Y+T.World.Labels.Pad)
+    local actingBottom=feedback.Acting.Position.Y.Offset+T.Feedback.SubtitleHeight
+    feedback.Acting.Visible=feedback.Acting.Visible and not modal and not promptUI.Root.Visible and not zoneTitle and actingBottom<hud.Layout.Hotbar.Y
+    feedback.SanityWarning.Visible=feedback.SanityWarning.Visible and not modal and not cinematic and not hud.Cast.Visible and not feedback.Notice.Visible
 end)
 resize()
 send("Sync",{})
-script.Destroying:Connect(function() testRoom:Close();presentation:Destroy() end)
+script.Destroying:Connect(function() testRoom:Close();worldView:Destroy();presentation:Destroy() end)
 ```
 
 
@@ -2190,6 +2256,17 @@ end
 function Hud.Render(self: any,state: any,receivedAt: number)
     self.State=state;self.ReceivedAt=receivedAt
     if not state or not state.Ready then self.PathTitle.Text="Opening journal…";return end
+    if self.SkinPath~=state.PathwayId then
+        self.SkinPath=state.PathwayId
+        Kit.Skin(self.Pathway,state.PathwayId)
+        Kit.Skin(self.Hotbar,state.PathwayId)
+        local skin=T.Skins[state.PathwayId] or T.Skins.Seer
+        for _,slot in ipairs(self.Slots) do
+            Kit.Skin(slot.Face,state.PathwayId,true)
+            slot.Face.BackgroundColor3=skin.Backing
+            for _,segment in ipairs(slot.Segments) do segment.BackgroundColor3=skin.Accent end
+        end
+    end
     for key,bar in pairs(self.Bars) do
         local maximum=if key=="Sanity" then 100 else state["Max"..key]
         bar.Number.Text=string.format("%d / %d",math.ceil(state[key]),math.ceil(maximum))
@@ -2241,6 +2318,13 @@ function Hud.Step(self: any,now: number)
         local a=slot.Id and self.Data.Abilities[slot.Id]
         local remaining=if a then Model.Cooldown(state,slot.Id,elapsed) else 0
         local n=if a then math.ceil(math.clamp(remaining/a.CooldownSeconds,0,1)*T.Layout.Hotbar.Segments) else 0
+        if (slot.PreviousCooldown or 0)>0 and remaining==0 then slot.ReadyUntil=now+T.Skins.ReadyTime end
+        slot.PreviousCooldown=remaining
+        local reduced=self.Callbacks.ReducedMotion and self.Callbacks.ReducedMotion()
+        local ready=not reduced and now<(slot.ReadyUntil or 0)
+        for _,child in ipairs(slot.Face:GetChildren()) do
+            if child:IsA("UIStroke") then child.Transparency=if not a then 1 elseif ready then T.Skins.ReadyAlpha else T.Style.BorderAlpha end
+        end
         slot.Countdown.Visible=remaining>0
         slot.Countdown.Text=if remaining>0 then string.format("%.1f",remaining) else ""
         for i,segment in ipairs(slot.Segments) do segment.Visible=i<=n end
@@ -2340,6 +2424,7 @@ end
 function Menus.Render(self: any)
     if not self.Layout then return end
     self:Resize(self.Layout)
+    Kit.Skin(self.Card,self.State and self.State.PathwayId)
     local oldScroll=self.Scroll.CanvasPosition
     Kit.Clear(self.PreviewActions);Kit.Clear(self.Scroll);Kit.List(self.Scroll,T.Layout.Modal.Gap);self.Rows={}
     self.Title.Text=if self.View=="Preview" then (if self.Purchase then "POTION ALTAR" else "POTION RITUAL") else "BEYONDER "..string.upper(self.Tab)
@@ -2383,7 +2468,7 @@ function Menus.Render(self: any)
         if type(state.StolenPower)=="string" then
             self:TextRow(T.AbilityUI.StoredPrefix..(T.AbilityUI.PowerNames[state.StolenPower] or state.StolenPower).." · use Ability Theft again to release it.")
         end
-        self:TextRow("The acting method",true)
+        self:TextRow((T.Skins[state.PathwayId] or T.Skins.Seer).Name.." · The acting method",true)
         if state.PathwayId then
             local seq=self.Data.Pathways[state.PathwayId].Sequences[state.Sequence]
             self:TextRow(seq.ActingObjectives[1].Label)
@@ -2468,7 +2553,8 @@ function Menus.Update(self: any,state: any)
     table.sort(inventory)
     local loadout={}
     for i=1,T.Layout.Hotbar.Slots do loadout[i]=state.Loadout[i] or "-" end
-    local keys={tostring(state.PathwayId),tostring(state.Sequence),table.concat(inventory,","),table.concat(loadout,"|")}
+    local keys={tostring(state.PathwayId),tostring(state.Sequence),table.concat(inventory,","),table.concat(loadout,"|"),
+        tostring(state.RecordedPowerId),tostring(state.RecordedCharges),tostring(state.StolenPower),tostring(state.Digestion),tostring(state.ActingProgress)}
     local key=table.concat(keys,";")
     if self.Root.Visible then
         if self.View=="Preview" then
@@ -2514,6 +2600,8 @@ local AnimationController=require(Visuals.AnimationController)
 local CameraFeel=require(Visuals.CameraFeel)
 local HitPresentation=require(Visuals.HitPresentation)
 local AbilityPresentation=require(Visuals.AbilityPresentation)
+local CharacterArt=require(Visuals.CharacterArt)
+local EnemyPresentation=require(Visuals.EnemyPresentation)
 local Presentation={}
 function Presentation.new(gui: Instance,data: any,callbacks: any?): any
     local cb=callbacks or {}
@@ -2523,6 +2611,8 @@ function Presentation.new(gui: Instance,data: any,callbacks: any?): any
     self.Blocks=Blocks.new(self.VFX,{ScreenEdgePulse=function(_color: Color3,_duration: number)
         if not self.Reduced and cb.ScreenEdgePulse then cb.ScreenEdgePulse() end
     end})
+    self.Outfits=CharacterArt.new(self.VFX,self.Blocks)
+    self.Enemies=EnemyPresentation.new(self.VFX,self.Blocks,data.Runtime,cb.Notice,function(hook: string) self:Audio(hook) end)
     self.Camera=CameraFeel.new()
     self.Hits=HitPresentation.new(self.VFX,self.Blocks)
     self.Abilities=AbilityPresentation.new(self.VFX,self.Blocks,data,{
@@ -2579,6 +2669,12 @@ end
 function Presentation.Event(self: any,event: any)
     if event.Kind=="AbilityVisual" or event.Kind=="StatusVisual" or event.Kind=="VisualTrigger" or event.Kind=="GateRemoval"
         or event.Kind=="GateSnapshot" or event.Kind=="EchoSnapshot" then self.Abilities:Event(event);return end
+    if event.Kind=="PotionConfirmed" then
+        if type(event.At)~="number" or math.abs(workspace:GetServerTimeNow()-event.At)>C.Protocol.MaxAge or not T.CharacterArt.Trim[event.PathwayId] then return end
+        local controller=self:LocalController();if controller then controller:Play("CastRelease",nil,nil,T.Ritual.Pose) end
+        self.Blocks:Compose({{Name="RisingMotes",Position=event.Position,Palette=event.PathwayId,Options={Scale=T.CharacterArt.AuraScale}}},1,2,T.Ritual.DrinkTime)
+        return
+    end
     if not self.VFX:Visible(event.Position) then return end
     if event.Kind=="Damage" then
         self.Hits:Hit(event)
@@ -2596,7 +2692,7 @@ function Presentation.Event(self: any,event: any)
     end
 end
 function Presentation.Step(self: any,dt: number)
-    self.VFX:Step(dt);self.Abilities:Step();self.ScanElapsed+=dt
+    self.VFX:Step(dt);self.Abilities:Step();self.Outfits:Step(dt);self.Enemies:Step(dt);self.ScanElapsed+=dt
     if self.AbilityDemo and workspace:GetServerTimeNow()>=self.AbilityDemo.EndsAt then
         local demo=self.AbilityDemo;self.AbilityDemo=nil
         if demo.Windup then demo.Windup:Finish() end
@@ -2652,7 +2748,7 @@ function Presentation.PreviewTrigger(self: any,id: string,trigger: string,origin
     self.Abilities:Preview(id,"Confirmed",origin,destination,target,"Result",trigger)
 end
 function Presentation.Destroy(self: any)
-    self.Abilities:Destroy();self.Camera:Destroy();self.VFX:Destroy()
+    self.Outfits:Destroy();self.Enemies:Destroy();self.Abilities:Destroy();self.Camera:Destroy();self.VFX:Destroy()
     for _,controller in pairs(self.Controllers) do controller:Destroy() end
     table.clear(self.Controllers)
 end
@@ -3279,6 +3375,98 @@ return CameraFeel
 ```
 
 
+## src/StarterPlayer/StarterPlayerScripts/Visuals/CharacterArt.lua
+
+**Class:** ModuleScript
+
+**Explorer path:** `StarterPlayer/StarterPlayerScripts/Visuals/CharacterArt`
+
+```lua
+--!strict
+-- Cosmetic, locally welded clothing. Never writes body colors/scales or Humanoid state.
+local Players=game:GetService("Players")
+local T=require(game:GetService("ReplicatedStorage").Shared.Theme)
+local A=T.CharacterArt
+local Outfit={}
+function Outfit.new(service: any,blocks: any): any
+    return setmetatable({Service=service,Blocks=blocks,Records={},Elapsed=0,AuraAt=0},{__index=Outfit})
+end
+function Outfit.Clear(self: any,character: Model)
+    local record=self.Records[character]
+    if record then record.Model:Destroy();self.Records[character]=nil end
+end
+function Outfit.Build(self: any,character: Model,path: string,sequence: number,torso: BasePart,head: BasePart)
+    self:Clear(character)
+    local model=Instance.new("Model");model.Name="LocalMysteriesOutfit";model.Parent=character
+    local count=0;local cloth=A.Cloth[path];local trim=A.Trim[path]
+    local function piece(name: string,base: BasePart,size: {number},offset: CFrame,color: Color3)
+        if count>=A.MaxParts then return end;count+=1
+        local part=Instance.new("Part");part.Name=name;part.Size=Vector3.new(table.unpack(size));part.CFrame=base.CFrame*offset
+        part.Anchored=false;part.CanCollide=false;part.CanQuery=false;part.CanTouch=false;part.Massless=true;part.CastShadow=false
+        part.Material=Enum.Material.Fabric;part.Color=color;part.Parent=model
+        local weld=Instance.new("WeldConstraint");weld.Part0=base;weld.Part1=part;weld.Parent=part
+    end
+    local bodyScale=math.clamp(torso.Size.X/2,A.BodyScaleMin,A.BodyScaleMax)
+    local coat={A.Coat[1]*bodyScale,math.max(A.Coat[2],torso.Size.Y),math.max(A.Coat[3],torso.Size.Z+A.CoatClearance)}
+    piece("Victorian waistcoat",torso,coat,CFrame.identity,cloth)
+    for _,side in ipairs({-1,1}) do
+        piece("Split coat tail",torso,A.Tail,CFrame.new(side*0.48,-coat[2]/2-0.45,0.35),cloth)
+        piece("Lapel",torso,{A.LapelWidth,coat[2]*A.LapelFraction,A.LapelDepth},CFrame.new(side*0.4,0,-coat[3]/2-0.06)*CFrame.Angles(0,0,math.rad(side*A.LapelAngle)),trim)
+    end
+    if path=="Seer" then
+        piece("Top hat brim",head,A.Brim,CFrame.new(0,head.Size.Y/2+0.08,0),cloth)
+        piece("Top hat crown",head,A.Crown,CFrame.new(0,head.Size.Y/2+A.Crown[2]/2+0.1,0),cloth)
+    elseif path=="Marauder" then
+        piece("Offset bronze pin",torso,A.Pendant,CFrame.new(0.65,0.55,-coat[3]/2-0.1)*CFrame.Angles(0,0,math.rad(45)),trim)
+        piece("Short shoulder mantle",torso,A.Collar,CFrame.new(0,coat[2]/2,0.2),cloth)
+    else
+        piece("Travel cloak collar",torso,A.Collar,CFrame.new(0,coat[2]/2,0.2),trim)
+        piece("Traveller cape",torso,{coat[1],coat[2]+A.CapeExtra,A.CapeDepth},CFrame.new(0,-0.25,coat[3]/2+0.12),cloth)
+    end
+    if sequence<=4 then piece("Sequence crest",torso,A.Pendant,CFrame.new(0,0.2,-coat[3]/2-0.15),trim) end
+    if sequence<=2 then piece("Silvered collar seal",torso,A.CollarSeal,CFrame.new(0,coat[2]/2,-coat[3]/2-0.08),trim) end
+    self.Records[character]={Model=model,Path=path,Sequence=sequence,Torso=torso,Head=head}
+end
+function Outfit.Step(self: any,dt: number)
+    self.Elapsed+=dt;if self.Elapsed<A.Scan then return end;self.Elapsed=0
+    local camera=workspace.CurrentCamera;if not camera then return end
+    local candidates={};local wanted={}
+    for _,player in ipairs(Players:GetPlayers()) do
+        local character=player.Character
+        local root=character and character:FindFirstChild("HumanoidRootPart")
+        local hum=character and character:FindFirstChildOfClass("Humanoid")
+        if root and root:IsA("BasePart") and hum and hum.Health>0 then
+            local distance=(root.Position-camera.CFrame.Position).Magnitude
+            if distance<=A.Distance then table.insert(candidates,{Character=character,Distance=distance,Root=root}) end
+        end
+    end
+    table.sort(candidates,function(a,b) return a.Distance<b.Distance end)
+    local now=os.clock();local aura=now>=self.AuraAt
+    if aura then self.AuraAt=now+A.AuraInterval end
+    for i,item in ipairs(candidates) do
+        if i>A.MaxPlayers then break end
+        local character=item.Character;local path=character:GetAttribute("MysteriesPathway");local seq=character:GetAttribute("MysteriesSequence")
+        local torso=character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso");local head=character:FindFirstChild("Head")
+        if not A.Cloth[path] or type(seq)~="number" or character:GetAttribute("MysteriesDisguised")==true
+            or not torso or not torso:IsA("BasePart") or not head or not head:IsA("BasePart") then continue end
+        wanted[character]=true
+        local record=self.Records[character]
+        if not record or record.Path~=path or record.Sequence~=seq or record.Torso~=torso or record.Head~=head then self:Build(character,path,seq,torso,head) end
+        local profile=self.Service:Profile()
+        if aura and seq<=6 and not self.Service.LowGraphics and not self.Service.ReducedMotion and not profile.Low and self.Service:Visible(item.Root.Position) then
+            self.Blocks:Compose({{Name=if seq<=3 then "VeilRibbon" else "RisingMotes",Position=torso.Position,Palette=path,Options={Scale=A.AuraScale}}},1,0,A.AuraLife)
+            aura=false -- one subtle nearby aura per interval; it shares the global effect cap.
+        end
+    end
+    for character in pairs(self.Records) do if not wanted[character] then self:Clear(character) end end
+end
+function Outfit.Destroy(self: any)
+    for character in pairs(self.Records) do self:Clear(character) end
+end
+return Outfit
+```
+
+
 ## src/StarterPlayer/StarterPlayerScripts/Visuals/Choreography.lua
 
 **Class:** ModuleScript
@@ -3733,6 +3921,187 @@ return Blocks
 ```
 
 
+## src/StarterPlayer/StarterPlayerScripts/Visuals/EnemyPresentation.lua
+
+**Class:** ModuleScript
+
+**Explorer path:** `StarterPlayer/StarterPlayerScripts/Visuals/EnemyPresentation`
+
+```lua
+--!strict
+-- Original silhouettes; the real registered root/humanoid remains the sole combat entity.
+local Collection=game:GetService("CollectionService")
+local Players=game:GetService("Players")
+local T=require(game:GetService("ReplicatedStorage").Shared.Theme)
+local Kit=require(script.Parent.Parent.UI.Kit)
+local A=T.EnemyArt
+local Enemies={}
+function Enemies.new(service: any,blocks: any,runtime: any,notice: ((string)->())?,audio: ((string)->())?): any
+    return setmetatable({Service=service,Blocks=blocks,Runtime=runtime,Notice=notice,Audio=audio,Records={},Bars={},BarCount=0,Elapsed=0,IntroAt=0,Seen=setmetatable({},{__mode="k"})},{__index=Enemies})
+end
+function Enemies.Bar(self: any): any
+    local pooled=table.remove(self.Bars)
+    if pooled then return pooled end
+    if self.BarCount>=A.MaxBars then return nil end;self.BarCount+=1
+    local gui=Kit.New("BillboardGui",self.Service.Folder,{Name="MysteriesEnemyHealth",Size=UDim2.fromOffset(A.BarWidth,A.BarHeight),
+        MaxDistance=A.BarDistance,AlwaysOnTop=false})
+    local title=Kit.Text(gui,"",T.Type.Micro,T.Fonts.Number);title.Name="Title";title.Size=UDim2.new(1,0,1,-A.BarTrack)
+    title.BackgroundColor3=T.Colors.Ink;title.BackgroundTransparency=0;title.TextXAlignment=Enum.TextXAlignment.Center
+    local track=Kit.New("Frame",gui,{Name="Track",BorderSizePixel=0,BackgroundColor3=T.Colors.Slate,
+        Position=UDim2.new(0,0,1,-A.BarTrack),Size=UDim2.new(1,0,0,A.BarTrack)})
+    Kit.New("Frame",track,{Name="Fill",BorderSizePixel=0,BackgroundColor3=T.Colors.Health,Size=UDim2.fromScale(1,1)})
+    return gui
+end
+function Enemies.ReleaseBar(self: any,r: any)
+    if r.Bar then r.Bar.Enabled=false;r.Bar.Adornee=nil;table.insert(self.Bars,r.Bar);r.Bar=nil end
+end
+function Enemies.Clear(self: any,model: Model)
+    local r=self.Records[model];if not r then return end
+    if r.Cue then r.Cue:Finish() end;self:ReleaseBar(r)
+    for _,old in ipairs(r.Hidden) do if old.Part.Parent and r.Humanoid.Health>0 then old.Part.LocalTransparencyModifier=old.Alpha end end
+    r.Art:Destroy();self.Records[model]=nil
+end
+function Enemies.Build(self: any,model: Model,root: BasePart,humanoid: Humanoid,tier: number): any
+    local spec=A.Profiles[tier];if not spec then return nil end
+    local art=Instance.new("Model");art.Name="Local silhouette · "..spec.Name;art.Parent=self.Service.Folder
+    local r: any={Art=art,Parts={},Hidden={},Root=root,Humanoid=humanoid,Model=model,Spec=spec,Tier=tier,LastHealth=humanoid.Health,Attack=0,HitAt=-math.huge}
+    local scale,width=spec.Scale,spec.Width
+    local function geometry(name: string,x: number?,y: number?): Vector3
+        local g=A.Geometry[name];return Vector3.new(g[1]*(x or 1),g[2]*(y or 1),g[3])
+    end
+    local function piece(name: string,size: Vector3,at: Vector3,color: Color3,roll: number?)
+        if #r.Parts>=A.MaxParts then return end
+        local p=Instance.new("Part");p.Name=name;p.Size=size;p.Anchored=true;p.CanCollide=false;p.CanTouch=false;p.CanQuery=false;p.CastShadow=false
+        p.Material=Enum.Material.SmoothPlastic;p.Color=color;p.Parent=art
+        table.insert(r.Parts,{Part=p,Offset=CFrame.new(at)*CFrame.Angles(0,0,math.rad(roll or 0))})
+    end
+    local feet=A.GroundOffset;local body=feet+2.4*scale
+    piece("Coat",geometry("Coat",width,scale),Vector3.new(0,body,0),spec.Color)
+    for _,side in ipairs({-1,1}) do
+        piece("Sleeve",geometry("Sleeve",width,scale),Vector3.new(side*1.5*width,body-0.1,0),spec.Color,side*8)
+        piece("Boot",geometry("Boot",1,scale),Vector3.new(side*0.55,feet+0.6*scale,0),T.Colors.Iron)
+    end
+    local top=body+2.2*scale
+    piece("Unmarked mask",geometry("Mask",width,scale),Vector3.new(0,top,0),spec.Mask)
+    if spec.Motif=="Hat" then
+        piece("Hat brim",geometry("Brim"),Vector3.new(0,top+0.9*scale,0),T.Colors.Iron)
+        piece("Hat crown",geometry("Crown"),Vector3.new(0,top+1.35*scale,0),T.Colors.Iron)
+    elseif spec.Motif=="Beast" then
+        for _,side in ipairs({-1,1}) do piece("Angular ear",geometry("Ear"),Vector3.new(side*0.7,top+0.7,0),spec.Mask,side*25) end
+    elseif spec.Motif=="Veil" then
+        piece("Long veil",geometry("Veil",width,scale),Vector3.new(0,body+0.4,0.8),spec.Color)
+    else
+        for _,side in ipairs({-1,1}) do piece("Bound arch",geometry("Arch",1,scale),Vector3.new(side*1.7*width,body,0.8),spec.Mask) end
+        piece("Arch lintel",geometry("Lintel",width),Vector3.new(0,body+2*scale,0.8),spec.Mask)
+    end
+    for _,part in ipairs(model:GetDescendants()) do
+        if part:IsA("BasePart") and part.Name~="HumanoidRootPart" then
+            table.insert(r.Hidden,{Part=part,Alpha=part.LocalTransparencyModifier});part.LocalTransparencyModifier=1
+        end
+    end
+    self.Records[model]=r
+    local seen=self.Seen[model] or {};self.Seen[model]=seen;r.Phase=seen.Phase
+    if not seen.Intro and tier<=2 and os.clock()>=self.IntroAt then
+        seen.Intro=true;self.IntroAt=os.clock()+A.IntroGap
+        if self.Audio then self.Audio(A.Sound.Intro) end
+        if self.Notice then self.Notice(spec.Name.." · Sequence "..tier) end
+    end
+    return r
+end
+function Enemies.Warning(self: any,r: any,now: number)
+    if r.Humanoid.Health<=0 then if r.Cue then r.Cue:Finish();r.Cue=nil end;return end
+    local threat=r.Model:GetAttribute("VisualThreatUserId")
+    local player=type(threat)=="number" and Players:GetPlayerByUserId(threat)
+    local target=player and player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    local due=nil;local kind="Melee"
+    if target and target:IsA("BasePart") then
+        local distance=(target.Position-r.Root.Position).Magnitude
+        local melee=r.Model:GetAttribute("VisualMeleeDue")
+        if type(melee)=="number" and melee>now and melee-now<=A.WarningLead and distance<=self.Runtime.NPCAttackRange then due=melee end
+        local spell=r.Model:GetAttribute("VisualSpellDue")
+        if r.Model:GetAttribute("VisualSpellAllowed")==true and r.Tier<=6 and type(spell)=="number" and spell>now and spell-now<=A.WarningLead and distance<=self.Runtime.NPCSpellRange and (not due or spell<due) then due=spell;kind="Spell" end
+    end
+    if not due then if r.Cue then r.Cue:Finish();r.Cue=nil end;return end
+    if r.Cue and r.Cue.Active and r.Due==due then return end
+    if r.Cue then r.Cue:Finish() end
+    local radius=if kind=="Melee" then self.Runtime.NPCAttackRange else A.SpellRadius
+    local h=self.Service:Begin("Enemy telegraph",r.Root.Position,1,A.ThreatPriority,{Part=2})
+    if not h then return end
+    r.Cue=h;r.Due=due;r.WarningKind=kind;h.Duration=math.max(A.MinimumLife,due-now)
+    local rim=h:Acquire("Part");local fill=h:Acquire("Part")
+    for _,p in ipairs({rim,fill}) do p.Shape=Enum.PartType.Cylinder;p.Color=T.Colors.Danger;p.Material=Enum.Material.SmoothPlastic end
+    h.Update=function()
+        if not r.Model.Parent or r.Humanoid.Health<=0 then h:Finish();return end
+        h.Position=r.Root.Position
+        local t=math.clamp(1-(due-workspace:GetServerTimeNow())/A.WarningLead,0,1)
+        local at=r.Root.Position+Vector3.yAxis*A.GroundOffset
+        local frame=CFrame.new(at)*CFrame.Angles(0,0,math.pi/2)
+        rim.Size=Vector3.new(A.GroundThickness,radius*2,radius*2);rim.CFrame=frame;rim.Transparency=A.WarningAlpha
+        fill.Size=Vector3.new(A.GroundThickness,math.max(A.MinimumSize,radius*2*t),math.max(A.MinimumSize,radius*2*t));fill.CFrame=frame+Vector3.yAxis*A.GroundThickness;fill.Transparency=A.FillAlpha
+    end
+end
+function Enemies.Step(self: any,dt: number)
+    self.Elapsed+=dt;if self.Elapsed<A.Scan then return end;self.Elapsed=0
+    local camera=workspace.CurrentCamera;if not camera then return end
+    local now=workspace:GetServerTimeNow();local candidates={};local wanted={}
+    for _,model in ipairs(Collection:GetTagged("Enemy")) do
+        if model:IsA("Model") and not model:GetAttribute("VisualEcho") then
+            local root=model.PrimaryPart;local hum=model:FindFirstChildOfClass("Humanoid")
+            if root and hum and (hum.Health>0 or self.Records[model]) and self.Service:Visible(root.Position) then table.insert(candidates,{Model=model,Root=root,Humanoid=hum,Distance=(root.Position-camera.CFrame.Position).Magnitude}) end
+        end
+    end
+    table.sort(candidates,function(a,b) return a.Distance<b.Distance end)
+    local bars=0;local limit=if self.Service:Profile().Mobile then A.MobileBars else A.MaxBars
+    for i,item in ipairs(candidates) do
+        if i>A.Max then break end
+        local model=item.Model;local r=self.Records[model]
+        if not r then r=self:Build(model,item.Root,item.Humanoid,model:GetAttribute("VisualTier")) end
+        if not r then continue end;wanted[model]=true
+        if r.Humanoid.Health<r.LastHealth then r.HitAt=now end;r.LastHealth=r.Humanoid.Health
+        local health=math.clamp(r.Humanoid.Health/math.max(1,r.Humanoid.MaxHealth),0,1)
+        if health<=A.PhaseRatio and not r.Phase and r.Tier<=2 and health>0 then
+            r.Phase=true;self.Seen[model].Phase=true
+            if self.Audio then self.Audio(A.Sound.Phase) end
+            self.Blocks:Compose({{Name="SigilStencil",Position=r.Root.Position,Palette="Apprentice",Options={Glyph="Seal",Scale=A.PhaseScale}}},1,A.PhasePriority,A.DeathTime)
+            if self.Notice then self.Notice(r.Spec.Name.." · seal fractured") end
+        end
+        if health<=0 then
+            if not r.DiedAt and self.Audio then self.Audio(A.Sound.Death) end
+            r.DiedAt=r.DiedAt or now;self:ReleaseBar(r)
+        end
+        local deadFade=if r.DiedAt then math.clamp((now-r.DiedAt)/A.DeathTime,0,1) else 0
+        local reduced=self.Service.ReducedMotion or self.Service.LowGraphics
+        local rise=if reduced then 0 else math.sin(now/A.IdlePeriod*math.pi*2)*A.IdleRise
+        local serial=model:GetAttribute("VisualAttackSerial") or 0
+        if serial>r.Attack then
+            r.Attack=serial
+            if self.Audio then self.Audio(if model:GetAttribute("VisualAttackKind")=="Spell" then A.Sound.Spell else A.Sound.Melee) end
+        end
+        local attackAt=model:GetAttribute("VisualAttackAt")
+        local attack=if type(attackAt)=="number" then math.clamp(1-(now-attackAt)/A.HitTime,0,1) else 0
+        local hit=math.clamp(1-(now-r.HitAt)/A.HitTime,0,1)
+        local frame=r.Root.CFrame*CFrame.new(0,rise,0)*CFrame.Angles(math.rad(if reduced then 0 else -attack*A.AttackLean+hit*A.HitLean),0,0)
+        for _,part in ipairs(r.Parts) do part.Part.CFrame=frame*part.Offset;part.Part.Transparency=deadFade end
+        self:Warning(r,now)
+        if health>0 and item.Distance<=A.BarDistance and bars<limit then
+            bars+=1;r.Bar=r.Bar or self:Bar()
+            if r.Bar then
+                r.Bar.Adornee=r.Root;r.Bar.StudsOffset=Vector3.yAxis*(r.Spec.Scale*5);r.Bar.Enabled=true
+                r.Bar.Title.Text=(if r.Cue and r.Cue.Active then r.WarningKind.." · " else "")..r.Spec.Name.." · "..math.ceil(r.Humanoid.Health).."/"..math.ceil(r.Humanoid.MaxHealth)
+                r.Bar.Track.Fill.Size=UDim2.fromScale(health,1)
+            end
+        else self:ReleaseBar(r) end
+    end
+    for model in pairs(self.Records) do if not wanted[model] then self:Clear(model) end end
+end
+function Enemies.Destroy(self: any)
+    for model in pairs(self.Records) do self:Clear(model) end
+    for _,bar in ipairs(self.Bars) do bar:Destroy() end;table.clear(self.Bars)
+end
+return Enemies
+```
+
+
 ## src/StarterPlayer/StarterPlayerScripts/Visuals/HitPresentation.lua
 
 **Class:** ModuleScript
@@ -4091,6 +4460,72 @@ function Seer.Build(a: any,e: any,c: any): (any,number?)
     return nil,nil
 end
 return Seer
+```
+
+
+## src/StarterPlayer/StarterPlayerScripts/Visuals/PerformanceProbe.lua
+
+**Class:** ModuleScript
+
+**Explorer path:** `StarterPlayer/StarterPlayerScripts/Visuals/PerformanceProbe`
+
+```lua
+--!strict
+-- Studio-only, bounded local stress harness. Measures Heartbeat intervals, not GPU time.
+local RunService=game:GetService("RunService")
+local T=require(game:GetService("ReplicatedStorage").Shared.Theme)
+local Probe={}
+local function total(counts: any): number local n=0;for _,v in pairs(counts) do n+=v end;return n end
+function Probe.new(service: any,blocks: any): any
+    return setmetatable({Service=service,Blocks=blocks,Running=false,Reports=0,Last=nil,Handles={},Frames={}},{__index=Probe})
+end
+function Probe.Start(self: any,position: Vector3,palette: string): boolean
+    if not RunService:IsStudio() or self.Running or self.Reports>=T.QA.MaxReports then return false end
+    self.Running=true;self.Elapsed=0;self.NextBurst=0;self.Position=position;self.Palette=palette
+    self.Frames={};self.FrameSerial=0;self.Peak=0;self.Violations=0;self.Attempts=0;self.Handles={};self.Before=self.Service:Stats()
+    self.BeforeInstances=#workspace:GetDescendants()
+    return true
+end
+function Probe.Cancel(self: any)
+    for _,handle in ipairs(self.Handles) do if handle.Active then handle:Finish() end end
+    self.Handles={};self.Running=false
+end
+function Probe.Finish(self: any)
+    local stats=self.Service:Stats();local frames=table.clone(self.Frames);table.sort(frames)
+    local function percentile(fraction: number): number return frames[math.max(1,math.ceil(#frames*fraction))] or 0 end
+    local profile=self.Service:Profile();local pools=true
+    for class,count in pairs(stats.Allocated) do if count>self.Service.Limits[class] then pools=false end end
+    self.Reports+=1
+    self.Last={MedianMs=percentile(0.5),P95Ms=percentile(0.95),MaxMs=frames[#frames] or 0,Samples=#frames,Peak=self.Peak,Cap=profile.MaxEffects,
+        Allocated=total(stats.Allocated),Reserved=total(stats.Reserved),Active=stats.Active,Errors=stats.Errors-self.Before.Errors,
+        BudgetViolations=self.Violations,BeforeActive=self.Before.Active,BeforeReserved=total(self.Before.Reserved),
+        Dropped=stats.Dropped-self.Before.Dropped,Evicted=stats.Evicted-self.Before.Evicted,PoolsBounded=pools,
+        InstancesBefore=self.BeforeInstances,InstancesAfter=#workspace:GetDescendants(),Attempts=self.Attempts,Mobile=profile.Mobile,Quality=profile.Level,
+        Reduced=self.Service.ReducedMotion,Low=self.Service.LowGraphics}
+    self:Cancel()
+    print(T.QA.ReportPrefix..game:GetService("HttpService"):JSONEncode(self.Last))
+end
+function Probe.Step(self: any,dt: number)
+    if not self.Running then return end
+    self.Elapsed+=dt;self.FrameSerial+=1
+    self.Frames[(self.FrameSerial-1)%T.QA.Samples+1]=dt*1000
+    local stats=self.Service:Stats();self.Peak=math.max(self.Peak,stats.Active)
+    if stats.Active>self.Service:Profile().MaxEffects then self.Violations+=1 end
+    if self.Elapsed>=T.QA.Duration+T.QA.Drain then self:Finish();return end
+    if self.Elapsed>T.QA.Duration or self.Elapsed<self.NextBurst then return end
+    self.NextBurst=self.Elapsed+T.QA.SpawnInterval
+    local alive={};for _,handle in ipairs(self.Handles) do if handle.Active then table.insert(alive,handle) end end;self.Handles=alive
+    local names={"CardFan","VeilRibbon","GroundRune","SigilStencil"}
+    for i=1,self.Service:Profile().MaxEffects+T.QA.Overfill do
+        self.Attempts+=1
+        local at=self.Position+Vector3.xAxis*((i%3)-1)
+        local h=self.Blocks:Compose({{Name=names[(i-1)%#names+1],Position=at,Palette=self.Palette,
+            Options={Scale=T.QA.Scale,Glyph="Seal",Frame=CFrame.new(at)}}},1,T.QA.Priority,T.World.Ambient.Life)
+        if h then table.insert(self.Handles,h) end
+    end
+    self.Peak=math.max(self.Peak,self.Service:Stats().Active)
+end
+return Probe
 ```
 
 
@@ -4563,10 +4998,12 @@ local V=require(Shared.VfxConfig)
 local Data=require(Shared.GameData)
 local Kit=require(script.Parent.Parent.UI.Kit)
 local Blocks=require(script.Parent.EffectBlocks)
+local Probe=require(script.Parent.PerformanceProbe)
 local TestRoom={}
 function TestRoom.new(parent: Instance,presentation: any,callbacks: any): any
     local self: any=setmetatable({Presentation=presentation,Callbacks=callbacks,Palette=T.TestRoom.DefaultPalette,
         Reduced=false,Low=false,Gray=false,Elapsed=0,Stage=nil,Position=Vector3.zero},{__index=TestRoom})
+    self.Probe=Probe.new(presentation.VFX,presentation.Blocks)
     self.Root=Kit.Panel(parent,"VFXTestRoom");self.Root.ZIndex=T.Layers.Developer;self.Root.Visible=false
     local title=Kit.Text(self.Root,"VFX TEST ROOM · STUDIO",T.Type.Heading,T.Fonts.Heading)
     title.Position=UDim2.fromOffset(T.TestRoom.Pad,0);title.Size=UDim2.new(1,-T.TestRoom.Header-T.TestRoom.Pad,0,T.TestRoom.Header)
@@ -4583,6 +5020,11 @@ function TestRoom.new(parent: Instance,presentation: any,callbacks: any): any
         button.Size=UDim2.new(1,-T.TestRoom.Gap,0,T.TestRoom.Row);button.LayoutOrder=order
         return button
     end
+    row("Run bounded stress · "..T.QA.Duration.." s + "..T.QA.Drain.." s drain",function()
+        if not self.Stage then self:StageAtCamera() end
+        self.Probe:Start(self.Position,self.Palette)
+    end)
+    row("Cancel stress run",function() self.Probe:Cancel() end)
     self.PaletteButton=row("Palette: "..self.Palette,function()
         self.Palette=if self.Palette=="Seer" then "Marauder" elseif self.Palette=="Marauder" then "Apprentice" else "Seer"
         self.PaletteButton.Text="Palette: "..self.Palette
@@ -4722,6 +5164,7 @@ function TestRoom.Toggle(self: any,allowed: boolean)
     self.Root.Visible=true;self:StageAtCamera();self.Callbacks.Modal(true)
 end
 function TestRoom.Close(self: any)
+    self.Probe:Cancel()
     self.Root.Visible=false
     if self.Stage then self.Stage:Destroy();self.Stage=nil;self.Dummy=nil end
     if self.GrayEffect then self.GrayEffect:Destroy();self.GrayEffect=nil end
@@ -4730,6 +5173,7 @@ function TestRoom.Close(self: any)
 end
 function TestRoom.Step(self: any,dt: number)
     if not self.Root.Visible then return end
+    self.Probe:Step(dt)
     self.Elapsed+=dt
     if self.Elapsed<T.TestRoom.StatInterval then return end;self.Elapsed=0
     local stats=self.Presentation.VFX:Stats()
@@ -4739,9 +5183,199 @@ function TestRoom.Step(self: any,dt: number)
     for _,count in pairs(stats.Reserved) do reserved+=count end
     self.Status.Text="Active "..stats.Active.." / "..profile.MaxEffects.." · dropped "..stats.Dropped.." · evicted "..stats.Evicted.."\n"..
         (if profile.Mobile then "Mobile" else "Desktop").." · quality "..profile.Level.." · detail "..string.format("%.2f",profile.Detail)..
-        "\nInstances "..allocated.." allocated · "..reserved.." reserved · errors "..stats.Errors
+        "\nInstances "..allocated.." allocated · "..reserved.." reserved · errors "..stats.Errors..(if self.Probe.Running then " · stress running" elseif self.Probe.Last then " · p95 "..string.format("%.1fms",self.Probe.Last.P95Ms) else "")
 end
 return TestRoom
+```
+
+
+## src/StarterPlayer/StarterPlayerScripts/Visuals/WorldPresentation.lua
+
+**Class:** ModuleScript
+
+**Explorer path:** `StarterPlayer/StarterPlayerScripts/Visuals/WorldPresentation`
+
+```lua
+--!strict
+-- Local lighting/labels/ambience. All landmarks are tagged by the server.
+local Collection=game:GetService("CollectionService")
+local Lighting=game:GetService("Lighting")
+local Players=game:GetService("Players")
+local Shared=game:GetService("ReplicatedStorage").Shared
+local T=require(Shared.Theme)
+local Layout=require(Shared.VisualLayout)
+local Kit=require(script.Parent.Parent.UI.Kit)
+local WorldView={}
+function WorldView.new(root: GuiObject,presentation: any,callbacks: any): any
+    local self: any=setmetatable({Root=root,Presentation=presentation,Callbacks=callbacks,Labels={},Elapsed=0,AmbientAt=0,
+        Lamps={},Zones={},Objects={},LastZone="",Exited={},Reduced=false,Low=false,ZoneSerial=0,NextScan=0},{__index=WorldView})
+    self.Compass=Kit.Text(root,"Sanctuary Square",T.Type.Small,T.Fonts.Number);self.Compass.TextXAlignment=Enum.TextXAlignment.Center
+    self.Compass.BackgroundColor3=T.Colors.Ink;self.Compass.BackgroundTransparency=0
+    self.Title=Kit.New("CanvasGroup",root,{Name="ZoneTitle",BackgroundColor3=T.Colors.Ink,BorderSizePixel=0,Visible=false,ZIndex=T.Layers.Feedback})
+    Kit.Corner(self.Title);Kit.Stroke(self.Title)
+    self.TitleText=Kit.Text(self.Title,"",T.Type.Heading,T.Fonts.Title);self.TitleText.Size=UDim2.fromScale(1,1);self.TitleText.TextXAlignment=Enum.TextXAlignment.Center
+    for i=1,T.World.Labels.Max do
+        local label=Kit.Text(root,"",T.World.Labels.TextSize,T.Fonts.Number)
+        label.Name="WorldLabel"..i;label.Size=UDim2.fromOffset(T.World.Labels.Width,T.World.Labels.Height)
+        label.BackgroundColor3=T.Colors.Ink;label.BackgroundTransparency=0;label.Visible=false;label.TextXAlignment=Enum.TextXAlignment.Center
+        Kit.Corner(label);self.Labels[i]=label
+    end
+    local old=Lighting:FindFirstChild("MysteriesWorldGrade");if old then old:Destroy() end
+    self.Grade=Kit.New("ColorCorrectionEffect",Lighting,{Name="MysteriesWorldGrade"})
+    for key,value in pairs(T.World.Correction) do self.Grade[key]=value end
+    self:Scan()
+    return self
+end
+function WorldView.Scan(self: any)
+    self.Lamps=Collection:GetTagged("MysteriesLamp");self.Zones=Collection:GetTagged("MysteriesZone");self.Objects=Collection:GetTagged("MysteriesInteractable")
+end
+function WorldView.Resize(self: any,layout: any)
+    self.Layout=layout;Kit.Rect(self.Compass,layout.Wordmark)
+    local width=math.min(T.World.Zone.TitleWidth,layout.Width-layout.Profile.Margin*2)
+    local top=math.max(T.World.Zone.TitleTop,layout.Resources.Y+layout.Resources.H+T.World.Labels.Pad)
+    local height=math.min(T.World.Zone.TitleHeight,math.max(0,layout.Hotbar.Y-top-T.World.Labels.Pad))
+    Kit.Rect(self.Title,{X=(layout.Width-width)/2,Y=top,W=width,H=height})
+    self.TitleText.TextSize=layout.Profile.HeadingSize
+end
+function WorldView.SetSettings(self: any,reduced: boolean,low: boolean)
+    self.Reduced=reduced;self.Low=low
+    local bloom=Lighting:FindFirstChild("MysteriesBloom")
+    if bloom and bloom:IsA("BloomEffect") then bloom.Enabled=not low end
+end
+function WorldView.Enter(self: any,zone: any,now: number)
+    local name=if zone then zone:GetAttribute("VisualName") else "Outskirts"
+    if type(name)~="string" then return end
+    if name==self.LastZone then return end
+    if self.LastZone~="" then self.Exited[self.LastZone]=now end
+    self.LastZone=name
+    local tier=zone and zone:GetAttribute("Sequence")
+    local tint=if type(tier)=="number" then (if tier<=4 then T.World.Zone.HighTint else T.World.Zone.LowTint) else T.World.Zone.HubTint
+    local color=T.World.Zone.HubTint:Lerp(tint,T.World.Zone.Blend)
+    if self.Reduced then self.Grade.TintColor=color else Kit.Tween(self.Grade,T.World.Zone.Transition,{TintColor=color}) end
+    if now-(self.Exited[name] or -math.huge)<T.World.Zone.Repeat then return end
+    self.ZoneSerial+=1;local serial=self.ZoneSerial
+    self.TitleText.Text=name..(if type(tier)=="number" then " · Sequence "..tier else "")
+    self.Title.GroupTransparency=if self.Reduced then 0 else 1;self.Title.Visible=true
+    if not self.Reduced then Kit.Tween(self.Title,T.World.Zone.Enter,{GroupTransparency=0}) end
+    task.delay(T.World.Zone.Enter+T.World.Zone.Hold,function()
+        if serial~=self.ZoneSerial then return end
+        if self.Reduced then self.Title.Visible=false;return end
+        local tween=Kit.Tween(self.Title,T.World.Zone.Leave,{GroupTransparency=1})
+        tween.Completed:Once(function() if serial==self.ZoneSerial then self.Title.Visible=false end end)
+    end)
+end
+function WorldView.ClearRay(self: any,from: Vector3,to: Vector3,target: Instance): boolean
+    local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Exclude
+    local ignore: {Instance}={self.Presentation.VFX.Folder}
+    if Players.LocalPlayer.Character then table.insert(ignore,Players.LocalPlayer.Character) end
+    params.FilterDescendantsInstances=ignore
+    local hit=workspace:Raycast(from,to-from,params)
+    return not hit or hit.Instance==target or hit.Instance:IsDescendantOf(target)
+end
+function WorldView.ProjectLabels(self: any,camera: Camera,root: BasePart)
+    for _,label in ipairs(self.Labels) do label.Visible=false end
+    if not self.Layout or self.Callbacks.Modal() then return end
+    local cfg=T.World.Labels;local accepted={};local candidates={}
+    for _,object in ipairs(self.Objects) do
+        if object:IsA("BasePart") and object.Parent then
+            local distance=(root.Position-object.Position).Magnitude
+            if distance<=cfg.Distance then table.insert(candidates,{Part=object,Distance=distance}) end
+        end
+    end
+    table.sort(candidates,function(a,b) return a.Distance<b.Distance end)
+    local count=0;local origin=self.Root.AbsolutePosition
+    local exclusions={self.Layout.Resources,self.Layout.Hotbar,self.Layout.Journal,self.Layout.Action}
+    for _,gui in ipairs(self.Callbacks.Exclusions()) do
+        if gui.Visible then
+            local p=gui.AbsolutePosition-origin;local size=gui.AbsoluteSize
+            table.insert(exclusions,{X=p.X,Y=p.Y,W=size.X,H=size.Y})
+        end
+    end
+    for _,item in ipairs(candidates) do
+        if count>=cfg.Max then break end
+        local object=item.Part
+        local prompt=self.Callbacks.Prompt()
+        if prompt and prompt.Parent==object then continue end
+        local at=object.Position+Vector3.yAxis*cfg.Offset
+        local point,visible=camera:WorldToViewportPoint(at)
+        if not visible or not self:ClearRay(camera.CFrame.Position,object.Position,object) then continue end
+        for _,offset in ipairs(cfg.Slots) do
+            local r={X=point.X-origin.X-cfg.Width/2,Y=point.Y-origin.Y+offset,W=cfg.Width,H=cfg.Height}
+            if r.X<0 or r.Y<0 or r.X+r.W>self.Layout.Width or r.Y+r.H>self.Layout.Height then continue end
+            local blocked=false
+            for _,other in ipairs(exclusions) do if Layout.Intersects(r,other,cfg.Pad) then blocked=true;break end end
+            for _,other in ipairs(accepted) do if Layout.Intersects(r,other,cfg.Pad) then blocked=true;break end end
+            if blocked then continue end
+            count+=1;local label=self.Labels[count]
+            label.Text=object:GetAttribute("VisualName") or object.Name
+            local fade=math.clamp((item.Distance-cfg.Full)/(cfg.Distance-cfg.Full),0,1)
+            label.TextTransparency=fade;label.BackgroundTransparency=fade;Kit.Rect(label,r);label.Visible=true
+            table.insert(accepted,r);break
+        end
+    end
+end
+function WorldView.Step(self: any,dt: number)
+    self.Elapsed+=dt;if self.Elapsed<T.World.Lamp.Tick then return end;self.Elapsed=0
+    local bloom=Lighting:FindFirstChild("MysteriesBloom")
+    if bloom and bloom:IsA("BloomEffect") then bloom.Enabled=not self.Low end
+    local now=os.clock();if now>=self.NextScan then self:Scan();self.NextScan=now+T.World.Scan end
+    local camera=workspace.CurrentCamera
+    local character=Players.LocalPlayer.Character
+    local root=character and character:FindFirstChild("HumanoidRootPart")
+    if not camera or not root or not root:IsA("BasePart") then
+        for _,label in ipairs(self.Labels) do label.Visible=false end
+        for _,lamp in ipairs(self.Lamps) do local light=lamp:FindFirstChild("Gaslight");if light and light:IsA("PointLight") then light.Enabled=false end end
+        return
+    end
+    local zone=nil;local closest=math.huge
+    for _,object in ipairs(self.Zones) do
+        if object:IsA("BasePart") then
+            local distance=(root.Position-object.Position).Magnitude
+            if distance<(object:GetAttribute("Radius") or 0) and distance<closest then closest=distance;zone=object end
+        end
+    end
+    self:Enter(zone,now)
+    local look=camera.CFrame.LookVector
+    local heading=math.floor((math.deg(math.atan2(-look.X,-look.Z))+360)%360)
+    self.Compass.Text=heading.."° · "..self.LastZone
+    self.Compass.Visible=not self.Callbacks.Modal() and not self.Title.Visible
+    if self.Callbacks.Title then self.Callbacks.Title(self.Title.Visible) end
+    self:ProjectLabels(camera,root)
+    local lamps={}
+    for _,lamp in ipairs(self.Lamps) do
+        if lamp:IsA("BasePart") and lamp.Parent then
+            local light=lamp:FindFirstChild("Gaslight")
+            if light and light:IsA("PointLight") then
+                light.Enabled=false
+                local distance=(camera.CFrame.Position-lamp.Position).Magnitude
+                if distance<=T.World.Lamp.MaxDistance and self.Presentation.VFX:Visible(lamp.Position) then table.insert(lamps,{Part=lamp,Light=light,Distance=distance}) end
+            end
+        end
+    end
+    table.sort(lamps,function(a,b) return a.Distance<b.Distance end)
+    local profile=self.Presentation.VFX:Profile()
+    local limit=if self.Low or profile.Mobile or profile.Low then T.World.Lamp.LowMax else T.World.Lamp.DesktopMax
+    for i=1,math.min(limit,#lamps) do
+        local light=lamps[i].Light;light.Enabled=true;light.Shadows=false
+        light.Brightness=T.World.Lamp.Brightness*(if self.Reduced then 1 else 1+math.sin(now/T.World.Lamp.Period+lamps[i].Part.Position.X)*T.World.Lamp.Flicker)
+    end
+    if now>=self.AmbientAt then
+        self.AmbientAt=now+T.World.Ambient.Interval
+        if not self.Low and not profile.Low and not self.Reduced then
+            local count=if profile.Mobile then T.World.Ambient.MobileMax else T.World.Ambient.DesktopMax
+            for i=1,math.min(count,#lamps) do
+                local at=lamps[i].Part.Position
+                self.Presentation.Blocks:Compose({{Name="RisingMotes",Position=at,Palette="Seer",Options={Scale=T.World.Ambient.Scale,Tint=T.Colors.Warm}}},1,T.World.Ambient.Priority,T.World.Ambient.Life)
+            end
+        end
+    end
+end
+function WorldView.Destroy(self: any)
+    self.ZoneSerial+=1;self.Grade:Destroy();self.Title:Destroy();self.Compass:Destroy()
+    for _,label in ipairs(self.Labels) do label:Destroy() end
+    for _,lamp in ipairs(self.Lamps) do local light=lamp:FindFirstChild("Gaslight");if light and light:IsA("PointLight") then light.Enabled=false end end
+end
+return WorldView
 ```
 
 
@@ -4803,4 +5437,4 @@ return TestRoom
 - [PROPOSED] `CDE-cleanup.mp4` — repeated previews/casts, expiry, respawn and counters settling. Include measured frame time and allocated instances.
 - [PROPOSED] If Output has errors, send `CDE-output-errors.png` and paste the entire script/line/error text.
 
-[EXISTING] Implementation stops at Phase E. [PROPOSED] Phase F begins only after a later instruction.
+[EXISTING] This milestone ended at Phase E; the subsequent F–I implementation is documented in PHASE_FI_VISUALS.md.

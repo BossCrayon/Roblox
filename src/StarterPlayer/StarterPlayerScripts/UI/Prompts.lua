@@ -33,7 +33,7 @@ function Prompts.new(parent: GuiObject): any
     self.Fill.Size=UDim2.new(0,0,0,p.HoldHeight)
     local function track(object: Instance)
         if object:IsA("ProximityPrompt") then object.Style=Enum.ProximityPromptStyle.Custom
-        elseif object:IsA("BillboardGui") then
+        elseif object:IsA("BillboardGui") and object.Name~="MysteriesStatus" and object.Name~="MysteriesEnemyHealth" then
             self.LegacyLabels[object]=true
             if self.Root.Visible then self.Suppressed[object]=object.Enabled;object.Enabled=false end
         end

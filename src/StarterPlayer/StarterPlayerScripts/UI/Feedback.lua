@@ -13,6 +13,8 @@ function Feedback.new(parent: GuiObject,data: any,cinematic: (boolean)->()): any
     self.Advance=Kit.New("CanvasGroup",self.Root,{Name="SequenceAdvance",BackgroundColor3=T.Colors.Ink,BorderSizePixel=0,Visible=false});Kit.Corner(self.Advance);Kit.Stroke(self.Advance)
     self.AdvanceSmall=Kit.Text(self.Advance,"",T.Type.Small,T.Fonts.Number);self.AdvanceSmall.Size=UDim2.new(1,0,0,T.Feedback.SubtitleHeight);self.AdvanceSmall.TextXAlignment=Enum.TextXAlignment.Center
     self.AdvanceTitle=Kit.Text(self.Advance,"",T.Type.Title,T.Fonts.Title);self.AdvanceTitle.Size=UDim2.new(1,-T.Layout.Modal.BodyPad*2,0,T.Feedback.AdvanceTitleHeight);self.AdvanceTitle.Position=UDim2.fromOffset(T.Layout.Modal.BodyPad,T.Feedback.SubtitleHeight);self.AdvanceTitle.TextXAlignment=Enum.TextXAlignment.Center
+    self.Acting=Kit.Text(self.Root,"",T.Type.Small,T.Fonts.Number);self.Acting.BackgroundColor3=T.Colors.Ink;self.Acting.BackgroundTransparency=0;self.Acting.Visible=false
+    self.SanityWarning=Kit.Text(self.Root,"",T.Type.Small,T.Fonts.Number);self.SanityWarning.BackgroundColor3=T.Colors.Ink;self.SanityWarning.BackgroundTransparency=0;self.SanityWarning.Visible=false
     self.Vignette=Kit.New("Frame",self.Root,{Name="SanityVignette",Size=UDim2.fromScale(1,1),BackgroundTransparency=1})
     self.Edges={}
     self.Flashes={}
@@ -36,6 +38,8 @@ end
 function Feedback.Resize(self: any,layout: any)
     self.Layout=layout
     Kit.Rect(self.Notice,layout.Notice)
+    Kit.Rect(self.Acting,{X=layout.Pathway.X,Y=layout.Pathway.Y+layout.Profile.PathwayCollapsed,W=layout.Pathway.W,H=T.Feedback.SubtitleHeight})
+    Kit.Rect(self.SanityWarning,layout.Notice)
     local width=math.min(T.Layout.Advance.Width,layout.Width-layout.Profile.Margin*2)
     local x=(layout.Width-width)/2
     local top=T.Layout.Advance.Top
@@ -100,6 +104,10 @@ function Feedback.Update(self: any,state: any)
     if not state or not state.Ready then return end
     if previous and previous.Ready then
         if state.Health<previous.Health then self:Flash() end
+        if state.PathwayId==previous.PathwayId and state.Sequence==previous.Sequence and state.Digestion>previous.Digestion then
+            self.Acting.Text=T.Ritual.DigestionText..string.format("%.1f%%",state.Digestion-previous.Digestion)
+            self.ActingUntil=os.clock()+T.Ritual.DigestionTime
+        end
         if state.PathwayId and (state.PathwayId~=previous.PathwayId or state.Sequence~=previous.Sequence) then self:Sequence(state) end
     end
     self.Correction.Enabled=state.Sanity<T.Layout.Vignette.Low or state.Mode~="Normal"
@@ -117,6 +125,11 @@ function Feedback.Damage(self: any,event: any)
 end
 function Feedback.Step(self: any,now: number)
     local state=self.State
+    self.Acting.Visible=now<(self.ActingUntil or 0) and not self.Advance.Visible
+    self.SanityWarning.Visible=state~=nil and state.Ready and (state.Sanity<T.Layout.Vignette.Low or state.Mode~="Normal")
+    if self.SanityWarning.Visible then
+        self.SanityWarning.Text=if state.Mode=="LostControl" then T.Ritual.LostText elseif state.Mode=="Madness" then T.Ritual.MadnessText else T.Ritual.SanityText
+    end
     local severity=if state and state.Ready then math.clamp((T.Layout.Vignette.Low-state.Sanity)/T.Layout.Vignette.Low,0,1) else 0
     local breath=if self.ReducedMotion then 1 else T.Layout.Vignette.BreathMin+(1-T.Layout.Vignette.BreathMin)*(math.sin(now*math.pi*2/T.Timing.SanityBreath)+1)/2
     for _,f in ipairs(self.Edges) do f.BackgroundTransparency=1-T.Layout.Vignette.MaxAlpha*severity*breath end

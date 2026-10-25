@@ -1,0 +1,282 @@
+[
+  {
+    "file": "src/ReplicatedStorage/Shared/Theme.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ReplicatedStorage/Shared/Theme"
+  },
+  {
+    "file": "src/ReplicatedStorage/Shared/AbilityData.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ReplicatedStorage/Shared/AbilityData"
+  },
+  {
+    "file": "src/ReplicatedStorage/Shared/AnimConfig.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ReplicatedStorage/Shared/AnimConfig"
+  },
+  {
+    "file": "src/ReplicatedStorage/Shared/Freeze.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ReplicatedStorage/Shared/Freeze"
+  },
+  {
+    "file": "src/ReplicatedStorage/Shared/GameData.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ReplicatedStorage/Shared/GameData"
+  },
+  {
+    "file": "src/ReplicatedStorage/Shared/PathwayData.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ReplicatedStorage/Shared/PathwayData"
+  },
+  {
+    "file": "src/ReplicatedStorage/Shared/PathwayFactory.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ReplicatedStorage/Shared/PathwayFactory"
+  },
+  {
+    "file": "src/ReplicatedStorage/Shared/Pathways/Apprentice.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ReplicatedStorage/Shared/Pathways/Apprentice"
+  },
+  {
+    "file": "src/ReplicatedStorage/Shared/Pathways/Marauder.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ReplicatedStorage/Shared/Pathways/Marauder"
+  },
+  {
+    "file": "src/ReplicatedStorage/Shared/Pathways/Seer.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ReplicatedStorage/Shared/Pathways/Seer"
+  },
+  {
+    "file": "src/ReplicatedStorage/Shared/PotionData.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ReplicatedStorage/Shared/PotionData"
+  },
+  {
+    "file": "src/ReplicatedStorage/Shared/ProgressionConfig.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ReplicatedStorage/Shared/ProgressionConfig"
+  },
+  {
+    "file": "src/ReplicatedStorage/Shared/RuntimeConfig.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ReplicatedStorage/Shared/RuntimeConfig"
+  },
+  {
+    "file": "src/ReplicatedStorage/Shared/StatData.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ReplicatedStorage/Shared/StatData"
+  },
+  {
+    "file": "src/ReplicatedStorage/Shared/StatusEffectData.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ReplicatedStorage/Shared/StatusEffectData"
+  },
+  {
+    "file": "src/ReplicatedStorage/Shared/Types.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ReplicatedStorage/Shared/Types"
+  },
+  {
+    "file": "src/ReplicatedStorage/Shared/VfxConfig.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ReplicatedStorage/Shared/VfxConfig"
+  },
+  {
+    "file": "src/ReplicatedStorage/Shared/VisualBudget.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ReplicatedStorage/Shared/VisualBudget"
+  },
+  {
+    "file": "src/ReplicatedStorage/Shared/VisualLayout.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ReplicatedStorage/Shared/VisualLayout"
+  },
+  {
+    "file": "src/ReplicatedStorage/Shared/VisualModel.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ReplicatedStorage/Shared/VisualModel"
+  },
+  {
+    "file": "src/ServerScriptService/AdminConfig.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ServerScriptService/AdminConfig"
+  },
+  {
+    "file": "src/ServerScriptService/Bootstrap.server.lua",
+    "script_class": "Script",
+    "explorer_path": "ServerScriptService/Bootstrap"
+  },
+  {
+    "file": "src/ServerScriptService/Domain/AdminProgression.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ServerScriptService/Domain/AdminProgression"
+  },
+  {
+    "file": "src/ServerScriptService/Domain/PlayerDomain.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ServerScriptService/Domain/PlayerDomain"
+  },
+  {
+    "file": "src/ServerScriptService/Domain/RateLimiter.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ServerScriptService/Domain/RateLimiter"
+  },
+  {
+    "file": "src/ServerScriptService/Domain/SessionStore.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ServerScriptService/Domain/SessionStore"
+  },
+  {
+    "file": "src/ServerScriptService/Domain/VisualAccess.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ServerScriptService/Domain/VisualAccess"
+  },
+  {
+    "file": "src/ServerScriptService/Services/EffectService.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ServerScriptService/Services/EffectService"
+  },
+  {
+    "file": "src/ServerScriptService/Services/VisualEventService.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ServerScriptService/Services/VisualEventService"
+  },
+  {
+    "file": "src/ServerScriptService/Services/WorldArt.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ServerScriptService/Services/WorldArt"
+  },
+  {
+    "file": "src/ServerScriptService/Services/WorldService.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ServerScriptService/Services/WorldService"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Mysteries.client.lua",
+    "script_class": "LocalScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Mysteries"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/UI/Developer.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/UI/Developer"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/UI/Feedback.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/UI/Feedback"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/UI/Hud.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/UI/Hud"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/UI/Kit.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/UI/Kit"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/UI/Menus.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/UI/Menus"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/UI/Presentation.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/UI/Presentation"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/UI/Prompts.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/UI/Prompts"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/AbilityPresentation.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/AbilityPresentation"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/AnimationController.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/AnimationController"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/CameraFeel.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/CameraFeel"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/CharacterArt.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/CharacterArt"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/Choreography.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/Choreography"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/EffectBlocks.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/EffectBlocks"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/EnemyPresentation.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/EnemyPresentation"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/HitPresentation.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/HitPresentation"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/MotionSpring.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/MotionSpring"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/PathwayEffects/Apprentice.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/PathwayEffects/Apprentice"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/PathwayEffects/Marauder.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/PathwayEffects/Marauder"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/PathwayEffects/Seer.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/PathwayEffects/Seer"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/PerformanceProbe.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/PerformanceProbe"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/StatusPresentation.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/StatusPresentation"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/VfxService.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/VfxService"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/VfxTestRoom.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/VfxTestRoom"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/WorldPresentation.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/WorldPresentation"
+  }
+]

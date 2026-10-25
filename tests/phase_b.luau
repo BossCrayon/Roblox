@@ -31,7 +31,14 @@ return function(data: any,load: any,shared: any)
     local function instance(class)
         local props={ClassName=class,_kind="Instance",Parent=true,Name=class,CFrame=cf(),Size=v(7,9,1),Transparency=0,LocalTransparencyModifier=0,Color={R=0.5,G=0.5,B=0.5}}
         local children={};local methods={};local object
-        function methods:IsA(kind) return kind==class or (kind=="BasePart" and class=="Part") end
+        function methods:IsA(kind) return kind==class or (kind=="BasePart" and (class=="Part" or class=="SpawnLocation")) end
+        function methods:SetAttribute(key,value) props["Attr_"..key]=value end
+        function methods:GetAttribute(key) return props["Attr_"..key] end
+        function methods:IsDescendantOf(parent)
+            local item=object
+            while type(item)=="table" do if item==parent then return true end;item=item.Parent end
+            return false
+        end
         function methods:Clear() end
         function methods:Emit(count) props.Emitted=count end
         function methods:Destroy() for _,child in ipairs(table.clone(children)) do child:Destroy() end;object.Parent=nil end
@@ -48,6 +55,7 @@ return function(data: any,load: any,shared: any)
         end
         object=setmetatable({_Children=children},{__index=function(_,key)
             if methods[key] then return methods[key] end
+            if key=="Triggered" then return {Connect=function(_,fn) props.Trigger=fn end} end
             if key=="Position" then return props.CFrame.Position end
             if props[key]~=nil then return props[key] end
             for _,child in ipairs(children) do if child.Name==key then return child end end
@@ -58,7 +66,7 @@ return function(data: any,load: any,shared: any)
                 end
                 if type(value)=="table" and value._Children then table.insert(value._Children,object) end
             end
-            props[key]=value
+            if key=="Position" then props.CFrame=cf(value) else props[key]=value end
         end})
         return object
     end
@@ -72,7 +80,7 @@ return function(data: any,load: any,shared: any)
     function camera:WorldToViewportPoint(p)
         return {Z=1},if self.Mode=="All" then true elseif self.Mode=="Positive" then p.X>=0 else p.X<0
     end
-    local worldRoot={CurrentCamera=camera}
+    local worldRoot=instance("Workspace");worldRoot.CurrentCamera=camera
     local env={UDim2={fromOffset=function(x,y) return {X=x,Y=y} end,fromScale=function(x,y) return {X=x,Y=y} end},Vector3={new=v,zero=v(0,0,0),one=v(1,1,1),xAxis=v(1,0,0),yAxis=v(0,1,0),zAxis=v(0,0,1)},CFrame=frames,
         Vector2={new=function(x,y) return {X=x,Y=y} end},Enum=enums,workspace=worldRoot,Instance={new=instance},
         Color3={fromRGB=function(r,g,b) return {R=r/255,G=g/255,B=b/255} end},
@@ -396,4 +404,6 @@ return function(data: any,load: any,shared: any)
     check(next(cache.Gates)==nil and next(cache.Echoes)==nil,"Departing owner clears persistent cosmetic caches")
     status:Clear();effects:Destroy()
     print("PASS: "..checks.." ability composition/54-route/status/privacy/lifecycle assertions (engine stand-ins; no rendering)")
+    return {Env=env,Instance=instance,Vector=v,Frame=cf,Camera=camera,Input=input,
+        SetTime=function(value) now=value end,SetQuality=function(value) quality=value end}
 end

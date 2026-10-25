@@ -12,6 +12,8 @@ local AnimationController=require(Visuals.AnimationController)
 local CameraFeel=require(Visuals.CameraFeel)
 local HitPresentation=require(Visuals.HitPresentation)
 local AbilityPresentation=require(Visuals.AbilityPresentation)
+local CharacterArt=require(Visuals.CharacterArt)
+local EnemyPresentation=require(Visuals.EnemyPresentation)
 local Presentation={}
 function Presentation.new(gui: Instance,data: any,callbacks: any?): any
     local cb=callbacks or {}
@@ -21,6 +23,8 @@ function Presentation.new(gui: Instance,data: any,callbacks: any?): any
     self.Blocks=Blocks.new(self.VFX,{ScreenEdgePulse=function(_color: Color3,_duration: number)
         if not self.Reduced and cb.ScreenEdgePulse then cb.ScreenEdgePulse() end
     end})
+    self.Outfits=CharacterArt.new(self.VFX,self.Blocks)
+    self.Enemies=EnemyPresentation.new(self.VFX,self.Blocks,data.Runtime,cb.Notice,function(hook: string) self:Audio(hook) end)
     self.Camera=CameraFeel.new()
     self.Hits=HitPresentation.new(self.VFX,self.Blocks)
     self.Abilities=AbilityPresentation.new(self.VFX,self.Blocks,data,{
@@ -77,6 +81,12 @@ end
 function Presentation.Event(self: any,event: any)
     if event.Kind=="AbilityVisual" or event.Kind=="StatusVisual" or event.Kind=="VisualTrigger" or event.Kind=="GateRemoval"
         or event.Kind=="GateSnapshot" or event.Kind=="EchoSnapshot" then self.Abilities:Event(event);return end
+    if event.Kind=="PotionConfirmed" then
+        if type(event.At)~="number" or math.abs(workspace:GetServerTimeNow()-event.At)>C.Protocol.MaxAge or not T.CharacterArt.Trim[event.PathwayId] then return end
+        local controller=self:LocalController();if controller then controller:Play("CastRelease",nil,nil,T.Ritual.Pose) end
+        self.Blocks:Compose({{Name="RisingMotes",Position=event.Position,Palette=event.PathwayId,Options={Scale=T.CharacterArt.AuraScale}}},1,2,T.Ritual.DrinkTime)
+        return
+    end
     if not self.VFX:Visible(event.Position) then return end
     if event.Kind=="Damage" then
         self.Hits:Hit(event)
@@ -94,7 +104,7 @@ function Presentation.Event(self: any,event: any)
     end
 end
 function Presentation.Step(self: any,dt: number)
-    self.VFX:Step(dt);self.Abilities:Step();self.ScanElapsed+=dt
+    self.VFX:Step(dt);self.Abilities:Step();self.Outfits:Step(dt);self.Enemies:Step(dt);self.ScanElapsed+=dt
     if self.AbilityDemo and workspace:GetServerTimeNow()>=self.AbilityDemo.EndsAt then
         local demo=self.AbilityDemo;self.AbilityDemo=nil
         if demo.Windup then demo.Windup:Finish() end
@@ -150,7 +160,7 @@ function Presentation.PreviewTrigger(self: any,id: string,trigger: string,origin
     self.Abilities:Preview(id,"Confirmed",origin,destination,target,"Result",trigger)
 end
 function Presentation.Destroy(self: any)
-    self.Abilities:Destroy();self.Camera:Destroy();self.VFX:Destroy()
+    self.Outfits:Destroy();self.Enemies:Destroy();self.Abilities:Destroy();self.Camera:Destroy();self.VFX:Destroy()
     for _,controller in pairs(self.Controllers) do controller:Destroy() end
     table.clear(self.Controllers)
 end

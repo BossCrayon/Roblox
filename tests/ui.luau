@@ -263,6 +263,34 @@ return function(data: any,load: any,sharedNode: any)
     check(not hud.Cast.Visible,"Late pre-result snapshot cannot resurrect completed HUD cast")
     visualState.VisualToken=2;hud:Render(visualState,now)
     check(hud.Cast.Visible,"A newer confirmed snapshot may show a fresh cast")
+    -- F: pathway skins and read-only cooldown/acting feedback.
+    for _,path in ipairs({"Seer","Marauder","Apprentice"}) do
+        local skinState=table.clone(state);skinState.PathwayId=path;skinState.Sequence=9
+        skinState.Loadout={[1]=path.."_9"};skinState.Cooldowns={[path.."_9"]=0.5}
+        hud:Render(skinState,now)
+        check(hud.SkinPath==path and hud.Hotbar:FindFirstChild("PathwaySkin")~=nil,"HUD applies each pathway's native geometry skin")
+        check(hud.Slots[1].Face.BackgroundColor3==T.Skins[path].Backing,"Each pathway gets its configured card surface")
+        hud.Slots[1].Face.MouseEnter:Fire();hud.Slots[1].Face.MouseLeave:Fire()
+        check(hud.Slots[1].Face.BackgroundColor3==T.Skins[path].Backing,"Hover/selection leave preserves the pathway skin surface")
+        hud:Step(now+1)
+        local stroke=hud.Slots[1].Face:FindFirstChildOfClass("UIStroke")
+        check(stroke.Transparency==T.Skins.ReadyAlpha,"Cooldown completion gives a restrained ready frame")
+        hud.Callbacks.ReducedMotion=function() return true end;hud:Step(now+1)
+        check(stroke.Transparency==T.Style.BorderAlpha,"Reduced Motion disables ready accent")
+        hud.Callbacks.ReducedMotion=nil
+        check(skinState.Cooldowns[path.."_9"]==0.5,"Cooldown polish never mutates the server snapshot")
+    end
+    menus:Update(visualState);menus:Open("Journal")
+    local priorKey=menus.LastKey
+    local recordedUpdate=table.clone(visualState);recordedUpdate.RecordedCharges=2;menus:Update(recordedUpdate)
+    check(menus.LastKey~=priorKey,"Open Journal refreshes when confirmed recording charges change")
+    menus:Close()
+    local actingBefore=table.clone(state);actingBefore.Digestion=0;feedback:Update(actingBefore)
+    local actingAfter=table.clone(actingBefore);actingAfter.Digestion=5;feedback:Update(actingAfter);feedback:Step(now)
+    check(feedback.Acting.Visible and string.find(feedback.Acting.Text,"5.0%%")~=nil,"Confirmed digestion gain gets readable acting feedback")
+    local madness=table.clone(actingAfter);madness.Sanity=10;madness.Mode="Madness";feedback:Update(madness);feedback:SetReducedMotion(true);feedback:Step(now)
+    check(feedback.SanityWarning.Visible and feedback.SanityWarning.Text==T.Ritual.MadnessText,"Madness has static readable guidance under Reduced Motion")
+    feedback:Update(state);feedback:SetReducedMotion(false)
     local Prompts=load("Client/UI/Prompts",environment)
     local prompts=Prompts.new(root);prompts.Layout=layout
     service.PromptShown:Fire(prompt,enum.ProximityPromptInputType.Keyboard)

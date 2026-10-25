@@ -71,6 +71,7 @@ end
 function Menus.Render(self: any)
     if not self.Layout then return end
     self:Resize(self.Layout)
+    Kit.Skin(self.Card,self.State and self.State.PathwayId)
     local oldScroll=self.Scroll.CanvasPosition
     Kit.Clear(self.PreviewActions);Kit.Clear(self.Scroll);Kit.List(self.Scroll,T.Layout.Modal.Gap);self.Rows={}
     self.Title.Text=if self.View=="Preview" then (if self.Purchase then "POTION ALTAR" else "POTION RITUAL") else "BEYONDER "..string.upper(self.Tab)
@@ -114,7 +115,7 @@ function Menus.Render(self: any)
         if type(state.StolenPower)=="string" then
             self:TextRow(T.AbilityUI.StoredPrefix..(T.AbilityUI.PowerNames[state.StolenPower] or state.StolenPower).." · use Ability Theft again to release it.")
         end
-        self:TextRow("The acting method",true)
+        self:TextRow((T.Skins[state.PathwayId] or T.Skins.Seer).Name.." · The acting method",true)
         if state.PathwayId then
             local seq=self.Data.Pathways[state.PathwayId].Sequences[state.Sequence]
             self:TextRow(seq.ActingObjectives[1].Label)
@@ -199,7 +200,8 @@ function Menus.Update(self: any,state: any)
     table.sort(inventory)
     local loadout={}
     for i=1,T.Layout.Hotbar.Slots do loadout[i]=state.Loadout[i] or "-" end
-    local keys={tostring(state.PathwayId),tostring(state.Sequence),table.concat(inventory,","),table.concat(loadout,"|")}
+    local keys={tostring(state.PathwayId),tostring(state.Sequence),table.concat(inventory,","),table.concat(loadout,"|"),
+        tostring(state.RecordedPowerId),tostring(state.RecordedCharges),tostring(state.StolenPower),tostring(state.Digestion),tostring(state.ActingProgress)}
     local key=table.concat(keys,";")
     if self.Root.Visible then
         if self.View=="Preview" then

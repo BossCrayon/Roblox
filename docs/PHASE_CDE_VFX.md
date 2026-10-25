@@ -1,5 +1,7 @@
 # Phases C–E — all pathway ability presentation
 
+[EXISTING] Historical C–E milestone. The project has since continued through Phase I; use [the F–I handoff](PHASE_FI_VISUALS.md) and [complete current code](PHASE_FI_VISUALS_CODE.md) for installation and remaining Studio acceptance. Earlier deferral statements below describe this milestone.
+
 [EXISTING] Phases C, D and E are implemented in source and included in the rebuilt `studio/Mysteries.rbxlx`. All 54 registered abilities have explicit composition recipes and per-ability cast-pose selections; none of the registered roster relies on the generic fallback. This describes completed code, not Studio-certified appearance or performance.
 
 [EXISTING] Phase C supplies all 18 Seer packages; Phase D all 18 Marauder packages; Phase E all 18 Apprentice packages. Gameplay balance, damage, cooldowns, potion rules, server hit decisions, teleport eligibility, control limits, persistence and administrator permissions are preserved. Source changes in the server observe actual outcomes rather than authorize outcomes from visuals.
@@ -169,4 +171,4 @@
 - [PROPOSED] `CDE-cleanup.mp4` — repeated previews/casts, expiry, respawn and counters settling. Include measured frame time and allocated instances.
 - [PROPOSED] If Output has errors, send `CDE-output-errors.png` and paste the entire script/line/error text.
 
-[EXISTING] Implementation stops at Phase E. [PROPOSED] Phase F begins only after a later instruction.
+[EXISTING] This milestone ended at Phase E; the subsequent F–I implementation is documented in PHASE_FI_VISUALS.md.

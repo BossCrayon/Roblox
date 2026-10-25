@@ -17,10 +17,6 @@ local function part(parent: Instance,name: string,size: Vector3,position: Vector
     p.TopSurface=Enum.SurfaceType.Smooth; p.BottomSurface=Enum.SurfaceType.Smooth; p.Parent=parent
     return p
 end
-local function label(p: BasePart,text: string)
-    local gui=Instance.new("BillboardGui");gui.Size=UDim2.fromOffset(260,70);gui.StudsOffset=Vector3.new(0,4,0);gui.AlwaysOnTop=false;gui.Parent=p
-    local t=Instance.new("TextLabel");t.Size=UDim2.fromScale(1,1);t.BackgroundTransparency=1;t.Text=text;t.TextColor3=Color3.new(1,1,1);t.TextStrokeTransparency=0.3;t.TextScaled=true;t.Font=Enum.Font.GothamMedium;t.Parent=gui
-end
 function World.new(data: any,domain: any,states: any,effects: RemoteEvent): World
     local folder=Instance.new("Folder");folder.Name="MysteriesWorld";folder.Parent=workspace
     local npcs=Instance.new("Folder");npcs.Name="Enemies";npcs.Parent=folder
@@ -30,49 +26,7 @@ function World.new(data: any,domain: any,states: any,effects: RemoteEvent): Worl
 end
 function World.Build(self: World)
     if not self.Data.Runtime.GenerateDemoWorld then return end
-    part(self.Folder,"TrainingGround",Vector3.new(800,4,800),Vector3.new(0,-2,0),Color3.fromRGB(35,41,49))
-    local spawn=Instance.new("SpawnLocation");spawn.Name="SanctuarySpawn";spawn.Size=Vector3.new(12,1,12);spawn.Position=Vector3.new(0,0.5,0);spawn.Neutral=true;spawn.Duration=0;spawn.Color=Color3.fromRGB(95,153,170);spawn.Parent=self.Folder
-    label(spawn,"SANCTUARY\nChoose a potion in your journal")
-    for _,v in ipairs({{Name="Potion Altar",Action="Buy",Pos=Vector3.new(-12,3,0)},
-        {Name="Stabilization",Action="Recover",Pos=Vector3.new(12,3,0)},
-        {Name="Cipher Archive",Action="Cipher",Pos=Vector3.new(0,3,-16)},
-        {Name="Hidden Archive",Action="Archive",Pos=Vector3.new(0,3,16)}}) do
-        local p=part(self.Folder,v.Name,Vector3.new(3,6,3),v.Pos,Color3.fromRGB(112,100,160))
-        label(p,v.Name)
-        local prompt=Instance.new("ProximityPrompt");prompt.ActionText=if v.Action=="Buy" then "Next potion · 100 gold" else v.Name
-        prompt:SetAttribute("InteractionId",v.Action)
-        prompt.ObjectText=v.Name;prompt.MaxActivationDistance=10;prompt.HoldDuration=0.4;prompt.RequiresLineOfSight=true;prompt.Parent=p
-        prompt.Triggered:Connect(function(player)
-            local root=self:Root(player)
-            if root and (root.Position-p.Position).Magnitude<=12 and self.OnInteraction then self.OnInteraction(player,v.Action) end
-        end)
-    end
-    for i=1,4 do
-        local door=part(self.Folder,"PracticeDoor",Vector3.new(7,9,1),Vector3.new(-35+i*14,4.5,-34),Color3.fromRGB(123,92,62))
-        CollectionService:AddTag(door,"MysticDoor");label(door,"LOCKED PASSAGE")
-    end
-    for x=-168,168,28 do
-        for z=-168,168,28 do
-            if Vector3.new(x,0,z).Magnitude>35 then
-                local p=part(self.Folder,"FlameAnchor",Vector3.new(0.7,2,0.7),Vector3.new(x,1,z),Color3.fromRGB(255,150,70))
-                p.CanCollide=false;p.Material=Enum.Material.Neon;CollectionService:AddTag(p,"FlameAnchor")
-            end
-        end
-    end
-    for index,tier in ipairs(self.Data.Runtime.EnemyTiers) do
-        local angle=(index-1)*math.pi/3
-        local center=Vector3.new(math.cos(angle)*130,0,math.sin(angle)*130)
-        local marker=part(self.Folder,"Arena"..tier,Vector3.new(8,0.3,8),center,Color3.fromRGB(75,65,100))
-        label(marker,"SEQUENCE "..tier.." ENEMIES")
-        if tier<=4 then
-            local zone=part(self.Folder,"WhisperZone",Vector3.new(50,12,50),center+Vector3.new(0,6,0),Color3.fromRGB(90,70,120))
-            zone.Transparency=1;zone.CanCollide=false;zone.CanTouch=false;zone.CanQuery=false
-            zone:SetAttribute("Radius",self.Data.Runtime.ExposureRadius);CollectionService:AddTag(zone,"MysticalExposure")
-        end
-        for offset=1,3 do
-            table.insert(self.Spawns,{Position=center+Vector3.new((offset-2)*12,4,8),Tier=tier,Entity=nil,NextSpawn=0})
-        end
-    end
+    require(script.Parent.WorldArt).Build(self)
 end
 function World.Root(self: World, player: Player): BasePart?
     local c=player.Character
@@ -189,6 +143,8 @@ function World.Spawn(self: World, position: Vector3,tier: number,owner: Player?,
     local head=part(model,"Head",Vector3.new(1.8,1.8,1.8),position+Vector3.new(0,2.3,0),Color3.fromRGB(190,170,190));head.Shape=Enum.PartType.Ball;head.CanCollide=false
     local hum=Instance.new("Humanoid");hum.RequiresNeck=false;hum.BreakJointsOnDeath=false
     local t=self.Data.Stats.TierMultipliers[tier];hum.MaxHealth=self.Data.Runtime.NPCHealthPerTier*t;hum.Health=hum.MaxHealth;hum.WalkSpeed=0;hum.Parent=model
+    hum.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None
+    model:SetAttribute("VisualTier",tier);model:SetAttribute("VisualEcho",owner~=nil)
     model.PrimaryPart=root;model.Parent=self.NPCFolder
     CollectionService:AddTag(model,"Enemy");model:SetAttribute("AbilityId","ArcBolt");model:SetAttribute("Omen",math.random(1,4))
     self.Clock+=1
@@ -205,6 +161,30 @@ function World.Spawn(self: World, position: Vector3,tier: number,owner: Player?,
         Debris:AddItem(model,2)
     end)
     return e
+end
+-- These attributes describe existing attack eligibility/times; they never reserve or delay a hit.
+function World.Threat(self: World,e: any,nearest: Player?,blocked: boolean,now: number)
+    local model=e.Model
+    local target=nearest and self:Root(nearest)
+    local eligible=target and not blocked and self:LineOfSight(e.Root.Position,target.Position,model,nearest and nearest.Character)
+    local userId=if eligible and nearest then nearest.UserId else 0
+    if model:GetAttribute("VisualThreatUserId")~=userId then model:SetAttribute("VisualThreatUserId",userId) end
+    model:SetAttribute("VisualSpellAllowed",eligible~=nil and eligible~=false and e.Tier<=6 and not self:Has(e,"Silenced",now))
+    if e.VisualMeleeObserved~=e.LastAttack then
+        e.VisualMeleeObserved=e.LastAttack
+        model:SetAttribute("VisualMeleeDue",workspace:GetServerTimeNow()+e.LastAttack+self.Data.Runtime.NPCAttackInterval-now)
+    end
+    local spell=e.LastSpell or -100
+    if e.VisualSpellObserved~=spell then
+        e.VisualSpellObserved=spell
+        model:SetAttribute("VisualSpellDue",workspace:GetServerTimeNow()+spell+self.Data.Runtime.NPCSpellCooldown-now)
+    end
+end
+function World.AttackVisual(self: World,e: any,kind: string)
+    e.VisualAttackSerial=(e.VisualAttackSerial or 0)+1
+    e.Model:SetAttribute("VisualAttackKind",kind)
+    e.Model:SetAttribute("VisualAttackAt",workspace:GetServerTimeNow())
+    e.Model:SetAttribute("VisualAttackSerial",e.VisualAttackSerial)
 end
 function World.Step(self: World, dt: number,now: number)
     for player,s in pairs(self.States) do
@@ -258,6 +238,7 @@ function World.Step(self: World, dt: number,now: number)
             if def.MoveMultiplier then speed*=def.MoveMultiplier end
         end
         if e.Owner then
+            self:Threat(e,nil,true,now)
             local foes=self:Targets(e.Root.Position,55,1,e.Owner)
             local foe=foes[1]
             if foe then
@@ -276,10 +257,11 @@ function World.Step(self: World, dt: number,now: number)
                 if d<distance and d<range then nearest=player;distance=d end
             end
         end
+        self:Threat(e,nearest,blocked,now)
         if nearest and not blocked then
             local root=self:Root(nearest)
             if root and e.Tier<=6 and distance<self.Data.Runtime.NPCSpellRange and now-(e.LastSpell or -100)>self.Data.Runtime.NPCSpellCooldown and not self:Has(e,"Silenced",now) and self:LineOfSight(e.Root.Position,root.Position,model,nearest.Character) then
-                e.LastSpell=now
+                e.LastSpell=now;self:AttackVisual(e,"Spell")
                 self:DamagePlayer(nearest,self.Data.Runtime.NPCSpellDamagePerTier*e.Power,e,now)
                 self.Domain:DrainSanity(self.States[nearest],2,now)
                 self:Effect(root.Position,"ArcBolt",nil)
@@ -290,7 +272,7 @@ function World.Step(self: World, dt: number,now: number)
                     local step=delta.Unit*math.min(delta.Magnitude-4,speed*dt)
                     if (e.Root.Position+step-e.Home).Magnitude<75 then model:PivotTo(model:GetPivot()+Vector3.new(step.X,0,step.Z)) end
                 elseif now-e.LastAttack>=self.Data.Runtime.NPCAttackInterval and self:LineOfSight(e.Root.Position,root.Position,model,nearest.Character) then
-                    e.LastAttack=now
+                    e.LastAttack=now;self:AttackVisual(e,"Melee")
                     local payload=e.Statuses.Payload
                     if payload and payload.Owner then
                         e.Statuses.Payload=nil;self:Damage(e,payload.Power,payload.Owner,now)

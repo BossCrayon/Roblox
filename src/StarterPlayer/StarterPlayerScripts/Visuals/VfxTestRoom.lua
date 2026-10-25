@@ -10,10 +10,12 @@ local V=require(Shared.VfxConfig)
 local Data=require(Shared.GameData)
 local Kit=require(script.Parent.Parent.UI.Kit)
 local Blocks=require(script.Parent.EffectBlocks)
+local Probe=require(script.Parent.PerformanceProbe)
 local TestRoom={}
 function TestRoom.new(parent: Instance,presentation: any,callbacks: any): any
     local self: any=setmetatable({Presentation=presentation,Callbacks=callbacks,Palette=T.TestRoom.DefaultPalette,
         Reduced=false,Low=false,Gray=false,Elapsed=0,Stage=nil,Position=Vector3.zero},{__index=TestRoom})
+    self.Probe=Probe.new(presentation.VFX,presentation.Blocks)
     self.Root=Kit.Panel(parent,"VFXTestRoom");self.Root.ZIndex=T.Layers.Developer;self.Root.Visible=false
     local title=Kit.Text(self.Root,"VFX TEST ROOM · STUDIO",T.Type.Heading,T.Fonts.Heading)
     title.Position=UDim2.fromOffset(T.TestRoom.Pad,0);title.Size=UDim2.new(1,-T.TestRoom.Header-T.TestRoom.Pad,0,T.TestRoom.Header)
@@ -30,6 +32,11 @@ function TestRoom.new(parent: Instance,presentation: any,callbacks: any): any
         button.Size=UDim2.new(1,-T.TestRoom.Gap,0,T.TestRoom.Row);button.LayoutOrder=order
         return button
     end
+    row("Run bounded stress · "..T.QA.Duration.." s + "..T.QA.Drain.." s drain",function()
+        if not self.Stage then self:StageAtCamera() end
+        self.Probe:Start(self.Position,self.Palette)
+    end)
+    row("Cancel stress run",function() self.Probe:Cancel() end)
     self.PaletteButton=row("Palette: "..self.Palette,function()
         self.Palette=if self.Palette=="Seer" then "Marauder" elseif self.Palette=="Marauder" then "Apprentice" else "Seer"
         self.PaletteButton.Text="Palette: "..self.Palette
@@ -169,6 +176,7 @@ function TestRoom.Toggle(self: any,allowed: boolean)
     self.Root.Visible=true;self:StageAtCamera();self.Callbacks.Modal(true)
 end
 function TestRoom.Close(self: any)
+    self.Probe:Cancel()
     self.Root.Visible=false
     if self.Stage then self.Stage:Destroy();self.Stage=nil;self.Dummy=nil end
     if self.GrayEffect then self.GrayEffect:Destroy();self.GrayEffect=nil end
@@ -177,6 +185,7 @@ function TestRoom.Close(self: any)
 end
 function TestRoom.Step(self: any,dt: number)
     if not self.Root.Visible then return end
+    self.Probe:Step(dt)
     self.Elapsed+=dt
     if self.Elapsed<T.TestRoom.StatInterval then return end;self.Elapsed=0
     local stats=self.Presentation.VFX:Stats()
@@ -186,6 +195,6 @@ function TestRoom.Step(self: any,dt: number)
     for _,count in pairs(stats.Reserved) do reserved+=count end
     self.Status.Text="Active "..stats.Active.." / "..profile.MaxEffects.." · dropped "..stats.Dropped.." · evicted "..stats.Evicted.."\n"..
         (if profile.Mobile then "Mobile" else "Desktop").." · quality "..profile.Level.." · detail "..string.format("%.2f",profile.Detail)..
-        "\nInstances "..allocated.." allocated · "..reserved.." reserved · errors "..stats.Errors
+        "\nInstances "..allocated.." allocated · "..reserved.." reserved · errors "..stats.Errors..(if self.Probe.Running then " · stress running" elseif self.Probe.Last then " · p95 "..string.format("%.1fms",self.Probe.Last.P95Ms) else "")
 end
 return TestRoom

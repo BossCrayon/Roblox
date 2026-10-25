@@ -75,6 +75,11 @@
     "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/CameraFeel"
   },
   {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/CharacterArt.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/CharacterArt"
+  },
+  {
     "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/Choreography.lua",
     "script_class": "ModuleScript",
     "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/Choreography"
@@ -83,6 +88,11 @@
     "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/EffectBlocks.lua",
     "script_class": "ModuleScript",
     "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/EffectBlocks"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/EnemyPresentation.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/EnemyPresentation"
   },
   {
     "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/HitPresentation.lua",
@@ -110,6 +120,11 @@
     "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/PathwayEffects/Seer"
   },
   {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/PerformanceProbe.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/PerformanceProbe"
+  },
+  {
     "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/StatusPresentation.lua",
     "script_class": "ModuleScript",
     "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/StatusPresentation"
@@ -123,5 +138,10 @@
     "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/VfxTestRoom.lua",
     "script_class": "ModuleScript",
     "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/VfxTestRoom"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/WorldPresentation.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/WorldPresentation"
   }
 ]

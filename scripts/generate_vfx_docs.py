@@ -50,7 +50,7 @@ parts = [
     'the unchanged foundation modules; do not run duplicate Mysteries or Bootstrap '
     'entrypoints. Theme is listed first. The ready-to-open place is '
     '`studio/Mysteries.rbxlx`.\n',
-    'This framework source handoff includes later integration updates; use docs/PHASE_CDE_VFX_CODE.md for the current C–E handoff. '
+    'This framework source handoff includes later integration updates; use docs/PHASE_FI_VISUALS_CODE.md for the current F–I handoff. '
     'The test room previews reusable building blocks, all 54 ability packages and three confirmed triggers. Animation, texture '
     'and sound slots are empty/0 until original assets are supplied.\n',
     '| File name | Class | Exact Explorer path |\n|---|---|---|',

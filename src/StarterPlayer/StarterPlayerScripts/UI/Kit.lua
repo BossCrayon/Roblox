@@ -52,8 +52,13 @@ function Kit.Button(parent: Instance,text: string,callback: ()->()): TextButton
     local b=Kit.New("TextButton",parent,{Text=text,BackgroundColor3=T.Colors.Slate,BorderSizePixel=0,
         TextColor3=T.Colors.Text,TextSize=T.Type.Number,Font=T.Fonts.Number,TextWrapped=true,AutoButtonColor=false})
     Kit.Corner(b);Kit.Stroke(b)
-    local function enter() Kit.Sound(b,"Hover");Kit.Tween(b,T.Timing.Hover,{BackgroundColor3=T.Colors.Slate:Lerp(T.Colors.Gold,T.Style.HoverBlend)}) end
-    local function leave() Kit.Tween(b,T.Timing.Return,{BackgroundColor3=T.Colors.Slate}) end
+    local function enter()
+        Kit.Sound(b,"Hover")
+        local base=b:GetAttribute("SkinBase") or T.Colors.Slate
+        local accent=b:GetAttribute("SkinAccent") or T.Colors.Gold
+        Kit.Tween(b,T.Timing.Hover,{BackgroundColor3=base:Lerp(accent,T.Style.HoverBlend)})
+    end
+    local function leave() Kit.Tween(b,T.Timing.Return,{BackgroundColor3=b:GetAttribute("SkinBase") or T.Colors.Slate}) end
     b.MouseEnter:Connect(enter);b.SelectionGained:Connect(enter);b.MouseLeave:Connect(leave);b.SelectionLost:Connect(leave)
     b.Activated:Connect(function() Kit.Sound(b,"Click");callback() end)
     return b
@@ -81,6 +86,35 @@ function Kit.Glyph(parent: Instance,kind: string,pixels: number,color: Color3?):
         end
     end
     return f
+end
+-- All ornaments are original line geometry with no input surface or external image.
+function Kit.Skin(parent: Instance,pathway: any,small: boolean?): any
+    local old=parent:FindFirstChild("PathwaySkin");if old then old:Destroy() end
+    local spec=T.Skins[pathway] or T.Skins.Seer
+    if parent:IsA("TextButton") then parent:SetAttribute("SkinBase",spec.Backing);parent:SetAttribute("SkinAccent",spec.Accent) end
+    local root=Kit.New("Frame",parent,{Name="PathwaySkin",BackgroundTransparency=1,Size=UDim2.fromScale(1,1),ZIndex=1})
+    local spine=Kit.New("Frame",root,{Name="Spine",BorderSizePixel=0,BackgroundColor3=spec.Accent,
+        BackgroundTransparency=T.Skins.OrnamentAlpha,Size=UDim2.new(0,T.Skins.Spine,1,-T.Skins.Inset*2),Position=UDim2.fromOffset(T.Skins.Inset,T.Skins.Inset)})
+    if small then
+        spine.Visible=false
+        for _,side in ipairs({0,1}) do
+            for _,edge in ipairs({0,1}) do
+                Kit.New("Frame",root,{BorderSizePixel=0,BackgroundColor3=spec.Accent,BackgroundTransparency=T.Skins.OrnamentAlpha,
+                    AnchorPoint=Vector2.new(side,edge),Position=UDim2.new(side,if side==0 then T.Skins.Inset else -T.Skins.Inset,edge,if edge==0 then T.Skins.Inset else -T.Skins.Inset),
+                    Size=UDim2.new(T.Skins.CornerLength,0,0,T.Style.Stroke),Rotation=if pathway=="Marauder" then spec.Rotation else 0})
+            end
+        end
+        if pathway=="Seer" then
+            Kit.New("Frame",root,{BorderSizePixel=0,BackgroundColor3=spec.Accent,BackgroundTransparency=T.Skins.OrnamentAlpha,
+                AnchorPoint=Vector2.new(0.5,0),Position=UDim2.new(0.5,0,0,T.Skins.Inset),Size=UDim2.new(0.5,0,0,T.Style.Stroke),Rotation=spec.Rotation})
+        elseif pathway=="Apprentice" then
+            for _,side in ipairs({0,1}) do
+                Kit.New("Frame",root,{BorderSizePixel=0,BackgroundColor3=spec.Accent,BackgroundTransparency=T.Skins.OrnamentAlpha,
+                    Position=UDim2.new(side,if side==0 then T.Skins.Inset else -T.Skins.Inset,0,T.Skins.Inset),Size=UDim2.new(0,T.Style.Stroke,1,-T.Skins.Inset*2)})
+            end
+        end
+    end
+    return root
 end
 function Kit.PathColor(id: any): Color3
     return if id=="Marauder" then T.Colors.Bronze elseif id=="Apprentice" then T.Colors.Teal else T.Colors.Gold

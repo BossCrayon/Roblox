@@ -17,6 +17,7 @@ local Prompts=require(UI.Prompts)
 local Feedback=require(UI.Feedback)
 local Developer=require(UI.Developer)
 local Presentation=require(UI.Presentation)
+local WorldPresentation=require(script.Parent.Visuals.WorldPresentation)
 local VfxTestRoom=require(script.Parent.Visuals.VfxTestRoom)
 local remotes=ReplicatedStorage:WaitForChild("MysteriesRemotes")
 local intent=remotes:WaitForChild("Intent") :: RemoteEvent
@@ -35,6 +36,8 @@ local modal=false
 local menuModal=false
 local roomModal=false
 local cinematic=false
+local worldView: any=nil
+local zoneTitle=false
 local menus: any=nil
 local hud: any=nil
 local presentation: any=nil
@@ -76,9 +79,9 @@ local function melee()
 end
 local feedback=Feedback.new(safeRoot,data,function(active: boolean)
     cinematic=active
-    if hud then hud.Wordmark.Visible=not active and not promptUI.Root.Visible;hud.Pathway.Visible=not active and not promptUI.Root.Visible end
+    if hud then hud.Wordmark.Visible=not active and not promptUI.Root.Visible;hud.Pathway.Visible=not active and not zoneTitle and not promptUI.Root.Visible end
 end)
-hud=Hud.new(safeRoot,data,{Cast=cast,Melee=melee,Touch=UserInputService.TouchEnabled,TouchAim=touchAim,Journal=function(tab: string)
+hud=Hud.new(safeRoot,data,{Cast=cast,Melee=melee,Touch=UserInputService.TouchEnabled,TouchAim=touchAim,ReducedMotion=function() return menus and menus.ReducedMotion end,Journal=function(tab: string)
     if roomModal then return end
     if menus.Root.Visible and menus.Tab==tab and menus.View=="Page" then menus:Close() else menus:Open(tab) end
 end})
@@ -88,6 +91,7 @@ local function updateModal()
 end
 local function visualSettings(reduced: boolean,low: boolean)
     feedback:SetReducedMotion(reduced)
+    if worldView then worldView:SetSettings(reduced,low) end
     if presentation then presentation:SetSettings(reduced,low) end
     if testRoom then
         testRoom.Reduced=reduced;testRoom.Low=low
@@ -99,7 +103,7 @@ menus=Menus.new(safeRoot,data,{Intent=send,Modal=function(open: boolean)
     menuModal=open;updateModal()
 end,ReducedMotion=function(reduced: boolean) visualSettings(reduced,menus.LowGraphics) end,
     LowGraphics=function(low: boolean) visualSettings(menus.ReducedMotion,low) end})
-presentation=Presentation.new(gui,data,{Damage=function(event: any) feedback:Damage(event) end,
+presentation=Presentation.new(gui,data,{Notice=function(text: string) feedback:Tell(text) end,Damage=function(event: any) feedback:Damage(event) end,
     CastVisual=function(event: any) hud:SetVisualCast(event) end,
     ScreenEdgePulse=function() feedback:Flash() end})
 testRoom=VfxTestRoom.new(safeRoot,presentation,{Modal=function(open: boolean) roomModal=open;updateModal() end,
@@ -111,16 +115,24 @@ developer=Developer.new(safeRoot,send,if RunService:IsStudio() then function()
     testRoom:Toggle(developer.Allowed);developer.Root.Visible=false
 end else nil)
 promptUI.OnVisibility=function(visible: boolean)
-    hud.Pathway.Visible=not visible and not cinematic;hud.Wordmark.Visible=not visible and not cinematic
+    hud.Pathway.Visible=not visible and not cinematic and not zoneTitle;hud.Wordmark.Visible=not visible and not cinematic
 end
-promptUI.Exclusions={hud.Pathway,hud.Cast,feedback.Notice,feedback.Advance,developer.Root}
+promptUI.Exclusions={hud.Pathway,hud.Cast,feedback.Notice,feedback.Advance,feedback.Acting,feedback.SanityWarning,developer.Root}
+worldView=WorldPresentation.new(safeRoot,presentation,{
+    Modal=function() return modal or cinematic end,
+    Prompt=function() return promptUI.Current end,
+    Exclusions=function() return {hud.Pathway,hud.Cast,promptUI.Root,feedback.Notice,feedback.Advance,feedback.Acting,feedback.SanityWarning,developer.Root,worldView.Compass,worldView.Title} end,
+    Title=function(active: boolean)
+        zoneTitle=active;hud.Pathway.Visible=not active and not cinematic and not promptUI.Root.Visible
+    end,
+})
 local function resize()
     local size=safeRoot.AbsoluteSize
     if size.X<=0 or size.Y<=0 then return end
     local layout=Layout.Resolve(T,size.X,size.Y,UserInputService.TouchEnabled)
     hud:Resize(layout);menus:Resize(layout);feedback:Resize(layout);developer:Resize(layout);promptUI.Layout=layout
-    testRoom:Resize(size.X,size.Y)
-    hud.Wordmark.Visible=not cinematic and not promptUI.Root.Visible;hud.Pathway.Visible=not cinematic and not promptUI.Root.Visible
+    testRoom:Resize(size.X,size.Y);worldView:Resize(layout)
+    hud.Wordmark.Visible=not cinematic and not promptUI.Root.Visible;hud.Pathway.Visible=not cinematic and not promptUI.Root.Visible and not zoneTitle
     if menus.Root.Visible then menus:Render() end
 end
 safeRoot:GetPropertyChangedSignal("AbsoluteSize"):Connect(resize)
@@ -172,15 +184,19 @@ UserInputService.InputBegan:Connect(function(input: InputObject,processed: boole
 end)
 local accumulator=0
 RunService.Heartbeat:Connect(function(dt: number)
-    presentation:Step(dt);testRoom:Step(dt)
+    presentation:Step(dt);testRoom:Step(dt);worldView:Step(dt)
     accumulator+=dt
     if accumulator<T.Timing.Step then return end
     accumulator=0
     local now=os.clock()
     hud:Step(now);menus:Step(now);feedback:Step(now)
     feedback.Notice.Visible=now<(feedback.NoticeUntil or 0) and not hud.Cast.Visible and not cinematic and not modal
-    hud.Wordmark.Visible=not cinematic and not promptUI.Root.Visible and not feedback.Notice.Visible and not hud.Cast.Visible
+    hud.Wordmark.Visible=false -- the zone compass occupies the Art Bible's top-center strip.
+    feedback.Acting.Position=UDim2.fromOffset(hud.Layout.Pathway.X,hud.Layout.Pathway.Y+hud.Pathway.AbsoluteSize.Y+T.World.Labels.Pad)
+    local actingBottom=feedback.Acting.Position.Y.Offset+T.Feedback.SubtitleHeight
+    feedback.Acting.Visible=feedback.Acting.Visible and not modal and not promptUI.Root.Visible and not zoneTitle and actingBottom<hud.Layout.Hotbar.Y
+    feedback.SanityWarning.Visible=feedback.SanityWarning.Visible and not modal and not cinematic and not hud.Cast.Visible and not feedback.Notice.Visible
 end)
 resize()
 send("Sync",{})
-script.Destroying:Connect(function() testRoom:Close();presentation:Destroy() end)
+script.Destroying:Connect(function() testRoom:Close();worldView:Destroy();presentation:Destroy() end)

@@ -102,11 +102,17 @@ if '--stats' not in sys.argv and '--catalog' not in sys.argv:
                   return moduleRequire(nodes[path])
               end,nodes[""])''']
     lines += ['local phaseBTests=assert(loadstring(' + literal((root/'tests/phase_b.luau').read_text()) + ', "phase_b"))()',
-              '''phaseBTests(data,function(path,environment)
+              '''local presentationEngine=phaseBTests(data,function(path,environment)
                   moduleOverrides[path]=environment
                   cache[nodes[path]]=nil
                   return moduleRequire(nodes[path])
               end,nodes[""])''']
+    lines += ['local phaseFITests=assert(loadstring(' + literal((root/'tests/phase_fi.luau').read_text()) + ', "phase_fi"))()',
+              '''phaseFITests(data,function(path,environment)
+                  moduleOverrides[path]=environment
+                  cache[nodes[path]]=nil
+                  return moduleRequire(nodes[path])
+              end,nodes[""],presentationEngine)''']
 with tempfile.TemporaryDirectory(prefix='lotm-tests-') as directory:
     runner = Path(directory)/'run.luau'
     runner.write_text('\n'.join(lines))

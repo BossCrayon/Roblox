@@ -31,7 +31,7 @@ parts=['# Phases C–E — full copy-ready code\n',
        'Apply to the existing Mysteries foundation with Play stopped; replace matching scripts and create Folder parents. '
        'For a blank place use docs/FULL_SOURCE.md. The built studio/Mysteries.rbxlx already contains everything.\n',
        '[EXISTING] All 54 abilities have explicit procedural compositions and cast-pose profiles, retaining the twelve-state framework and eleven original primitives. '
-       'Studio rendering and engine/device performance remain unverified. [PROPOSED] Phases F–I remain future work. '
+       'This historical export includes later integration updates; install docs/PHASE_FI_VISUALS_CODE.md for the complete current F–I code. Studio rendering and engine/device performance remain unverified. '
        '[NEEDS NEW ASSET] Optional original uploaded audio/animation polish; every supplied slot remains 0/empty.\n',
        '| File | Class | Exact Explorer path |\n|---|---|---|']
 for entry in manifest:

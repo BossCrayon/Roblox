@@ -157,6 +157,17 @@ end
 function Hud.Render(self: any,state: any,receivedAt: number)
     self.State=state;self.ReceivedAt=receivedAt
     if not state or not state.Ready then self.PathTitle.Text="Opening journal…";return end
+    if self.SkinPath~=state.PathwayId then
+        self.SkinPath=state.PathwayId
+        Kit.Skin(self.Pathway,state.PathwayId)
+        Kit.Skin(self.Hotbar,state.PathwayId)
+        local skin=T.Skins[state.PathwayId] or T.Skins.Seer
+        for _,slot in ipairs(self.Slots) do
+            Kit.Skin(slot.Face,state.PathwayId,true)
+            slot.Face.BackgroundColor3=skin.Backing
+            for _,segment in ipairs(slot.Segments) do segment.BackgroundColor3=skin.Accent end
+        end
+    end
     for key,bar in pairs(self.Bars) do
         local maximum=if key=="Sanity" then 100 else state["Max"..key]
         bar.Number.Text=string.format("%d / %d",math.ceil(state[key]),math.ceil(maximum))
@@ -208,6 +219,13 @@ function Hud.Step(self: any,now: number)
         local a=slot.Id and self.Data.Abilities[slot.Id]
         local remaining=if a then Model.Cooldown(state,slot.Id,elapsed) else 0
         local n=if a then math.ceil(math.clamp(remaining/a.CooldownSeconds,0,1)*T.Layout.Hotbar.Segments) else 0
+        if (slot.PreviousCooldown or 0)>0 and remaining==0 then slot.ReadyUntil=now+T.Skins.ReadyTime end
+        slot.PreviousCooldown=remaining
+        local reduced=self.Callbacks.ReducedMotion and self.Callbacks.ReducedMotion()
+        local ready=not reduced and now<(slot.ReadyUntil or 0)
+        for _,child in ipairs(slot.Face:GetChildren()) do
+            if child:IsA("UIStroke") then child.Transparency=if not a then 1 elseif ready then T.Skins.ReadyAlpha else T.Style.BorderAlpha end
+        end
         slot.Countdown.Visible=remaining>0
         slot.Countdown.Text=if remaining>0 then string.format("%.1f",remaining) else ""
         for i,segment in ipairs(slot.Segments) do segment.Visible=i<=n end

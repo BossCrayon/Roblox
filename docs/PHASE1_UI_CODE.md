@@ -2,7 +2,7 @@
 
 All 17 production Luau files are supplied in full, including later admin-control updates. Create Folder parents, keep every existing unchanged module, and **replace** same-name scripts rather than running duplicate Bootstrap/Mysteries entrypoints. Install while Play is stopped. Theme is deliberately first. The complete built place is `studio/Mysteries.rbxlx`.
 
-This UI source export includes later integrations. Install the current framework from docs/PHASE_CDE_VFX_CODE.md, or use docs/FULL_SOURCE.md for a blank place. The reference concept images were not received; the UI follows the Art Bible. Permanent label replacement and map redesign remain later phases.
+This UI source export includes later integrations. Install the current framework from docs/PHASE_FI_VISUALS_CODE.md, or use docs/FULL_SOURCE.md for a blank place. The reference concept images were not received; the UI follows the Art Bible. Permanent label replacement and map redesign remain later phases.
 
 | File | Class | Explorer path |
 |---|---|---|
@@ -42,7 +42,59 @@ return freeze({
         Danger=rgb("E17986"),Health=rgb("B94A61"),Spirituality=rgb("71B9DA"),Sanity=rgb("AD96DD"),
         Fog=rgb("A8ADB7"),DeepPurple=rgb("41334F"),Black=rgb("0C0E12"),Crimson=rgb("9F3148"),Bronze=rgb("B88A5A"),
         Teal=rgb("4AB7BA"),Silver=rgb("C6D0D9"),Starlight=rgb("EEF7FF"),White=rgb("FFFFFF"),
-        Hit=rgb("E17986"),Warm=rgb("FFD39A"),ClearTint=rgb("FFFFFF"),MadnessTint=rgb("F0B4C3"),LostTint=rgb("AA82B4")},
+        Stone=rgb("68615D"),Wood=rgb("42342D"),Iron=rgb("2B3037"),Mist=rgb("8B96A4"),Hit=rgb("E17986"),Warm=rgb("FFD39A"),ClearTint=rgb("FFFFFF"),MadnessTint=rgb("F0B4C3"),LostTint=rgb("AA82B4")},
+    Skins={
+        Seer={Accent=rgb("C6A56B"),Backing=rgb("25202F"),Glyph="Thread",Name="Veiled cards",Rotation=-5},
+        Marauder={Accent=rgb("B88A5A"),Backing=rgb("191B22"),Glyph="Split",Name="Split ledger",Rotation=7},
+        Apprentice={Accent=rgb("C6D0D9"),Backing=rgb("172A30"),Glyph="Door",Name="Threshold folio",Rotation=0},
+        Spine=3,Inset=5,CornerLength=0.2,Ornament=18,OrnamentAlpha=0.55,ReadyTime=0.55,ReadyAlpha=0.12,
+    },
+    Ritual={DrinkTime=0.9,Pose="Potion",DigestionTime=1.4,DigestionText="Acting recognised · +",SanityText="Your thoughts are fraying",MadnessText="Hold to your identity",LostText="Control lost · seek Stabilization"},
+    World={
+        Kit={GroundDepth=4,HubDepth=0.1,RoadDepth=0.12,PavementDepth=0.2,ArenaDepth=0.18,Reflectance=0.04,
+            SpawnSize={12,1,12},FoundationDepth=0.2,JambWidth=0.7,JambDepth=1.5,ArchDepth=1,ArchThickness=0.5,ArchAngle=35,
+            Window={3,5,0.15},Cabinet={2,8,3},Shelf={2.1,0.15,3.1},Desk={6,3,3},DeskRim={6.3,0.2,3.3},
+            Bottle={0.65,1.2,0.65},Stopper={0.3,0.3,0.3},Book={1.1,0.3,1.5},LampPost=0.3,LampGlass={0.8,1.2,0.8},LampCap={1,0.2,1},
+            Buttress={2,12,2},HighButtress={2,20,2},DistantPier={3,30,3},DistantCrown={43,3,3},Exposure={50,12,50},
+            PracticeDoor={4,7,0.5},PracticeJamb={0.5,8,1},ClockFaceDepth=0.3,ClockHandWidth=0.18,ClockHandDepth=0.1},
+        Scan=1,Ground=800,Hub=96,Road=20,Pavement=4,ArenaRadius=238,ArenaSizes={[9]={96,112},[7]={96,112},[5]={120,120},[4]={120,120},[2]={144,144},[1]={144,144}},
+        Building={Width=28,Depth=28,Height=28,Storey=12,Wall=1,DoorWidth=8,DoorHeight=11,RoofHeight=4},
+        Tower={Height=64,Width=12,ClockSize=8,Hands={2.5,1.7}},
+        Lamp={Height=9,Spacing=24,Range=18,Brightness=1.8,DesktopMax=8,LowMax=3,MaxDistance=120,Flicker=0.04,Period=3.8,Tick=0.25},
+        Services={{Name="Potion Altar",Action="Buy",X=-34,Z=-64,Glyph="Bottle"},{Name="Stabilization",Action="Recover",X=34,Z=-64,Glyph="Seal"},
+            {Name="Hidden Archive",Action="Archive",X=-34,Z=64,Glyph="Book"},{Name="Cipher Archive",Action="Cipher",X=34,Z=64,Glyph="Split"}},
+        Zones={[9]="Gasworks Court",[7]="Ashen Depot",[5]="Masked Conservatory",[4]="Silent Cloister",[2]="Broken Observatory",[1]="Sanctum of Seals"},
+        Zone={HubRadius=68,Blend=0.25,Transition=1.2,Enter=0.35,Hold=2,Leave=0.55,Repeat=8,TitleWidth=480,TitleHeight=68,TitleTop=82,
+            HubTint=rgb("D9E2F2"),LowTint=rgb("D3DBE5"),HighTint=rgb("C6C7DE")},
+        Labels={Max=6,Width=156,Height=28,Distance=40,Full=28,Pad=8,Slots={0,-32,32},Offset=3.6,Scan=0.25,TextSize=13},
+        Ambient={Interval=3,DesktopMax=2,MobileMax=1,Life=1.2,Scale=0.18,Priority=0},
+        Lighting={ClockTime=20.25,GeographicLatitude=42,Brightness=2,ExposureCompensation=-0.05,Ambient=rgb("464A55"),OutdoorAmbient=rgb("67717B"),
+            GlobalShadows=true,ShadowSoftness=0.45,EnvironmentDiffuseScale=0.4,EnvironmentSpecularScale=0.55,FogColor=rgb("8B96A4"),FogStart=120,FogEnd=600},
+        Atmosphere={Density=0.32,Offset=0.12,Color=rgb("8B96A4"),Decay=rgb("394253"),Glare=0.08,Haze=1.7},
+        Correction={Brightness=0.02,Contrast=0.1,Saturation=-0.12,TintColor=rgb("D9E2F2")},Bloom={Intensity=0.18,Size=24,Threshold=1.6},
+        Sky={Bk="",Dn="",Ft="",Lf="",Rt="",Up=""},
+    },
+    CharacterArt={MaxPlayers=8,Distance=80,Scan=0.25,MaxParts=10,AuraInterval=4,AuraScale=0.16,
+        Cloth={Seer=rgb("41334F"),Marauder=rgb("0C0E12"),Apprentice=rgb("172A30")},
+        Trim={Seer=rgb("C6A56B"),Marauder=rgb("B88A5A"),Apprentice=rgb("C6D0D9")},
+        Coat={2.15,2.15,1.15},Tail={0.9,1.2,0.2},Brim={2.2,0.12,1.7},Crown={1.4,0.65,1.25},Collar={2.25,0.3,1.2},
+        Pendant={0.28,0.4,0.12},AuraLife=0.8,LapelWidth=0.18,LapelDepth=0.1,LapelFraction=0.65,LapelAngle=15,
+        CapeExtra=0.5,CapeDepth=0.2,CollarSeal={0.45,0.12,0.18},BodyScaleMin=0.8,BodyScaleMax=1.5,CoatClearance=0.1},
+    EnemyArt={Geometry={Coat={2.4,2.8,1.35},Sleeve={0.65,2.7,0.8},Boot={0.85,1.2,1},Mask={1.3,1.6,0.9},
+        Brim={2.4,0.15,1.8},Crown={1.5,0.9,1.2},Ear={0.4,1.3,0.5},Veil={2.2,4,0.18},Arch={0.25,4,0.25},Lintel={3.4,0.25,0.25}},
+        PhaseScale=0.6,PhasePriority=2,MinimumSize=0.05,MinimumLife=0.01,Max=18,MaxParts=12,Distance=120,Scan=0.1,MaxBars=4,MobileBars=2,BarDistance=40,BarWidth=176,BarHeight=40,BarTrack=4,
+        IdlePeriod=3.6,IdleRise=0.035,AttackLean=12,HitLean=8,HitTime=0.2,DeathTime=0.8,WarningLead=0.65,
+        WarningAlpha=0.88,FillAlpha=0.8,GroundOffset=-3.85,GroundThickness=0.04,SpellRadius=2.6,ThreatPriority=5,
+        IntroGap=8,PhaseRatio=0.5,Sound={Intro="Enemy.Intro",Phase="Enemy.Phase",Death="Enemy.Death",Melee="Enemy.Melee",Spell="Enemy.Spell"},
+        Profiles={
+            [9]={Name="Lamplight Ruffian",Scale=1,Width=1,Color=rgb("42342D"),Mask=rgb("B8B4AC"),Motif="Hat"},
+            [7]={Name="Veiled Penitent",Scale=1.1,Width=0.9,Color=rgb("41334F"),Mask=rgb("E9DFC6"),Motif="Veil"},
+            [5]={Name="Brass-Masked Prowler",Scale=1.15,Width=1.4,Color=rgb("2B3037"),Mask=rgb("B88A5A"),Motif="Beast"},
+            [4]={Name="Cloister Apparition",Scale=1.5,Width=0.72,Color=rgb("252C36"),Mask=rgb("A8ADB7"),Motif="Veil"},
+            [2]={Name="Bound Astronomer",Scale=1.8,Width=0.85,Color=rgb("41334F"),Mask=rgb("C6D0D9"),Motif="Seal"},
+            [1]={Name="Warden of the Last Arch",Scale=2.1,Width=1.3,Color=rgb("172A30"),Mask=rgb("C6D0D9"),Motif="Arch"},
+        }},
+    QA={Duration=10,Drain=3,SpawnInterval=0.4,Overfill=4,Samples=600,ReportPrefix="[Mysteries visual QA] ",MaxReports=12,Scale=0.3,Priority=1},
     Layers={HUD=10,Prompt=20,Feedback=30,Modal=50,Developer=60},
     Interaction={ServerDistance=12},
     Fonts={Title=Enum.Font.Antique,Heading=Enum.Font.Merriweather,Body=Enum.Font.Gotham,Number=Enum.Font.GothamMedium},
@@ -58,7 +110,7 @@ return freeze({
         Pulse=0.5,Reveal=5,LoadingHint=8,CastPulse=0.18},
     Sound={Hover={Id=0,Volume=0.12},Click={Id=0,Volume=0.18},Confirm={Id=0,Volume=0.22},
         Reject={Id=0,Volume=0.18},JournalOpen={Id=0,Volume=0.15},Advance={Id=0,Volume=0.28},
-        Hit={Id=0,Volume=0.16},Abilities={["Trigger.SubstituteTriggered"]=0,["Trigger.GraftReflected"]=0,["Trigger.PayloadTriggered"]=0},MaxPlaying=8,AbilityVolume=0.4,MinPitch=0.5,MaxPitch=2},
+        Hit={Id=0,Volume=0.16},Abilities={["Enemy.Intro"]=0,["Enemy.Phase"]=0,["Enemy.Death"]=0,["Enemy.Melee"]=0,["Enemy.Spell"]=0,["Trigger.SubstituteTriggered"]=0,["Trigger.GraftReflected"]=0,["Trigger.PayloadTriggered"]=0},MaxPlaying=8,AbilityVolume=0.4,MinPitch=0.5,MaxPitch=2},
     Camera={MinZoom=8,MaxZoom=32},
     CameraFeel={SmallStuds=0.10,MajorStuds=0.22,SmallDegrees=0.25,MajorDegrees=0.55,
         SmallDuration=0.12,MajorDuration=0.22,FovKick=1.8,MaxFovKick=2.5,FovMin=1,FovMax=120,
@@ -423,8 +475,13 @@ function Kit.Button(parent: Instance,text: string,callback: ()->()): TextButton
     local b=Kit.New("TextButton",parent,{Text=text,BackgroundColor3=T.Colors.Slate,BorderSizePixel=0,
         TextColor3=T.Colors.Text,TextSize=T.Type.Number,Font=T.Fonts.Number,TextWrapped=true,AutoButtonColor=false})
     Kit.Corner(b);Kit.Stroke(b)
-    local function enter() Kit.Sound(b,"Hover");Kit.Tween(b,T.Timing.Hover,{BackgroundColor3=T.Colors.Slate:Lerp(T.Colors.Gold,T.Style.HoverBlend)}) end
-    local function leave() Kit.Tween(b,T.Timing.Return,{BackgroundColor3=T.Colors.Slate}) end
+    local function enter()
+        Kit.Sound(b,"Hover")
+        local base=b:GetAttribute("SkinBase") or T.Colors.Slate
+        local accent=b:GetAttribute("SkinAccent") or T.Colors.Gold
+        Kit.Tween(b,T.Timing.Hover,{BackgroundColor3=base:Lerp(accent,T.Style.HoverBlend)})
+    end
+    local function leave() Kit.Tween(b,T.Timing.Return,{BackgroundColor3=b:GetAttribute("SkinBase") or T.Colors.Slate}) end
     b.MouseEnter:Connect(enter);b.SelectionGained:Connect(enter);b.MouseLeave:Connect(leave);b.SelectionLost:Connect(leave)
     b.Activated:Connect(function() Kit.Sound(b,"Click");callback() end)
     return b
@@ -452,6 +509,35 @@ function Kit.Glyph(parent: Instance,kind: string,pixels: number,color: Color3?):
         end
     end
     return f
+end
+-- All ornaments are original line geometry with no input surface or external image.
+function Kit.Skin(parent: Instance,pathway: any,small: boolean?): any
+    local old=parent:FindFirstChild("PathwaySkin");if old then old:Destroy() end
+    local spec=T.Skins[pathway] or T.Skins.Seer
+    if parent:IsA("TextButton") then parent:SetAttribute("SkinBase",spec.Backing);parent:SetAttribute("SkinAccent",spec.Accent) end
+    local root=Kit.New("Frame",parent,{Name="PathwaySkin",BackgroundTransparency=1,Size=UDim2.fromScale(1,1),ZIndex=1})
+    local spine=Kit.New("Frame",root,{Name="Spine",BorderSizePixel=0,BackgroundColor3=spec.Accent,
+        BackgroundTransparency=T.Skins.OrnamentAlpha,Size=UDim2.new(0,T.Skins.Spine,1,-T.Skins.Inset*2),Position=UDim2.fromOffset(T.Skins.Inset,T.Skins.Inset)})
+    if small then
+        spine.Visible=false
+        for _,side in ipairs({0,1}) do
+            for _,edge in ipairs({0,1}) do
+                Kit.New("Frame",root,{BorderSizePixel=0,BackgroundColor3=spec.Accent,BackgroundTransparency=T.Skins.OrnamentAlpha,
+                    AnchorPoint=Vector2.new(side,edge),Position=UDim2.new(side,if side==0 then T.Skins.Inset else -T.Skins.Inset,edge,if edge==0 then T.Skins.Inset else -T.Skins.Inset),
+                    Size=UDim2.new(T.Skins.CornerLength,0,0,T.Style.Stroke),Rotation=if pathway=="Marauder" then spec.Rotation else 0})
+            end
+        end
+        if pathway=="Seer" then
+            Kit.New("Frame",root,{BorderSizePixel=0,BackgroundColor3=spec.Accent,BackgroundTransparency=T.Skins.OrnamentAlpha,
+                AnchorPoint=Vector2.new(0.5,0),Position=UDim2.new(0.5,0,0,T.Skins.Inset),Size=UDim2.new(0.5,0,0,T.Style.Stroke),Rotation=spec.Rotation})
+        elseif pathway=="Apprentice" then
+            for _,side in ipairs({0,1}) do
+                Kit.New("Frame",root,{BorderSizePixel=0,BackgroundColor3=spec.Accent,BackgroundTransparency=T.Skins.OrnamentAlpha,
+                    Position=UDim2.new(side,if side==0 then T.Skins.Inset else -T.Skins.Inset,0,T.Skins.Inset),Size=UDim2.new(0,T.Style.Stroke,1,-T.Skins.Inset*2)})
+            end
+        end
+    end
+    return root
 end
 function Kit.PathColor(id: any): Color3
     return if id=="Marauder" then T.Colors.Bronze elseif id=="Apprentice" then T.Colors.Teal else T.Colors.Gold
@@ -629,6 +715,17 @@ end
 function Hud.Render(self: any,state: any,receivedAt: number)
     self.State=state;self.ReceivedAt=receivedAt
     if not state or not state.Ready then self.PathTitle.Text="Opening journal…";return end
+    if self.SkinPath~=state.PathwayId then
+        self.SkinPath=state.PathwayId
+        Kit.Skin(self.Pathway,state.PathwayId)
+        Kit.Skin(self.Hotbar,state.PathwayId)
+        local skin=T.Skins[state.PathwayId] or T.Skins.Seer
+        for _,slot in ipairs(self.Slots) do
+            Kit.Skin(slot.Face,state.PathwayId,true)
+            slot.Face.BackgroundColor3=skin.Backing
+            for _,segment in ipairs(slot.Segments) do segment.BackgroundColor3=skin.Accent end
+        end
+    end
     for key,bar in pairs(self.Bars) do
         local maximum=if key=="Sanity" then 100 else state["Max"..key]
         bar.Number.Text=string.format("%d / %d",math.ceil(state[key]),math.ceil(maximum))
@@ -680,6 +777,13 @@ function Hud.Step(self: any,now: number)
         local a=slot.Id and self.Data.Abilities[slot.Id]
         local remaining=if a then Model.Cooldown(state,slot.Id,elapsed) else 0
         local n=if a then math.ceil(math.clamp(remaining/a.CooldownSeconds,0,1)*T.Layout.Hotbar.Segments) else 0
+        if (slot.PreviousCooldown or 0)>0 and remaining==0 then slot.ReadyUntil=now+T.Skins.ReadyTime end
+        slot.PreviousCooldown=remaining
+        local reduced=self.Callbacks.ReducedMotion and self.Callbacks.ReducedMotion()
+        local ready=not reduced and now<(slot.ReadyUntil or 0)
+        for _,child in ipairs(slot.Face:GetChildren()) do
+            if child:IsA("UIStroke") then child.Transparency=if not a then 1 elseif ready then T.Skins.ReadyAlpha else T.Style.BorderAlpha end
+        end
         slot.Countdown.Visible=remaining>0
         slot.Countdown.Text=if remaining>0 then string.format("%.1f",remaining) else ""
         for i,segment in ipairs(slot.Segments) do segment.Visible=i<=n end
@@ -779,6 +883,7 @@ end
 function Menus.Render(self: any)
     if not self.Layout then return end
     self:Resize(self.Layout)
+    Kit.Skin(self.Card,self.State and self.State.PathwayId)
     local oldScroll=self.Scroll.CanvasPosition
     Kit.Clear(self.PreviewActions);Kit.Clear(self.Scroll);Kit.List(self.Scroll,T.Layout.Modal.Gap);self.Rows={}
     self.Title.Text=if self.View=="Preview" then (if self.Purchase then "POTION ALTAR" else "POTION RITUAL") else "BEYONDER "..string.upper(self.Tab)
@@ -822,7 +927,7 @@ function Menus.Render(self: any)
         if type(state.StolenPower)=="string" then
             self:TextRow(T.AbilityUI.StoredPrefix..(T.AbilityUI.PowerNames[state.StolenPower] or state.StolenPower).." · use Ability Theft again to release it.")
         end
-        self:TextRow("The acting method",true)
+        self:TextRow((T.Skins[state.PathwayId] or T.Skins.Seer).Name.." · The acting method",true)
         if state.PathwayId then
             local seq=self.Data.Pathways[state.PathwayId].Sequences[state.Sequence]
             self:TextRow(seq.ActingObjectives[1].Label)
@@ -907,7 +1012,8 @@ function Menus.Update(self: any,state: any)
     table.sort(inventory)
     local loadout={}
     for i=1,T.Layout.Hotbar.Slots do loadout[i]=state.Loadout[i] or "-" end
-    local keys={tostring(state.PathwayId),tostring(state.Sequence),table.concat(inventory,","),table.concat(loadout,"|")}
+    local keys={tostring(state.PathwayId),tostring(state.Sequence),table.concat(inventory,","),table.concat(loadout,"|"),
+        tostring(state.RecordedPowerId),tostring(state.RecordedCharges),tostring(state.StolenPower),tostring(state.Digestion),tostring(state.ActingProgress)}
     local key=table.concat(keys,";")
     if self.Root.Visible then
         if self.View=="Preview" then
@@ -974,7 +1080,7 @@ function Prompts.new(parent: GuiObject): any
     self.Fill.Size=UDim2.new(0,0,0,p.HoldHeight)
     local function track(object: Instance)
         if object:IsA("ProximityPrompt") then object.Style=Enum.ProximityPromptStyle.Custom
-        elseif object:IsA("BillboardGui") then
+        elseif object:IsA("BillboardGui") and object.Name~="MysteriesStatus" and object.Name~="MysteriesEnemyHealth" then
             self.LegacyLabels[object]=true
             if self.Root.Visible then self.Suppressed[object]=object.Enabled;object.Enabled=false end
         end
@@ -1105,6 +1211,8 @@ function Feedback.new(parent: GuiObject,data: any,cinematic: (boolean)->()): any
     self.Advance=Kit.New("CanvasGroup",self.Root,{Name="SequenceAdvance",BackgroundColor3=T.Colors.Ink,BorderSizePixel=0,Visible=false});Kit.Corner(self.Advance);Kit.Stroke(self.Advance)
     self.AdvanceSmall=Kit.Text(self.Advance,"",T.Type.Small,T.Fonts.Number);self.AdvanceSmall.Size=UDim2.new(1,0,0,T.Feedback.SubtitleHeight);self.AdvanceSmall.TextXAlignment=Enum.TextXAlignment.Center
     self.AdvanceTitle=Kit.Text(self.Advance,"",T.Type.Title,T.Fonts.Title);self.AdvanceTitle.Size=UDim2.new(1,-T.Layout.Modal.BodyPad*2,0,T.Feedback.AdvanceTitleHeight);self.AdvanceTitle.Position=UDim2.fromOffset(T.Layout.Modal.BodyPad,T.Feedback.SubtitleHeight);self.AdvanceTitle.TextXAlignment=Enum.TextXAlignment.Center
+    self.Acting=Kit.Text(self.Root,"",T.Type.Small,T.Fonts.Number);self.Acting.BackgroundColor3=T.Colors.Ink;self.Acting.BackgroundTransparency=0;self.Acting.Visible=false
+    self.SanityWarning=Kit.Text(self.Root,"",T.Type.Small,T.Fonts.Number);self.SanityWarning.BackgroundColor3=T.Colors.Ink;self.SanityWarning.BackgroundTransparency=0;self.SanityWarning.Visible=false
     self.Vignette=Kit.New("Frame",self.Root,{Name="SanityVignette",Size=UDim2.fromScale(1,1),BackgroundTransparency=1})
     self.Edges={}
     self.Flashes={}
@@ -1128,6 +1236,8 @@ end
 function Feedback.Resize(self: any,layout: any)
     self.Layout=layout
     Kit.Rect(self.Notice,layout.Notice)
+    Kit.Rect(self.Acting,{X=layout.Pathway.X,Y=layout.Pathway.Y+layout.Profile.PathwayCollapsed,W=layout.Pathway.W,H=T.Feedback.SubtitleHeight})
+    Kit.Rect(self.SanityWarning,layout.Notice)
     local width=math.min(T.Layout.Advance.Width,layout.Width-layout.Profile.Margin*2)
     local x=(layout.Width-width)/2
     local top=T.Layout.Advance.Top
@@ -1192,6 +1302,10 @@ function Feedback.Update(self: any,state: any)
     if not state or not state.Ready then return end
     if previous and previous.Ready then
         if state.Health<previous.Health then self:Flash() end
+        if state.PathwayId==previous.PathwayId and state.Sequence==previous.Sequence and state.Digestion>previous.Digestion then
+            self.Acting.Text=T.Ritual.DigestionText..string.format("%.1f%%",state.Digestion-previous.Digestion)
+            self.ActingUntil=os.clock()+T.Ritual.DigestionTime
+        end
         if state.PathwayId and (state.PathwayId~=previous.PathwayId or state.Sequence~=previous.Sequence) then self:Sequence(state) end
     end
     self.Correction.Enabled=state.Sanity<T.Layout.Vignette.Low or state.Mode~="Normal"
@@ -1209,6 +1323,11 @@ function Feedback.Damage(self: any,event: any)
 end
 function Feedback.Step(self: any,now: number)
     local state=self.State
+    self.Acting.Visible=now<(self.ActingUntil or 0) and not self.Advance.Visible
+    self.SanityWarning.Visible=state~=nil and state.Ready and (state.Sanity<T.Layout.Vignette.Low or state.Mode~="Normal")
+    if self.SanityWarning.Visible then
+        self.SanityWarning.Text=if state.Mode=="LostControl" then T.Ritual.LostText elseif state.Mode=="Madness" then T.Ritual.MadnessText else T.Ritual.SanityText
+    end
     local severity=if state and state.Ready then math.clamp((T.Layout.Vignette.Low-state.Sanity)/T.Layout.Vignette.Low,0,1) else 0
     local breath=if self.ReducedMotion then 1 else T.Layout.Vignette.BreathMin+(1-T.Layout.Vignette.BreathMin)*(math.sin(now*math.pi*2/T.Timing.SanityBreath)+1)/2
     for _,f in ipairs(self.Edges) do f.BackgroundTransparency=1-T.Layout.Vignette.MaxAlpha*severity*breath end
@@ -1379,6 +1498,8 @@ local AnimationController=require(Visuals.AnimationController)
 local CameraFeel=require(Visuals.CameraFeel)
 local HitPresentation=require(Visuals.HitPresentation)
 local AbilityPresentation=require(Visuals.AbilityPresentation)
+local CharacterArt=require(Visuals.CharacterArt)
+local EnemyPresentation=require(Visuals.EnemyPresentation)
 local Presentation={}
 function Presentation.new(gui: Instance,data: any,callbacks: any?): any
     local cb=callbacks or {}
@@ -1388,6 +1509,8 @@ function Presentation.new(gui: Instance,data: any,callbacks: any?): any
     self.Blocks=Blocks.new(self.VFX,{ScreenEdgePulse=function(_color: Color3,_duration: number)
         if not self.Reduced and cb.ScreenEdgePulse then cb.ScreenEdgePulse() end
     end})
+    self.Outfits=CharacterArt.new(self.VFX,self.Blocks)
+    self.Enemies=EnemyPresentation.new(self.VFX,self.Blocks,data.Runtime,cb.Notice,function(hook: string) self:Audio(hook) end)
     self.Camera=CameraFeel.new()
     self.Hits=HitPresentation.new(self.VFX,self.Blocks)
     self.Abilities=AbilityPresentation.new(self.VFX,self.Blocks,data,{
@@ -1444,6 +1567,12 @@ end
 function Presentation.Event(self: any,event: any)
     if event.Kind=="AbilityVisual" or event.Kind=="StatusVisual" or event.Kind=="VisualTrigger" or event.Kind=="GateRemoval"
         or event.Kind=="GateSnapshot" or event.Kind=="EchoSnapshot" then self.Abilities:Event(event);return end
+    if event.Kind=="PotionConfirmed" then
+        if type(event.At)~="number" or math.abs(workspace:GetServerTimeNow()-event.At)>C.Protocol.MaxAge or not T.CharacterArt.Trim[event.PathwayId] then return end
+        local controller=self:LocalController();if controller then controller:Play("CastRelease",nil,nil,T.Ritual.Pose) end
+        self.Blocks:Compose({{Name="RisingMotes",Position=event.Position,Palette=event.PathwayId,Options={Scale=T.CharacterArt.AuraScale}}},1,2,T.Ritual.DrinkTime)
+        return
+    end
     if not self.VFX:Visible(event.Position) then return end
     if event.Kind=="Damage" then
         self.Hits:Hit(event)
@@ -1461,7 +1590,7 @@ function Presentation.Event(self: any,event: any)
     end
 end
 function Presentation.Step(self: any,dt: number)
-    self.VFX:Step(dt);self.Abilities:Step();self.ScanElapsed+=dt
+    self.VFX:Step(dt);self.Abilities:Step();self.Outfits:Step(dt);self.Enemies:Step(dt);self.ScanElapsed+=dt
     if self.AbilityDemo and workspace:GetServerTimeNow()>=self.AbilityDemo.EndsAt then
         local demo=self.AbilityDemo;self.AbilityDemo=nil
         if demo.Windup then demo.Windup:Finish() end
@@ -1517,7 +1646,7 @@ function Presentation.PreviewTrigger(self: any,id: string,trigger: string,origin
     self.Abilities:Preview(id,"Confirmed",origin,destination,target,"Result",trigger)
 end
 function Presentation.Destroy(self: any)
-    self.Abilities:Destroy();self.Camera:Destroy();self.VFX:Destroy()
+    self.Outfits:Destroy();self.Enemies:Destroy();self.Abilities:Destroy();self.Camera:Destroy();self.VFX:Destroy()
     for _,controller in pairs(self.Controllers) do controller:Destroy() end
     table.clear(self.Controllers)
 end
@@ -1551,6 +1680,7 @@ local Prompts=require(UI.Prompts)
 local Feedback=require(UI.Feedback)
 local Developer=require(UI.Developer)
 local Presentation=require(UI.Presentation)
+local WorldPresentation=require(script.Parent.Visuals.WorldPresentation)
 local VfxTestRoom=require(script.Parent.Visuals.VfxTestRoom)
 local remotes=ReplicatedStorage:WaitForChild("MysteriesRemotes")
 local intent=remotes:WaitForChild("Intent") :: RemoteEvent
@@ -1569,6 +1699,8 @@ local modal=false
 local menuModal=false
 local roomModal=false
 local cinematic=false
+local worldView: any=nil
+local zoneTitle=false
 local menus: any=nil
 local hud: any=nil
 local presentation: any=nil
@@ -1610,9 +1742,9 @@ local function melee()
 end
 local feedback=Feedback.new(safeRoot,data,function(active: boolean)
     cinematic=active
-    if hud then hud.Wordmark.Visible=not active and not promptUI.Root.Visible;hud.Pathway.Visible=not active and not promptUI.Root.Visible end
+    if hud then hud.Wordmark.Visible=not active and not promptUI.Root.Visible;hud.Pathway.Visible=not active and not zoneTitle and not promptUI.Root.Visible end
 end)
-hud=Hud.new(safeRoot,data,{Cast=cast,Melee=melee,Touch=UserInputService.TouchEnabled,TouchAim=touchAim,Journal=function(tab: string)
+hud=Hud.new(safeRoot,data,{Cast=cast,Melee=melee,Touch=UserInputService.TouchEnabled,TouchAim=touchAim,ReducedMotion=function() return menus and menus.ReducedMotion end,Journal=function(tab: string)
     if roomModal then return end
     if menus.Root.Visible and menus.Tab==tab and menus.View=="Page" then menus:Close() else menus:Open(tab) end
 end})
@@ -1622,6 +1754,7 @@ local function updateModal()
 end
 local function visualSettings(reduced: boolean,low: boolean)
     feedback:SetReducedMotion(reduced)
+    if worldView then worldView:SetSettings(reduced,low) end
     if presentation then presentation:SetSettings(reduced,low) end
     if testRoom then
         testRoom.Reduced=reduced;testRoom.Low=low
@@ -1633,7 +1766,7 @@ menus=Menus.new(safeRoot,data,{Intent=send,Modal=function(open: boolean)
     menuModal=open;updateModal()
 end,ReducedMotion=function(reduced: boolean) visualSettings(reduced,menus.LowGraphics) end,
     LowGraphics=function(low: boolean) visualSettings(menus.ReducedMotion,low) end})
-presentation=Presentation.new(gui,data,{Damage=function(event: any) feedback:Damage(event) end,
+presentation=Presentation.new(gui,data,{Notice=function(text: string) feedback:Tell(text) end,Damage=function(event: any) feedback:Damage(event) end,
     CastVisual=function(event: any) hud:SetVisualCast(event) end,
     ScreenEdgePulse=function() feedback:Flash() end})
 testRoom=VfxTestRoom.new(safeRoot,presentation,{Modal=function(open: boolean) roomModal=open;updateModal() end,
@@ -1645,16 +1778,24 @@ developer=Developer.new(safeRoot,send,if RunService:IsStudio() then function()
     testRoom:Toggle(developer.Allowed);developer.Root.Visible=false
 end else nil)
 promptUI.OnVisibility=function(visible: boolean)
-    hud.Pathway.Visible=not visible and not cinematic;hud.Wordmark.Visible=not visible and not cinematic
+    hud.Pathway.Visible=not visible and not cinematic and not zoneTitle;hud.Wordmark.Visible=not visible and not cinematic
 end
-promptUI.Exclusions={hud.Pathway,hud.Cast,feedback.Notice,feedback.Advance,developer.Root}
+promptUI.Exclusions={hud.Pathway,hud.Cast,feedback.Notice,feedback.Advance,feedback.Acting,feedback.SanityWarning,developer.Root}
+worldView=WorldPresentation.new(safeRoot,presentation,{
+    Modal=function() return modal or cinematic end,
+    Prompt=function() return promptUI.Current end,
+    Exclusions=function() return {hud.Pathway,hud.Cast,promptUI.Root,feedback.Notice,feedback.Advance,feedback.Acting,feedback.SanityWarning,developer.Root,worldView.Compass,worldView.Title} end,
+    Title=function(active: boolean)
+        zoneTitle=active;hud.Pathway.Visible=not active and not cinematic and not promptUI.Root.Visible
+    end,
+})
 local function resize()
     local size=safeRoot.AbsoluteSize
     if size.X<=0 or size.Y<=0 then return end
     local layout=Layout.Resolve(T,size.X,size.Y,UserInputService.TouchEnabled)
     hud:Resize(layout);menus:Resize(layout);feedback:Resize(layout);developer:Resize(layout);promptUI.Layout=layout
-    testRoom:Resize(size.X,size.Y)
-    hud.Wordmark.Visible=not cinematic and not promptUI.Root.Visible;hud.Pathway.Visible=not cinematic and not promptUI.Root.Visible
+    testRoom:Resize(size.X,size.Y);worldView:Resize(layout)
+    hud.Wordmark.Visible=not cinematic and not promptUI.Root.Visible;hud.Pathway.Visible=not cinematic and not promptUI.Root.Visible and not zoneTitle
     if menus.Root.Visible then menus:Render() end
 end
 safeRoot:GetPropertyChangedSignal("AbsoluteSize"):Connect(resize)
@@ -1706,18 +1847,22 @@ UserInputService.InputBegan:Connect(function(input: InputObject,processed: boole
 end)
 local accumulator=0
 RunService.Heartbeat:Connect(function(dt: number)
-    presentation:Step(dt);testRoom:Step(dt)
+    presentation:Step(dt);testRoom:Step(dt);worldView:Step(dt)
     accumulator+=dt
     if accumulator<T.Timing.Step then return end
     accumulator=0
     local now=os.clock()
     hud:Step(now);menus:Step(now);feedback:Step(now)
     feedback.Notice.Visible=now<(feedback.NoticeUntil or 0) and not hud.Cast.Visible and not cinematic and not modal
-    hud.Wordmark.Visible=not cinematic and not promptUI.Root.Visible and not feedback.Notice.Visible and not hud.Cast.Visible
+    hud.Wordmark.Visible=false -- the zone compass occupies the Art Bible's top-center strip.
+    feedback.Acting.Position=UDim2.fromOffset(hud.Layout.Pathway.X,hud.Layout.Pathway.Y+hud.Pathway.AbsoluteSize.Y+T.World.Labels.Pad)
+    local actingBottom=feedback.Acting.Position.Y.Offset+T.Feedback.SubtitleHeight
+    feedback.Acting.Visible=feedback.Acting.Visible and not modal and not promptUI.Root.Visible and not zoneTitle and actingBottom<hud.Layout.Hotbar.Y
+    feedback.SanityWarning.Visible=feedback.SanityWarning.Visible and not modal and not cinematic and not hud.Cast.Visible and not feedback.Notice.Visible
 end)
 resize()
 send("Sync",{})
-script.Destroying:Connect(function() testRoom:Close();presentation:Destroy() end)
+script.Destroying:Connect(function() testRoom:Close();worldView:Destroy();presentation:Destroy() end)
 ```
 
 
@@ -1747,10 +1892,6 @@ local function part(parent: Instance,name: string,size: Vector3,position: Vector
     p.TopSurface=Enum.SurfaceType.Smooth; p.BottomSurface=Enum.SurfaceType.Smooth; p.Parent=parent
     return p
 end
-local function label(p: BasePart,text: string)
-    local gui=Instance.new("BillboardGui");gui.Size=UDim2.fromOffset(260,70);gui.StudsOffset=Vector3.new(0,4,0);gui.AlwaysOnTop=false;gui.Parent=p
-    local t=Instance.new("TextLabel");t.Size=UDim2.fromScale(1,1);t.BackgroundTransparency=1;t.Text=text;t.TextColor3=Color3.new(1,1,1);t.TextStrokeTransparency=0.3;t.TextScaled=true;t.Font=Enum.Font.GothamMedium;t.Parent=gui
-end
 function World.new(data: any,domain: any,states: any,effects: RemoteEvent): World
     local folder=Instance.new("Folder");folder.Name="MysteriesWorld";folder.Parent=workspace
     local npcs=Instance.new("Folder");npcs.Name="Enemies";npcs.Parent=folder
@@ -1760,49 +1901,7 @@ function World.new(data: any,domain: any,states: any,effects: RemoteEvent): Worl
 end
 function World.Build(self: World)
     if not self.Data.Runtime.GenerateDemoWorld then return end
-    part(self.Folder,"TrainingGround",Vector3.new(800,4,800),Vector3.new(0,-2,0),Color3.fromRGB(35,41,49))
-    local spawn=Instance.new("SpawnLocation");spawn.Name="SanctuarySpawn";spawn.Size=Vector3.new(12,1,12);spawn.Position=Vector3.new(0,0.5,0);spawn.Neutral=true;spawn.Duration=0;spawn.Color=Color3.fromRGB(95,153,170);spawn.Parent=self.Folder
-    label(spawn,"SANCTUARY\nChoose a potion in your journal")
-    for _,v in ipairs({{Name="Potion Altar",Action="Buy",Pos=Vector3.new(-12,3,0)},
-        {Name="Stabilization",Action="Recover",Pos=Vector3.new(12,3,0)},
-        {Name="Cipher Archive",Action="Cipher",Pos=Vector3.new(0,3,-16)},
-        {Name="Hidden Archive",Action="Archive",Pos=Vector3.new(0,3,16)}}) do
-        local p=part(self.Folder,v.Name,Vector3.new(3,6,3),v.Pos,Color3.fromRGB(112,100,160))
-        label(p,v.Name)
-        local prompt=Instance.new("ProximityPrompt");prompt.ActionText=if v.Action=="Buy" then "Next potion · 100 gold" else v.Name
-        prompt:SetAttribute("InteractionId",v.Action)
-        prompt.ObjectText=v.Name;prompt.MaxActivationDistance=10;prompt.HoldDuration=0.4;prompt.RequiresLineOfSight=true;prompt.Parent=p
-        prompt.Triggered:Connect(function(player)
-            local root=self:Root(player)
-            if root and (root.Position-p.Position).Magnitude<=12 and self.OnInteraction then self.OnInteraction(player,v.Action) end
-        end)
-    end
-    for i=1,4 do
-        local door=part(self.Folder,"PracticeDoor",Vector3.new(7,9,1),Vector3.new(-35+i*14,4.5,-34),Color3.fromRGB(123,92,62))
-        CollectionService:AddTag(door,"MysticDoor");label(door,"LOCKED PASSAGE")
-    end
-    for x=-168,168,28 do
-        for z=-168,168,28 do
-            if Vector3.new(x,0,z).Magnitude>35 then
-                local p=part(self.Folder,"FlameAnchor",Vector3.new(0.7,2,0.7),Vector3.new(x,1,z),Color3.fromRGB(255,150,70))
-                p.CanCollide=false;p.Material=Enum.Material.Neon;CollectionService:AddTag(p,"FlameAnchor")
-            end
-        end
-    end
-    for index,tier in ipairs(self.Data.Runtime.EnemyTiers) do
-        local angle=(index-1)*math.pi/3
-        local center=Vector3.new(math.cos(angle)*130,0,math.sin(angle)*130)
-        local marker=part(self.Folder,"Arena"..tier,Vector3.new(8,0.3,8),center,Color3.fromRGB(75,65,100))
-        label(marker,"SEQUENCE "..tier.." ENEMIES")
-        if tier<=4 then
-            local zone=part(self.Folder,"WhisperZone",Vector3.new(50,12,50),center+Vector3.new(0,6,0),Color3.fromRGB(90,70,120))
-            zone.Transparency=1;zone.CanCollide=false;zone.CanTouch=false;zone.CanQuery=false
-            zone:SetAttribute("Radius",self.Data.Runtime.ExposureRadius);CollectionService:AddTag(zone,"MysticalExposure")
-        end
-        for offset=1,3 do
-            table.insert(self.Spawns,{Position=center+Vector3.new((offset-2)*12,4,8),Tier=tier,Entity=nil,NextSpawn=0})
-        end
-    end
+    require(script.Parent.WorldArt).Build(self)
 end
 function World.Root(self: World, player: Player): BasePart?
     local c=player.Character
@@ -1919,6 +2018,8 @@ function World.Spawn(self: World, position: Vector3,tier: number,owner: Player?,
     local head=part(model,"Head",Vector3.new(1.8,1.8,1.8),position+Vector3.new(0,2.3,0),Color3.fromRGB(190,170,190));head.Shape=Enum.PartType.Ball;head.CanCollide=false
     local hum=Instance.new("Humanoid");hum.RequiresNeck=false;hum.BreakJointsOnDeath=false
     local t=self.Data.Stats.TierMultipliers[tier];hum.MaxHealth=self.Data.Runtime.NPCHealthPerTier*t;hum.Health=hum.MaxHealth;hum.WalkSpeed=0;hum.Parent=model
+    hum.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None
+    model:SetAttribute("VisualTier",tier);model:SetAttribute("VisualEcho",owner~=nil)
     model.PrimaryPart=root;model.Parent=self.NPCFolder
     CollectionService:AddTag(model,"Enemy");model:SetAttribute("AbilityId","ArcBolt");model:SetAttribute("Omen",math.random(1,4))
     self.Clock+=1
@@ -1935,6 +2036,30 @@ function World.Spawn(self: World, position: Vector3,tier: number,owner: Player?,
         Debris:AddItem(model,2)
     end)
     return e
+end
+-- These attributes describe existing attack eligibility/times; they never reserve or delay a hit.
+function World.Threat(self: World,e: any,nearest: Player?,blocked: boolean,now: number)
+    local model=e.Model
+    local target=nearest and self:Root(nearest)
+    local eligible=target and not blocked and self:LineOfSight(e.Root.Position,target.Position,model,nearest and nearest.Character)
+    local userId=if eligible and nearest then nearest.UserId else 0
+    if model:GetAttribute("VisualThreatUserId")~=userId then model:SetAttribute("VisualThreatUserId",userId) end
+    model:SetAttribute("VisualSpellAllowed",eligible~=nil and eligible~=false and e.Tier<=6 and not self:Has(e,"Silenced",now))
+    if e.VisualMeleeObserved~=e.LastAttack then
+        e.VisualMeleeObserved=e.LastAttack
+        model:SetAttribute("VisualMeleeDue",workspace:GetServerTimeNow()+e.LastAttack+self.Data.Runtime.NPCAttackInterval-now)
+    end
+    local spell=e.LastSpell or -100
+    if e.VisualSpellObserved~=spell then
+        e.VisualSpellObserved=spell
+        model:SetAttribute("VisualSpellDue",workspace:GetServerTimeNow()+spell+self.Data.Runtime.NPCSpellCooldown-now)
+    end
+end
+function World.AttackVisual(self: World,e: any,kind: string)
+    e.VisualAttackSerial=(e.VisualAttackSerial or 0)+1
+    e.Model:SetAttribute("VisualAttackKind",kind)
+    e.Model:SetAttribute("VisualAttackAt",workspace:GetServerTimeNow())
+    e.Model:SetAttribute("VisualAttackSerial",e.VisualAttackSerial)
 end
 function World.Step(self: World, dt: number,now: number)
     for player,s in pairs(self.States) do
@@ -1988,6 +2113,7 @@ function World.Step(self: World, dt: number,now: number)
             if def.MoveMultiplier then speed*=def.MoveMultiplier end
         end
         if e.Owner then
+            self:Threat(e,nil,true,now)
             local foes=self:Targets(e.Root.Position,55,1,e.Owner)
             local foe=foes[1]
             if foe then
@@ -2006,10 +2132,11 @@ function World.Step(self: World, dt: number,now: number)
                 if d<distance and d<range then nearest=player;distance=d end
             end
         end
+        self:Threat(e,nearest,blocked,now)
         if nearest and not blocked then
             local root=self:Root(nearest)
             if root and e.Tier<=6 and distance<self.Data.Runtime.NPCSpellRange and now-(e.LastSpell or -100)>self.Data.Runtime.NPCSpellCooldown and not self:Has(e,"Silenced",now) and self:LineOfSight(e.Root.Position,root.Position,model,nearest.Character) then
-                e.LastSpell=now
+                e.LastSpell=now;self:AttackVisual(e,"Spell")
                 self:DamagePlayer(nearest,self.Data.Runtime.NPCSpellDamagePerTier*e.Power,e,now)
                 self.Domain:DrainSanity(self.States[nearest],2,now)
                 self:Effect(root.Position,"ArcBolt",nil)
@@ -2020,7 +2147,7 @@ function World.Step(self: World, dt: number,now: number)
                     local step=delta.Unit*math.min(delta.Magnitude-4,speed*dt)
                     if (e.Root.Position+step-e.Home).Magnitude<75 then model:PivotTo(model:GetPivot()+Vector3.new(step.X,0,step.Z)) end
                 elseif now-e.LastAttack>=self.Data.Runtime.NPCAttackInterval and self:LineOfSight(e.Root.Position,root.Position,model,nearest.Character) then
-                    e.LastAttack=now
+                    e.LastAttack=now;self:AttackVisual(e,"Melee")
                     local payload=e.Statuses.Payload
                     if payload and payload.Owner then
                         e.Statuses.Payload=nil;self:Damage(e,payload.Power,payload.Owner,now)
@@ -2145,6 +2272,12 @@ local function sendState(player: Player)
     for id,expiry in pairs(s.Cooldowns) do if expiry>now then cooldowns[id]=expiry-now end end
     for id,st in pairs(s.Statuses) do if st.ExpiresAt>now then table.insert(statuses,id) end end
     table.sort(statuses)
+    local character=player.Character
+    if character then
+        character:SetAttribute("MysteriesPathway",p.PathwayId or "")
+        character:SetAttribute("MysteriesSequence",p.Sequence or 9)
+        character:SetAttribute("MysteriesDisguised",s.Statuses.Disguised~=nil)
+    end
     stateEvent:FireClient(player,{Ready=true,Developer=isDeveloper(player),
         DeveloperInfo=if isDeveloper(player) then {SessionOnly=sessionOnly,Mode=s.Mode,Ready=s.Ready} else nil,PathwayId=p.PathwayId,Sequence=p.Sequence,
         Digestion=p.Digestion,ActingProgress=p.ActingProgress,Health=s.Health,MaxHealth=s.Stats.Health,
@@ -2295,7 +2428,11 @@ intent.OnServerEvent:Connect(function(player: Player,action: any,payload: any)
     elseif action=="Drink" then
         if type(payload.Id)~="string" or #payload.Id>80 then return end
         local ok,message=domain:Drink(s,payload.Id,now)
-        if ok then applyStats(player,s,true);world:Cleanup(player);effects:RemoveGates(player) end
+        if ok then
+            applyStats(player,s,true);world:Cleanup(player);effects:RemoveGates(player)
+            local root=world:Root(player)
+            if root then fx:FireClient(player,{Kind="PotionConfirmed",Position=root.Position,PathwayId=s.Profile.PathwayId,At=workspace:GetServerTimeNow()}) end
+        end
         notify(player,message)
     elseif action=="Equip" then
         if type(payload.Id)~="string" or #payload.Id>80 then return end

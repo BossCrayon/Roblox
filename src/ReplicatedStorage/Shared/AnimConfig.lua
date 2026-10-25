@@ -2,6 +2,7 @@
 -- Original, asset-free animation library. Optional uploaded assets override each entry.
 -- Degrees and studs below describe rendered joints only; no root physics are changed.
 local freeze=require(script.Parent.Freeze)
+local T=require(script.Parent.Theme)
 type Pose={[string]: CFrame}
 local function frame(y: number,pitch: number,yaw: number,roll: number): CFrame
     return CFrame.new(0,y,0)*CFrame.Angles(math.rad(pitch),math.rad(yaw),math.rad(roll))
@@ -32,6 +33,7 @@ local config={
     Locomotion={MinSpeed=0.1,RunSpeed=18,SpeedReference=16,MaxSpeedRatio=1.5,LandingVelocity=-3},
     Safety={MaxPause=0.08,MaxFrameDelta=0.1,AssetLoadGrace=1.5,MaxAssetSpeed=2,MinAssetSpeed=0.1},
     CastProfiles={
+        Potion={CastRelease={AnimationId="",Duration=T.Ritual.DrinkTime,Pose={Root={0,-3,0,0},Neck={0,-10,0,0},RightShoulder={0,-112,0,12},LeftShoulder={0,-16,0,-8}}}},
         Pickpocket={CastWindup={AnimationId="",Pose={Root={0,4,9,-3},RightShoulder={0,-48,-8,12}}},
             CastRelease={AnimationId="",Duration=0.16,Pose={Root={0,-2,-6,0},RightShoulder={0,-24,-16,6}}}},
         Travel={CastWindup={AnimationId="",Pose={Root={0,0,0,0},LeftShoulder={0,-52,-8,-16},RightShoulder={0,-52,8,16}}},

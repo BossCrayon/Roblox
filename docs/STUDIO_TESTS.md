@@ -1,5 +1,7 @@
 # Engine checks still required
 
+[EXISTING] Implementation now includes Phases F–I. [PROPOSED] Run [the current desktop/phone/tablet visual and performance checklist](PHASE_FI_VISUALS.md#studio-checklist) alongside the engine checks below.
+
 Cloud tests run real Luau and build the real place, but use fake Roblox engine dependencies for executor tests. Complete these checks in Roblox Studio before describing the game as engine-tested or publishing it publicly.
 
 1. Open `build/Mysteries.rbxlx`, press Play, and confirm the sanctuary, HUD, arenas, practice doors and 18 enemy models appear with no Output errors. Confirm third-person camera bounds, keyboard and touch controls, resizing, journal scrolling and cooldown feedback.
@@ -13,6 +15,6 @@ Cloud tests run real Luau and build the real place, but use fake Roblox engine d
 9. In an isolated published development place, use an isolated DataStore name and set StudioSessionOnly=false. Enable Studio API access. Save/rejoin and verify pathway, sequence, digestion, acting, sanity, inventory, credits and loadout. Attempt a second session, then shut down the first and verify it can acquire only after release or lease expiry. Check that API denial/load failure kicks rather than overwrites saves.
 10. Test crowded combat while watching server/client performance. VFX and highlights are pooled and bounded; NPCs tick at 0.25 seconds rather than per frame. Confirm repeated respawns and player departures do not accumulate models, connections or gates. Tune numbers in data modules based on measured fights; current balance is an initial numerical pass, not a player-tested release balance.
 
-For visual-overhaul checks and exact screenshot requests, see `PHASE1_UI.md`.
+For the current visual checks and exact screenshots/recordings, see `PHASE_FI_VISUALS.md`. Earlier phase checklists remain useful regression references.
 
 Publishing remains a separate action in Roblox Studio. No place ID, Roblox publishing credential, engine runtime, or publication tool was available to the cloud agent. Do not treat a generated `.rbxlx` as evidence of a published experience.
