@@ -6,6 +6,8 @@ local Lighting=game:GetService("Lighting")
 local Shared=game:GetService("ReplicatedStorage").Shared
 local T=require(Shared.Theme)
 local A=require(Shared.AnimConfig)
+local V=require(Shared.VfxConfig)
+local Data=require(Shared.GameData)
 local Kit=require(script.Parent.Parent.UI.Kit)
 local Blocks=require(script.Parent.EffectBlocks)
 local TestRoom={}
@@ -48,6 +50,28 @@ function TestRoom.new(parent: Instance,presentation: any,callbacks: any): any
         elseif self.GrayEffect then self.GrayEffect:Destroy();self.GrayEffect=nil end
         self.GrayButton.Text="Silhouette view: "..(if self.Gray then "grayscale" else "color")
     end)
+    local function abilityPreview(id: string,variant: string,cancel: boolean?,mode: string?)
+        if not self.Stage then self:StageAtCamera() end
+        local camera=workspace.CurrentCamera
+        if not camera then return end
+        local origin=self.Position
+        local destination=origin+camera.CFrame.RightVector*T.TestRoom.AbilityOffset
+        local target=self.Dummy
+        if id=="Apprentice_9" then target=self.PreviewDoor end
+        if mode=="HiddenOrigin" then origin=camera.CFrame.Position-camera.CFrame.LookVector*T.TestRoom.PreviewDistance
+        elseif mode=="DistantArrival" then destination=camera.CFrame.Position+camera.CFrame.LookVector*(V.Quality.MaximumDistance+T.TestRoom.PreviewBeyond) end
+        presentation:PreviewAbility(id,variant,origin,destination,target,cancel)
+    end
+    for _,id in ipairs(V.Ability.Pilots) do
+        row("Ability · "..Data.Abilities[id].Name,function() abilityPreview(id,if id=="Marauder_9" then "Taken" elseif id=="Marauder_6" then "Captured" else "Confirmed") end)
+    end
+    row("Ability Theft · release stored power",function() abilityPreview("Marauder_6","Released") end)
+    row("Cancel windup · no release",function() abilityPreview("Seer_9_Secondary","Confirmed",true) end)
+    row("Travel · origin behind camera",function() abilityPreview("Apprentice_5","Confirmed",false,"HiddenOrigin") end)
+    row("Travel · arrival beyond 120 studs",function() abilityPreview("Apprentice_5","Confirmed",false,"DistantArrival") end)
+    for _,id in ipairs({"Seer_1","Marauder_1","Apprentice_1"}) do
+        row("Generic fallback · "..Data.Abilities[id].PathwayId.." tier 3",function() abilityPreview(id,"Confirmed") end)
+    end
     for _,name in ipairs(Blocks.Names) do
         for tier=1,#require(Shared.VfxConfig).Tier do
             row(name.." · Tier "..tier,function()
@@ -99,6 +123,12 @@ function TestRoom.StageAtCamera(self: any)
     local body=Kit.New("Part",self.Dummy,{Name="Torso",Anchored=true,CanCollide=false,CanTouch=false,CanQuery=false,
         Size=Vector3.new(size[4],size[5],size[6]),Position=center,Color=T.Colors.Slate,CastShadow=false})
     self.Dummy.PrimaryPart=body
+    local doorSize=T.TestRoom.PreviewDoorSize
+    local doorCenter=center+camera.CFrame.RightVector*T.TestRoom.AbilityOffset+Vector3.yAxis*(T.TestRoom.FloorOffset+doorSize[2]/2)
+    local toward=Vector3.new(camera.CFrame.Position.X-doorCenter.X,0,camera.CFrame.Position.Z-doorCenter.Z)
+    local doorFrame=if toward.Magnitude>T.TestRoom.OrientationEpsilon then CFrame.lookAt(doorCenter,doorCenter+toward) else CFrame.new(doorCenter)
+    self.PreviewDoor=Kit.New("Part",self.Stage,{Name="LocalPreviewDoor",Anchored=true,CanCollide=false,CanTouch=false,CanQuery=false,
+        Size=Vector3.new(doorSize[1],doorSize[2],doorSize[3]),CFrame=doorFrame,Color=T.Colors.Slate,Transparency=T.TestRoom.FloorAlpha,CastShadow=false})
     Kit.New("Part",self.Dummy,{Name="Head",Anchored=true,CanCollide=false,CanTouch=false,CanQuery=false,
         Size=Vector3.one*T.TestRoom.HeadSize,Position=center+Vector3.new(0,T.TestRoom.HeadHeight,0),Color=T.Colors.Muted,CastShadow=false})
     Kit.New("Humanoid",self.Dummy,{RequiresNeck=false,DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None})

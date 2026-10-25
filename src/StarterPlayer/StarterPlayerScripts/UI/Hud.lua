@@ -70,18 +70,26 @@ function Hud.new(parent: Instance,data: any,callbacks: any): any
         local cost=Kit.Text(card,"",T.Type.Micro,T.Fonts.Number);cost.TextColor3=T.Colors.Spirituality;cost.TextXAlignment=Enum.TextXAlignment.Center
         local countdown=Kit.Text(face,"",T.Type.Number,T.Fonts.Number);countdown.AnchorPoint=Vector2.new(0.5,0.5);countdown.Position=UDim2.fromScale(0.5,0.5);countdown.BackgroundColor3=T.Colors.Ink;countdown.BackgroundTransparency=T.Style.PanelFade;countdown.Visible=false
         local segments={}
+        local stored=Kit.Text(face,T.AbilityUI.StoredSymbol,T.Type.Small,T.Fonts.Number)
+        stored.Name="StoredPower";stored.TextColor3=T.Colors.Bronze;stored.Visible=false;stored.TextXAlignment=Enum.TextXAlignment.Center
+        stored.Size=UDim2.fromOffset(T.AbilityUI.StoredSize,T.AbilityUI.StoredSize)
+        stored.Position=UDim2.new(1,-T.AbilityUI.StoredSize-T.AbilityUI.StoredPad,0,T.AbilityUI.StoredPad)
         for segment=1,T.Layout.Hotbar.Segments do
             local angle=(segment-1)/T.Layout.Hotbar.Segments*math.pi*2-math.pi/2
             table.insert(segments,Kit.New("Frame",face,{Name="CooldownSegment",BorderSizePixel=0,BackgroundColor3=T.Colors.Gold,
                 AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromScale(0.5+math.cos(angle)*T.Layout.Hotbar.RingRadius,0.5+math.sin(angle)*T.Layout.Hotbar.RingRadius),
                 Size=UDim2.fromOffset(T.Layout.Hotbar.SegmentWidth,T.Layout.Hotbar.SegmentHeight),Rotation=math.deg(angle)+90,Visible=false}))
         end
-        self.Slots[i]={Card=card,Face=face,Glyph=glyph,Seal=seal,EmptyGlyph=emptyGlyph,KeyBadge=badge,Key=key,Cost=cost,Countdown=countdown,Segments=segments,Id=false}
+        self.Slots[i]={Card=card,Face=face,Glyph=glyph,Seal=seal,EmptyGlyph=emptyGlyph,KeyBadge=badge,Key=key,Cost=cost,Countdown=countdown,Segments=segments,Stored=stored,Id=false}
         local function show()
             if callbacks.Touch then return end
             local id=self.State and self.State.Loadout and self.State.Loadout[i]
             local a=id and data.Abilities[id]
-            if a then self.TooltipText.Text=a.Name.." · "..tostring(a.SpiritualityCost).." spirituality";self.Tooltip.Visible=true end
+            if a then
+                self.TooltipText.Text=a.Name.." · "..tostring(a.SpiritualityCost).." spirituality"
+                if a.Id=="Marauder_6" and self.State.StolenPower then self.TooltipText.Text..=" · "..T.AbilityUI.StoredPrefix..(T.AbilityUI.PowerNames[self.State.StolenPower] or self.State.StolenPower) end
+                self.Tooltip.Visible=true
+            end
         end
         face.MouseEnter:Connect(show);face.SelectionGained:Connect(show)
         face.MouseLeave:Connect(function() self.Tooltip.Visible=false end);face.SelectionLost:Connect(function() self.Tooltip.Visible=false end)
@@ -165,6 +173,7 @@ function Hud.Render(self: any,state: any,receivedAt: number)
     Kit.Tween(self.DigestionFill,T.Timing.Fill,{Size=UDim2.fromScale(math.clamp(state.Digestion/100,0,1),1)})
     for i,slot in ipairs(self.Slots) do
         local id=state.Loadout[i];local a=id and self.Data.Abilities[id]
+        slot.Stored.Visible=id=="Marauder_6" and type(state.StolenPower)=="string"
         if slot.Id~=id then
             slot.Id=id;Kit.Clear(slot.Glyph)
             slot.Seal.Visible=not a;slot.KeyBadge.Visible=a~=nil;slot.Cost.Text=if a then "✦ "..tostring(a.SpiritualityCost) else ""
@@ -174,6 +183,14 @@ function Hud.Render(self: any,state: any,receivedAt: number)
                 icon.Size=UDim2.fromScale(1,1)
             end
         end
+    end
+    self:Step(os.clock())
+end
+function Hud.SetVisualCast(self: any,event: any)
+    if event and event.Phase=="Begin" then self.VisualCast=event
+    else
+        self.VisualCast=nil
+        if event then self.FinishedVisualToken=math.max(self.FinishedVisualToken or 0,event.Token) end
     end
     self:Step(os.clock())
 end
@@ -190,10 +207,13 @@ function Hud.Step(self: any,now: number)
         slot.Countdown.Text=if remaining>0 then string.format("%.1f",remaining) else ""
         for i,segment in ipairs(slot.Segments) do segment.Visible=i<=n end
     end
-    local a=state.Casting and self.Data.Abilities[state.Casting]
+    local visual=self.VisualCast
+    if visual and workspace:GetServerTimeNow()>visual.EndsAt+T.AbilityUI.CastGrace then self.VisualCast=nil;visual=nil end
+    local stale=(self.FinishedVisualToken or 0)>0 and (state.VisualToken or 0)<=(self.FinishedVisualToken or 0)
+    local a=if visual then self.Data.Abilities[visual.AbilityId] elseif not stale and state.Casting then self.Data.Abilities[state.Casting] else nil
     self.Cast.Visible=a~=nil
     if a then
-        local remaining=math.max(0,(state.CastRemaining or a.CastTimeSeconds)-elapsed)
+        local remaining=if visual then math.max(0,visual.EndsAt-workspace:GetServerTimeNow()) else math.max(0,(state.CastRemaining or a.CastTimeSeconds)-elapsed)
         self.CastText.Text=a.Name
         self.CastTrack.Size=UDim2.new(math.clamp(1-remaining/math.max(a.CastTimeSeconds,T.LegacyFX.MinBarFraction),0,1),0,0,T.Layout.Cast.Track)
     end

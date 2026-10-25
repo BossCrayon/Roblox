@@ -100,6 +100,7 @@ menus=Menus.new(safeRoot,data,{Intent=send,Modal=function(open: boolean)
 end,ReducedMotion=function(reduced: boolean) visualSettings(reduced,menus.LowGraphics) end,
     LowGraphics=function(low: boolean) visualSettings(menus.ReducedMotion,low) end})
 presentation=Presentation.new(gui,data,{Damage=function(event: any) feedback:Damage(event) end,
+    CastVisual=function(event: any) hud:SetVisualCast(event) end,
     ScreenEdgePulse=function() feedback:Flash() end})
 testRoom=VfxTestRoom.new(safeRoot,presentation,{Modal=function(open: boolean) roomModal=open;updateModal() end,
     ReducedMotion=function(reduced: boolean) menus.ReducedMotion=reduced;visualSettings(reduced,menus.LowGraphics) end,

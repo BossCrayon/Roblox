@@ -7,6 +7,7 @@ type Fields = {
     Data: any, Domain: any, States: {[Player]: any}, FX: RemoteEvent,
     Folder: Folder, NPCFolder: Folder, Transient: Folder, Entities: {[Model]: any},
     Spawns: {any}, Clock: number, OnInteraction: ((Player, string) -> ())?,
+    Visuals: any?,
 }
 type World = typeof(setmetatable({} :: Fields, World))
 

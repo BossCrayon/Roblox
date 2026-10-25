@@ -2,9 +2,11 @@
 
 # Mysteries — playable Roblox foundation
 
+> **[EXISTING] Phase B:** all 54 powers now have pathway-shaped cues, with dedicated procedural packages for **Spirit Vision, Flame Jump, Pickpocket, Ability Theft, Door Opening and Travel**. Accepted-cast timing, actual travel endpoints, private sensing batches, theft capture/release and cancellation feed the existing pooled framework. [Full code, classes and Explorer paths](docs/PHASE_B_VFX_CODE.md) · [Studio tests and exact captures to send](docs/PHASE_B_VFX.md). **[PROPOSED]** Bespoke choreography for the other 48 powers remains later work. Studio rendering remains unverified.
+
 > **Admin powers:** `johnskie816` is configured in the server allowlist. Click **ADMIN**, choose a pathway and Sequence 9–1, then **Apply pathway & sequence**. [Setup, behavior and Studio checks](docs/ADMIN_POWERS.md). Published-server selections save to your profile; Studio session-only selections reset when you stop Play.
 
-> **Animation/VFX — Phase A:** bounded client pools, 12 procedural animations, 11 reusable effect blocks, quality/120-stud LOD, reduced motion, low graphics and an authorized F8 Studio preview room. [Complete code, script classes/Explorer paths, and post-code tests](docs/PHASE_A_VFX_CODE.md) · [Numeric properties and exact screenshots/recordings to send](docs/PHASE_A_VFX.md). Pathway-specific choreography starts in Phase B.
+> **Animation/VFX — Phase A:** bounded client pools, 12 procedural animations, 11 reusable effect blocks, quality/120-stud LOD, reduced motion, low graphics and an authorized F8 Studio preview room. Phase B reuses these and adds a pooled stencil/composition helper. [Framework code and script destinations](docs/PHASE_A_VFX_CODE.md) · [Numeric properties and framework tests](docs/PHASE_A_VFX.md).
 
 > **Visual overhaul — Phase 1:** the current build includes a themed HUD, Journal/Pathway/Inventory tabs, confirmation-based potion UI, custom prompts, feedback and authorized developer diagnostics. [Full copy-ready code and script destinations](docs/PHASE1_UI_CODE.md) · [Studio checklist and exact screenshot requests](docs/PHASE1_UI.md). World relayout and permanent label replacement remain later visual phases.
 
@@ -96,10 +98,11 @@ Validation covers:
 
 - **1,306 data assertions:** roster, references, stats, jumps, bounds and immutability.
 - **2,163 domain assertions:** complete 9→1 advancement, acting deduplication, sanity, resources, cast reservations, lease contention/expiry, corrupt saves, retries and ambiguous committed responses.
-- **388 executor/target assertions:** all 54 abilities across 28 handlers, ownership/range/visibility checks, limited loot and recordings, safe teleport rejection, real adapter damage decisions, one-use substitutes, graft reflections, and high-tier resistance. Roblox engine dependencies are mocked.
-- **259 UI assertions:** responsive geometry, preview/confirm/cancel behavior, prompt lifecycle, role checks, admin selection/duplicate submission/modal visibility and GUI component updates with engine stand-ins.
+- **699 executor/target assertions:** all 54 abilities across 28 handlers, with the production visual-event adapter and unchanged ownership/range/visibility checks, limited loot/recordings, safe teleports, damage decisions, substitutes, graft reflections and resistance. Roblox engine dependencies are mocked.
+- **270 UI assertions:** responsive geometry, confirmation/cancellation, prompt lifecycle, role/admin controls, stored-power badge and synchronized cast-bar lifecycle with engine stand-ins.
 - **572 admin progression assertions:** authorization denial, malformed inputs, all 27 pathway/sequence choices, valid loadouts/stats, persistence compatibility and cleanup bookkeeping.
 - Animation/VFX assertions cover atomic budgets, seven pooled classes, culling/quality, all eleven blocks, animation blending/cleanup, camera caps/restoration and server-confirmed death presentation with engine stand-ins.
+- Phase B assertions cover all 54 visual routes at three qualities with/without Reduced Motion, six mobile packages, atomic multi-anchor admission/culling, moving symbols, private reveals, monotonic tokens and cancellation/stale-event rejection. [Details](docs/PHASE_B_VFX.md).
 - Compilation of production and test Luau, strict Roblox API/type analysis, a real Rojo place build, and inspection that every script in the place exactly matches its source.
 
 The domain and adapter boundaries deliberately accept validated dynamic profile/config/entity tables (`any`); strict mode does not replace runtime checks. No errors are suppressed with `--!nocheck`.
@@ -213,6 +216,20 @@ return freeze({
     Blend={Default=0.12,MinFade=0.016,MaxFade=2,WeightEpsilon=0.001,MaxWeight=1,ReducedScale=0.3},
     Locomotion={MinSpeed=0.1,RunSpeed=18,SpeedReference=16,MaxSpeedRatio=1.5,LandingVelocity=-3},
     Safety={MaxPause=0.08,MaxFrameDelta=0.1,AssetLoadGrace=1.5,MaxAssetSpeed=2,MinAssetSpeed=0.1},
+    CastProfiles={
+        Pickpocket={CastWindup={AnimationId="",Pose={Root={0,4,9,-3},RightShoulder={0,-48,-8,12}}},
+            CastRelease={AnimationId="",Duration=0.16,Pose={Root={0,-2,-6,0},RightShoulder={0,-24,-16,6}}}},
+        Travel={CastWindup={AnimationId="",Pose={Root={0,0,0,0},LeftShoulder={0,-52,-8,-16},RightShoulder={0,-52,8,16}}},
+            CastRelease={AnimationId="",Duration=0.20,Pose={Root={0,2,0,0},LeftShoulder={0,-65,-8,-26},RightShoulder={0,-65,8,26}}}},
+        Reading={CastWindup={AnimationId="",Pose={Root={0,0,0,0},Neck={0,-3,0,0},LeftShoulder={0,-20,0,-12},RightShoulder={0,-72,0,14}}},
+            CastRelease={AnimationId="",Duration=0.18,Pose={Neck={0,-2,0,0},RightShoulder={0,-55,0,20}}}},
+        Flame={CastWindup={AnimationId="",Pose={Root={0,-4,-12,0},LeftShoulder={0,-22,0,-8},RightShoulder={0,-40,10,20}}},
+            CastRelease={AnimationId="",Duration=0.18,Pose={Root={0,5,9,0},RightShoulder={0,-68,0,30}}}},
+        Theft={CastWindup={AnimationId="",Pose={Root={0,4,9,-3},Neck={0,0,-5,0},RightShoulder={0,-48,-8,12}}},
+            CastRelease={AnimationId="",Duration=0.22,Pose={Root={0,-2,-6,0},RightShoulder={0,-24,-16,6},LeftShoulder={0,-8,0,-4}}}},
+        Threshold={CastWindup={AnimationId="",Pose={Root={0,0,0,0},LeftShoulder={0,-52,-8,-16},RightShoulder={0,-52,8,16}}},
+            CastRelease={AnimationId="",Duration=0.25,Pose={Root={0,2,0,0},LeftShoulder={0,-65,-8,-26},RightShoulder={0,-65,8,26}}}},
+    },
     MotorRoles={RootJoint="Root",Root="Root",Waist="Waist",Neck="Neck",["Left Shoulder"]="LeftShoulder",
         ["Right Shoulder"]="RightShoulder",LeftShoulder="LeftShoulder",RightShoulder="RightShoulder",
         ["Left Hip"]="LeftHip",["Right Hip"]="RightHip",LeftHip="LeftHip",RightHip="RightHip"},
@@ -623,10 +640,12 @@ return freeze({
     Visuals={FlashGap=0.34,FlashOpacity=0.16,MaxDistance=120,LegacyPriority=1,
         LegacyLife=0.5,LegacyStart=1,LegacyEnd=7,LegacyAlpha=0.25,RevealPriority=3,
         GrayscaleSaturation=-1,AnimationViewDistance=120},
+    AbilityUI={StoredSize=14,StoredPad=3,StoredSymbol="◆",StoredPrefix="Stored: ",CastGrace=1,PowerNames={ArcBolt="Arc Bolt"}},
     TestRoom={Width=420,Height=540,Margin=12,Header=48,Row=44,Gap=8,Pad=12,StatusHeight=54,
         PreviewDistance=14,PreviewHeight=-2,PreviewSpacing=8,TargetOffset=8,
         FloorSize={32,0.15,26,2,3,1},HeadSize=1.5,HeadHeight=2.2,FloorAlpha=0.25,FloorOffset=-3,ButtonColumns=3,
-        DefaultTier=1,DefaultPalette="Seer",StatInterval=0.25,PreviewDamage=24,OrientationEpsilon=0.01},
+        DefaultTier=1,DefaultPalette="Seer",StatInterval=0.25,PreviewDamage=24,OrientationEpsilon=0.01,
+        AbilityOffset=-7,PreviewBeyond=10,PreviewDoorSize={7,9,0.3}},
     Input={Keys={Enum.KeyCode.Q,Enum.KeyCode.E,Enum.KeyCode.R,Enum.KeyCode.F,Enum.KeyCode.Z,Enum.KeyCode.X},
         KeyNames={"Q","E","R","F","Z","X"},Journal=Enum.KeyCode.B,Developer=Enum.KeyCode.F8,
         RayLength=500,FallbackAim=50,ConfirmGamepad=Enum.KeyCode.ButtonA},
@@ -758,6 +777,18 @@ return freeze({
         Mobile={Part=96,Attachment=112,Beam=56,Trail=8,ParticleEmitter=12,PointLight=2,Highlight=4},
     },
     Lifetime={Default=0.8,Maximum=8,MaxStep=0.1},
+    Protocol={MaxReveals=16,RevealLife=5,MaxAge=8,FutureTolerance=2,ResultGrace=1,MaxOwners=64,MaxStatuses=16},
+    Composition={MaxLayers=6,MaxAnchors=12,MobileDetail=0.35,Priority=3,WindupPriority=2,ResultLife=0.85,CancelFade=0.12,MinWidth=0.04,MobileMinWidth=0.06},
+    Ability={GroundOffset=-2.8,HandHeight=0.5,ReadHeight=1.8,DefaultScale=0.38,
+        WindupScale=0.24,EyeScale=1,ReadGroundDetail=0.35,TransferScale=0.3,DoorScale=1,
+        FlameScale=0.45,TravelScale=1,EndpointLife=0.75,PickpocketLife=0.65,TheftLife=0.85,
+        FlameTint=T.Colors.Warm,FlameRim=T.Colors.Fog,TheftTint=T.Colors.Crimson,DoorMargin=0.12,EndpointOffset=0.1,
+        RevealFill=0.9,RevealOutline=0.15,RevealPriority=2,StoredScale=0.24,StoredAlpha=0.35,
+        EyeGlyph="Eye",LowEyeGlyph="EyeLow",TheftGlyph="Split",DoorGlyph="Door",LowDoorGlyph="DoorLow",
+        Profiles={Seer_9_Secondary="Reading",Seer_7="Flame",Marauder_9="Pickpocket",Marauder_6="Theft",
+            Apprentice_9="Threshold",Apprentice_5="Travel"},
+        Defaults={Seer="RingBurst",Marauder="GlitchFlicker",Apprentice="DoorFrame"},
+        Pilots={"Seer_9_Secondary","Seer_7","Marauder_9","Marauder_6","Apprentice_9","Apprentice_5"}},
     DefaultCosts={Part=1,Attachment=8,Beam=4},
     Safety={MinimumPulseInterval=1/3,MaximumLightsPerEffect=1,PositionLimit=1000000},
     Part={Size=Vector3.new(0.05,0.05,0.05),Color=T.Colors.Fog,Transparency=1,
@@ -800,6 +831,9 @@ return freeze({
         ScreenEdgePulse={Duration=0.5,Priority=4},
         ShockwaveRing={Duration=0.8,Priority=2,Radius=4,Start=0.4},
         AfterimageTrail={Duration=1,Priority=2,Length=5,Height=2,Width=0.12,Head=0.18},
+        SigilStencil={Duration=0.85,Priority=3,Size=1.5,Paths={Eye=T.Glyphs.Eye,Split=T.Glyphs.Split,Door=T.Glyphs.Door,
+            EyeLow={{{0,0.5},{0.5,0.2},{1,0.5},{0.5,0.8},{0,0.5}}},
+            DoorLow={{{0.24,0.9},{0.24,0.15},{0.76,0.15},{0.76,0.9}}}}},
     },
 })
 ```
@@ -1040,6 +1074,8 @@ local Sessions=require(script.Parent.Domain.SessionStore)
 local RateLimiter=require(script.Parent.Domain.RateLimiter)
 local World=require(script.Parent.Services.WorldService)
 local Effects=require(script.Parent.Services.EffectService)
+local VisualEvents=require(script.Parent.Services.VisualEventService)
+local VfxConfig=require(ReplicatedStorage.Shared.VfxConfig)
 local domain=Domain.new(data)
 local states: {[Player]: any}={}
 local sessions: {[Player]: any}={}
@@ -1072,6 +1108,8 @@ local function notify(player: Player,text: string)
     if player.Parent then stateEvent:FireClient(player,{Message=string.sub(text,1,data.Runtime.MaxMessageLength)}) end
 end
 local world=World.new(data,domain,states,fx)
+local visualEvents=VisualEvents.new(world,VfxConfig.Protocol,function() return workspace:GetServerTimeNow() end)
+world.Visuals=visualEvents
 local effects=Effects.new(world,domain,notify)
 world:Build()
 local function applyStats(player: Player,s: any,refill: boolean)
@@ -1096,8 +1134,8 @@ local function sendState(player: Player)
         Digestion=p.Digestion,ActingProgress=p.ActingProgress,Health=s.Health,MaxHealth=s.Stats.Health,
         Spirituality=s.Spirituality,MaxSpirituality=s.Stats.Spirituality,Sanity=s.Sanity,Mode=s.Mode,
         Gold=p.Gold,WishCredits=p.WishCredits,Inventory=Domain.Copy(p.Inventory),Loadout=Domain.Copy(p.AbilityLoadout),
-        Cooldowns=cooldowns,Statuses=statuses,Dead=s.Dead,RecordedCharges=s.RecordedPower and s.RecordedPower.Charges or 0,
-        Casting=s.Pending and s.Pending.Id or false,CastRemaining=s.Pending and math.max(0,s.Pending.EndsAt-now) or 0})
+        Cooldowns=cooldowns,Statuses=statuses,Dead=s.Dead,RecordedCharges=s.RecordedPower and s.RecordedPower.Charges or 0,StolenPower=s.StolenPower or false,
+        Casting=s.Pending and s.Pending.Id or false,CastRemaining=s.Pending and math.max(0,s.Pending.EndsAt-now) or 0,CastSerial=s.CastSerial,VisualToken=s.VisualToken or 0})
 end
 local function bindCharacter(player: Player,character: Model)
     if bound[player]==character then return end
@@ -1189,6 +1227,7 @@ local function releasePlayer(player: Player)
     if releasing[player] then return end
     releasing[player]=true;releaseCount+=1
     local s=states[player];local handle=sessions[player]
+    visualEvents:Remove(player)
     if s then s.Ready=false;s.Pending=nil end
     effects:RemoveGates(player);world:Cleanup(player)
     if handle and s then
@@ -1255,6 +1294,7 @@ intent.OnServerEvent:Connect(function(player: Player,action: any,payload: any)
         local pending,reason=domain:BeginCast(s,payload.Id,now)
         if not pending then notify(player,reason or "Cannot cast");return end
         pending.Input=input
+        visualEvents:Begin(context,now)
     elseif action=="Melee" then
         local root=world:Root(player)
         if not root or not world:FiniteVector(root.Position) or s.Mode~="Normal" or s.Pending or now-s.LastMelee<data.Runtime.MeleeCooldown then return end
@@ -1325,7 +1365,7 @@ task.spawn(function()
                 end)
             end
         end
-        world:Step(math.min(dt,1),now);effects:Step(now)
+        world:Step(math.min(dt,1),now);effects:Step(now);visualEvents:Step()
         if now>=nextState then
             nextState=now+data.Runtime.StateIntervalSeconds
             for player in pairs(states) do if player.Parent then sendState(player) end end
@@ -1785,10 +1825,13 @@ function Effects.Execute(self: Effects, context: any,now: number): (boolean,stri
     local a=context.Ability;local op=a.Operation
     local handler=op and handlers[op.Kind]
     if not handler then return false,"No executor exists for this ability" end
+    local visuals=self.World.Visuals
+    local before=visuals and visuals:Capture(context)
     local ok,message,evidence=handler(self,context,op,now)
+    if visuals then visuals:Result(context,before,ok,evidence,now) end
     if ok then
         local world=self.World
-        world:Effect(context.Position,a.Id,context.Player,context.Entity and context.Entity.Model)
+        if not visuals then world:Effect(context.Position,a.Id,context.Player,context.Entity and context.Entity.Model) end
         if op.Signal and evidence~=false then
             self.Domain:Act(context.State,op.Signal,"cast:"..tostring(context.State.CastSerial),now)
         end
@@ -1825,7 +1868,8 @@ handlers.Sense=function(self: any,c: any,op: any,now: number)
         end
     end
     buff(self,c,op,now)
-    for _,e in ipairs(enemies) do self.World.FX:FireClient(c.Player,{Kind="Reveal",Position=e.Root.Position,Target=e.Model}) end
+    if self.World.Visuals then self.World.Visuals:Reveal(c,enemies,now)
+    else for _,e in ipairs(enemies) do self.World.FX:FireClient(c.Player,{Kind="Reveal",Position=e.Root.Position,Target=e.Model}) end end
     if enemies[1] then
         local e=enemies[1]
         self.Notify(c.Player,"Reading: omen "..tostring(e.Model:GetAttribute("Omen")).." · target HP "..tostring(math.ceil(e.Humanoid.Health)))
@@ -1834,11 +1878,14 @@ handlers.Sense=function(self: any,c: any,op: any,now: number)
 end
 handlers.SenseDoors=function(self: any,c: any,op: any,now: number)
     buff(self,c,op,now)
+    local revealed={}
     for _,door in ipairs(CollectionService:GetTagged("MysticDoor")) do
         if door:IsA("BasePart") and (door.Position-c.Root.Position).Magnitude<=c.State.Stats.Perception then
-            self.World.FX:FireClient(c.Player,{Kind="Reveal",Position=door.Position,Target=door})
+            if self.World.Visuals then table.insert(revealed,{Part=door,Position=door.Position})
+            else self.World.FX:FireClient(c.Player,{Kind="Reveal",Position=door.Position,Target=door}) end
         end
     end
+    if self.World.Visuals then self.World.Visuals:Reveal(c,revealed,now) end
     return true,"Passages revealed"
 end
 handlers.Dodge=function(self: any,c: any,op: any,now: number)
@@ -2056,6 +2103,7 @@ handlers.OpenDoor=function(self: any,c: any,op: any,now: number)
     end
     if not nearest or self.OpenDoors[nearest] then return false,"Aim at a closed practice door" end
     nearest.CanCollide=false;nearest.Transparency=0.75;self.OpenDoors[nearest]=now+20
+    c.VisualTarget=nearest;c.VisualExpires=self.OpenDoors[nearest]
     return true,"Locked passage opened"
 end
 handlers.Travel=function(self: any,c: any,op: any,now: number)
@@ -2148,6 +2196,99 @@ return Effects
 ```
 
 
+## src/ServerScriptService/Services/VisualEventService.lua
+
+**ModuleScript** at `ServerScriptService/Services/VisualEventService`. Create matching Folder parents.
+
+```lua
+--!strict
+-- Server-only evidence adapter. It observes accepted casts; it never changes outcomes.
+local Visual={}
+function Visual.new(world: any,config: any,clock: ()->number): any
+    return setmetatable({World=world,Config=config,Clock=clock,Active={},Counters={}},{__index=Visual})
+end
+function Visual.Packet(self: any,c: any,phase: string,position: any): any
+    if not self.World:FiniteVector(position) then return nil end
+    return {Kind="AbilityVisual",Phase=phase,AbilityId=c.Ability.Id,Owner=c.Player.UserId,
+        Token=c.State.VisualToken or c.State.CastSerial,Character=c.Player.Character,Position=position,Tier=if c.Ability.UnlockSequence>=7 then 1 elseif c.Ability.UnlockSequence>=4 then 2 else 3,
+        At=self.Clock()}
+end
+function Visual.Begin(self: any,c: any,now: number)
+    local pending=c.State.Pending
+    if not pending then return end
+    self.Counters[c.Player]=(self.Counters[c.Player] or 0)+1
+    c.State.VisualToken=self.Counters[c.Player]
+    local packet=self:Packet(c,"Begin",c.Root.Position)
+    if not packet then return end
+    packet.EndsAt=packet.At+math.max(0,pending.EndsAt-now)
+    self.Active[c.Player]={Ability=c.Ability,Token=packet.Token,DomainToken=pending.Token,Position=packet.Position,Character=c.Player.Character}
+    self.World.FX:FireAllClients(packet)
+end
+function Visual.Capture(self: any,c: any): any
+    return {Origin=c.Root.Position,Stored=c.State.StolenPower}
+end
+function Visual.Result(self: any,c: any,before: any,ok: boolean,evidence: any,now: number)
+    local packet=self:Packet(c,if ok then "Result" else "Cancel",if ok then c.Position else before.Origin)
+    self.Active[c.Player]=nil
+    if not packet then return end
+    packet.Origin=before.Origin;packet.Destination=c.Root.Position
+    packet.Target=c.VisualTarget or (c.Entity and c.Entity.Model)
+    packet.Outcome=if evidence==false and c.Ability.Operation.Kind=="Sense" then "Obscured" else "Confirmed"
+    if c.Ability.Operation.Kind=="Theft" then packet.Outcome="Taken"
+    elseif c.Ability.Operation.Kind=="StealPower" then
+        packet.Outcome=if before.Stored then "Released" else "Captured"
+        packet.PowerId=before.Stored or c.State.StolenPower
+    end
+    if c.VisualExpires then packet.ExpiresAt=packet.At+math.max(0,c.VisualExpires-now) end
+    self.World.FX:FireAllClients(packet)
+end
+function Visual.Reveal(self: any,c: any,entries: {any},now: number)
+    local packet=self:Packet(c,"Reveal",c.Root.Position)
+    if not packet then return end
+    local targets={}
+    for _,entry in ipairs(entries) do
+        if #targets>=self.Config.MaxReveals then break end
+        local target=entry.Model or entry.Part
+        local position=if entry.Root then entry.Root.Position else entry.Position
+        if target and self.World:FiniteVector(position) then table.insert(targets,{Target=target,Position=position}) end
+    end
+    if #targets==0 then return end
+    packet.Targets=targets
+    local status=c.State.Statuses.Vision
+    local duration=if status then math.max(0,status.ExpiresAt-now) else self.Config.RevealLife
+    packet.ExpiresAt=packet.At+math.min(duration,self.Config.RevealLife)
+    -- Perception evidence remains private to the player the server authorized.
+    self.World.FX:FireClient(c.Player,packet)
+end
+function Visual.Step(self: any)
+    for player,cast in pairs(self.Active) do
+        local state=self.World.States[player]
+        local pending=state and state.Pending
+        if not state or not state.Ready or state.Dead or player.Character~=cast.Character or not pending or pending.Token~=cast.DomainToken then
+            self.Active[player]=nil
+            if state then
+                local packet=self:Packet({Player=player,State=state,Ability=cast.Ability},"Cancel",cast.Position)
+                if packet then packet.Token=cast.Token;self.World.FX:FireAllClients(packet) end
+            end
+        end
+    end
+end
+function Visual.Remove(self: any,player: any)
+    local cast=self.Active[player]
+    if cast then
+        local state=self.World.States[player]
+        if state then
+            local packet=self:Packet({Player=player,State=state,Ability=cast.Ability},"Cancel",cast.Position)
+            if packet then packet.Token=cast.Token;self.World.FX:FireAllClients(packet) end
+        end
+        self.Active[player]=nil
+    end
+    self.Counters[player]=nil
+end
+return Visual
+```
+
+
 ## src/ServerScriptService/Services/WorldService.lua
 
 **ModuleScript** at `ServerScriptService/Services/WorldService`. Create matching Folder parents.
@@ -2162,6 +2303,7 @@ type Fields = {
     Data: any, Domain: any, States: {[Player]: any}, FX: RemoteEvent,
     Folder: Folder, NPCFolder: Folder, Transient: Folder, Entities: {[Model]: any},
     Spawns: {any}, Clock: number, OnInteraction: ((Player, string) -> ())?,
+    Visuals: any?,
 }
 type World = typeof(setmetatable({} :: Fields, World))
 
@@ -2575,6 +2717,7 @@ menus=Menus.new(safeRoot,data,{Intent=send,Modal=function(open: boolean)
 end,ReducedMotion=function(reduced: boolean) visualSettings(reduced,menus.LowGraphics) end,
     LowGraphics=function(low: boolean) visualSettings(menus.ReducedMotion,low) end})
 presentation=Presentation.new(gui,data,{Damage=function(event: any) feedback:Damage(event) end,
+    CastVisual=function(event: any) hud:SetVisualCast(event) end,
     ScreenEdgePulse=function() feedback:Flash() end})
 testRoom=VfxTestRoom.new(safeRoot,presentation,{Modal=function(open: boolean) roomModal=open;updateModal() end,
     ReducedMotion=function(reduced: boolean) menus.ReducedMotion=reduced;visualSettings(reduced,menus.LowGraphics) end,
@@ -3008,18 +3151,26 @@ function Hud.new(parent: Instance,data: any,callbacks: any): any
         local cost=Kit.Text(card,"",T.Type.Micro,T.Fonts.Number);cost.TextColor3=T.Colors.Spirituality;cost.TextXAlignment=Enum.TextXAlignment.Center
         local countdown=Kit.Text(face,"",T.Type.Number,T.Fonts.Number);countdown.AnchorPoint=Vector2.new(0.5,0.5);countdown.Position=UDim2.fromScale(0.5,0.5);countdown.BackgroundColor3=T.Colors.Ink;countdown.BackgroundTransparency=T.Style.PanelFade;countdown.Visible=false
         local segments={}
+        local stored=Kit.Text(face,T.AbilityUI.StoredSymbol,T.Type.Small,T.Fonts.Number)
+        stored.Name="StoredPower";stored.TextColor3=T.Colors.Bronze;stored.Visible=false;stored.TextXAlignment=Enum.TextXAlignment.Center
+        stored.Size=UDim2.fromOffset(T.AbilityUI.StoredSize,T.AbilityUI.StoredSize)
+        stored.Position=UDim2.new(1,-T.AbilityUI.StoredSize-T.AbilityUI.StoredPad,0,T.AbilityUI.StoredPad)
         for segment=1,T.Layout.Hotbar.Segments do
             local angle=(segment-1)/T.Layout.Hotbar.Segments*math.pi*2-math.pi/2
             table.insert(segments,Kit.New("Frame",face,{Name="CooldownSegment",BorderSizePixel=0,BackgroundColor3=T.Colors.Gold,
                 AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromScale(0.5+math.cos(angle)*T.Layout.Hotbar.RingRadius,0.5+math.sin(angle)*T.Layout.Hotbar.RingRadius),
                 Size=UDim2.fromOffset(T.Layout.Hotbar.SegmentWidth,T.Layout.Hotbar.SegmentHeight),Rotation=math.deg(angle)+90,Visible=false}))
         end
-        self.Slots[i]={Card=card,Face=face,Glyph=glyph,Seal=seal,EmptyGlyph=emptyGlyph,KeyBadge=badge,Key=key,Cost=cost,Countdown=countdown,Segments=segments,Id=false}
+        self.Slots[i]={Card=card,Face=face,Glyph=glyph,Seal=seal,EmptyGlyph=emptyGlyph,KeyBadge=badge,Key=key,Cost=cost,Countdown=countdown,Segments=segments,Stored=stored,Id=false}
         local function show()
             if callbacks.Touch then return end
             local id=self.State and self.State.Loadout and self.State.Loadout[i]
             local a=id and data.Abilities[id]
-            if a then self.TooltipText.Text=a.Name.." · "..tostring(a.SpiritualityCost).." spirituality";self.Tooltip.Visible=true end
+            if a then
+                self.TooltipText.Text=a.Name.." · "..tostring(a.SpiritualityCost).." spirituality"
+                if a.Id=="Marauder_6" and self.State.StolenPower then self.TooltipText.Text..=" · "..T.AbilityUI.StoredPrefix..(T.AbilityUI.PowerNames[self.State.StolenPower] or self.State.StolenPower) end
+                self.Tooltip.Visible=true
+            end
         end
         face.MouseEnter:Connect(show);face.SelectionGained:Connect(show)
         face.MouseLeave:Connect(function() self.Tooltip.Visible=false end);face.SelectionLost:Connect(function() self.Tooltip.Visible=false end)
@@ -3103,6 +3254,7 @@ function Hud.Render(self: any,state: any,receivedAt: number)
     Kit.Tween(self.DigestionFill,T.Timing.Fill,{Size=UDim2.fromScale(math.clamp(state.Digestion/100,0,1),1)})
     for i,slot in ipairs(self.Slots) do
         local id=state.Loadout[i];local a=id and self.Data.Abilities[id]
+        slot.Stored.Visible=id=="Marauder_6" and type(state.StolenPower)=="string"
         if slot.Id~=id then
             slot.Id=id;Kit.Clear(slot.Glyph)
             slot.Seal.Visible=not a;slot.KeyBadge.Visible=a~=nil;slot.Cost.Text=if a then "✦ "..tostring(a.SpiritualityCost) else ""
@@ -3112,6 +3264,14 @@ function Hud.Render(self: any,state: any,receivedAt: number)
                 icon.Size=UDim2.fromScale(1,1)
             end
         end
+    end
+    self:Step(os.clock())
+end
+function Hud.SetVisualCast(self: any,event: any)
+    if event and event.Phase=="Begin" then self.VisualCast=event
+    else
+        self.VisualCast=nil
+        if event then self.FinishedVisualToken=math.max(self.FinishedVisualToken or 0,event.Token) end
     end
     self:Step(os.clock())
 end
@@ -3128,10 +3288,13 @@ function Hud.Step(self: any,now: number)
         slot.Countdown.Text=if remaining>0 then string.format("%.1f",remaining) else ""
         for i,segment in ipairs(slot.Segments) do segment.Visible=i<=n end
     end
-    local a=state.Casting and self.Data.Abilities[state.Casting]
+    local visual=self.VisualCast
+    if visual and workspace:GetServerTimeNow()>visual.EndsAt+T.AbilityUI.CastGrace then self.VisualCast=nil;visual=nil end
+    local stale=(self.FinishedVisualToken or 0)>0 and (state.VisualToken or 0)<=(self.FinishedVisualToken or 0)
+    local a=if visual then self.Data.Abilities[visual.AbilityId] elseif not stale and state.Casting then self.Data.Abilities[state.Casting] else nil
     self.Cast.Visible=a~=nil
     if a then
-        local remaining=math.max(0,(state.CastRemaining or a.CastTimeSeconds)-elapsed)
+        local remaining=if visual then math.max(0,visual.EndsAt-workspace:GetServerTimeNow()) else math.max(0,(state.CastRemaining or a.CastTimeSeconds)-elapsed)
         self.CastText.Text=a.Name
         self.CastTrack.Size=UDim2.new(math.clamp(1-remaining/math.max(a.CastTimeSeconds,T.LegacyFX.MinBarFraction),0,1),0,0,T.Layout.Cast.Track)
     end
@@ -3354,6 +3517,9 @@ function Menus.Render(self: any)
         self.Confirm.Size=UDim2.new(0.5,-T.Layout.Modal.Gap/2,1,0);cancel.Size=self.Confirm.Size
         self:UpdatePreview()
     elseif self.Tab=="Journal" then
+        if type(state.StolenPower)=="string" then
+            self:TextRow(T.AbilityUI.StoredPrefix..(T.AbilityUI.PowerNames[state.StolenPower] or state.StolenPower).." · use Ability Theft again to release it.")
+        end
         self:TextRow("The acting method",true)
         if state.PathwayId then
             local seq=self.Data.Pathways[state.PathwayId].Sequences[state.Sequence]
@@ -3482,6 +3648,7 @@ local Blocks=require(Visuals.EffectBlocks)
 local AnimationController=require(Visuals.AnimationController)
 local CameraFeel=require(Visuals.CameraFeel)
 local HitPresentation=require(Visuals.HitPresentation)
+local AbilityPresentation=require(Visuals.AbilityPresentation)
 local Presentation={}
 function Presentation.new(gui: Instance,data: any,callbacks: any?): any
     local cb=callbacks or {}
@@ -3493,6 +3660,15 @@ function Presentation.new(gui: Instance,data: any,callbacks: any?): any
     end})
     self.Camera=CameraFeel.new()
     self.Hits=HitPresentation.new(self.VFX,self.Blocks)
+    self.Abilities=AbilityPresentation.new(self.VFX,self.Blocks,data,{
+        Clock=function() return workspace:GetServerTimeNow() end,
+        Camera=function() return workspace.CurrentCamera end,
+        LocalUserId=Players.LocalPlayer.UserId,
+        Player=function(id: number) return Players:GetPlayerByUserId(id) end,
+        Controller=function(character: Model) return self:Controller(character) end,
+        Audio=function(hook: string) self:Audio(hook) end,
+        Cast=cb.CastVisual,
+    })
     self.Camera.OnHitStop=function(seconds: number)
         local controller=self:LocalController()
         if controller then controller:Pause(seconds) end
@@ -3528,59 +3704,43 @@ function Presentation.SetSettings(self: any,reduced: boolean,low: boolean)
 end
 function Presentation.Update(self: any,state: any)
     local previous=self.State;self.State=state
+    self.Abilities:Update(state)
     if not state.Ready then return end
     local controller=self:LocalController()
-    if controller and not self.Demo then
-        if state.Casting and state.Casting~=self.Cast then controller:Play("CastWindup")
-        elseif not state.Casting and self.Cast then controller:Stop("CastWindup") end
-        if previous and previous.Ready and state.Health<previous.Health then
-            controller:Play("HitReact");self.Camera:Kick(1);self.Camera:HitStop()
-        end
+    if controller and not self.Demo and previous and previous.Ready and state.Health<previous.Health then
+        controller:Play("HitReact");self.Camera:Kick(1);self.Camera:HitStop()
     end
-    self.Cast=state.Casting or nil
 end
 function Presentation.Event(self: any,event: any)
+    if event.Kind=="AbilityVisual" then self.Abilities:Event(event);return end
     if not self.VFX:Visible(event.Position) then return end
     if event.Kind=="Damage" then
         self.Hits:Hit(event)
         if self.Callbacks.Damage then self.Callbacks.Damage(event) end
         if event.Owner==Players.LocalPlayer.UserId then self.Camera:Kick(1);self.Camera:HitStop() end
-        return
-    end
-    if event.Kind=="VoiceProfile" then self:Audio(event.Hook,event.Pitch);return end
-    local ability=self.Data.Abilities[event.Kind]
-    if ability then self:Audio(ability.SFXHook) end
-    if event.Owner then
-        local caster=Players:GetPlayerByUserId(event.Owner)
-        local controller=caster and self:Controller(caster.Character)
-        if controller and (ability or event.Kind=="Melee") then
-            controller:Stop("CastWindup");controller:Play("CastRelease")
-        end
-    end
-    if event.Kind=="Reveal" and typeof(event.Target)=="Instance" then
-        local h=self.VFX:Begin("Reveal",event.Position,1,T.Visuals.RevealPriority,{Highlight=1})
-        if not h then return end
-        h.Duration=C.Hit.RevealLife
-        local highlight=h:Acquire("Highlight")
-        highlight.Adornee=event.Target;highlight.FillColor=T.Colors.Sanity;highlight.OutlineColor=T.Colors.Fog
-        highlight.FillTransparency=T.LegacyFX.HighlightAlpha
+    elseif event.Kind=="VoiceProfile" then self:Audio(event.Hook,event.Pitch)
+    elseif event.Kind=="Reveal" and typeof(event.Target)=="Instance" then
+        -- Compatibility for old server reveal packets; current servers send private batches.
+        self.Abilities.Status:Reveal({Targets={{Target=event.Target,Position=event.Position}},
+            ExpiresAt=workspace:GetServerTimeNow()+C.Protocol.RevealLife},"Seer")
     elseif event.Kind~="Whisper" then
-        -- Preserve the old neutral pulse during Phase A. Pathway-specific layering
-        -- is deliberately deferred until the user continues to Phases B-D.
-        local h=self.VFX:Begin("LegacyPulse",event.Position,1,T.Visuals.LegacyPriority,{Part=1})
-        if not h then return end
-        h.Duration=T.Visuals.LegacyLife
-        local p=h:Acquire("Part")
-        p.Shape=Enum.PartType.Ball;p.Color=if ability then Kit.PathColor(ability.PathwayId) else T.Colors.Fog
-        p.Position=event.Position;p.Size=Vector3.one*T.Visuals.LegacyStart;p.Transparency=T.Visuals.LegacyAlpha
-        h.Update=function(_dt: number,_age: number,t: number)
-            p.Size=Vector3.one*(T.Visuals.LegacyStart+(T.Visuals.LegacyEnd-T.Visuals.LegacyStart)*t)
-            p.Transparency=T.Visuals.LegacyAlpha+(1-T.Visuals.LegacyAlpha)*t
-        end
+        local name=if event.Kind=="Defeat" then "RisingMotes" elseif event.Kind=="Substitute" then "RingBurst" else "ImpactFlash"
+        self.Blocks:Compose({{Name=name,Position=event.Position,Palette="Seer",Options={Scale=C.Ability.DefaultScale}}},1,
+            C.Composition.Priority,C.Composition.ResultLife)
     end
 end
 function Presentation.Step(self: any,dt: number)
-    self.VFX:Step(dt);self.ScanElapsed+=dt
+    self.VFX:Step(dt);self.Abilities:Step();self.ScanElapsed+=dt
+    if self.AbilityDemo and workspace:GetServerTimeNow()>=self.AbilityDemo.EndsAt then
+        local demo=self.AbilityDemo;self.AbilityDemo=nil
+        if demo.Windup then demo.Windup:Finish() end
+        local controller=self:LocalController()
+        if controller then
+            controller:Stop("CastWindup",C.Composition.CancelFade)
+            if not demo.Cancel then controller:Play("CastRelease",nil,nil,C.Ability.Profiles[demo.Id]) end
+        end
+        if not demo.Cancel then self.Abilities:Preview(demo.Id,demo.Variant,demo.Origin,demo.Destination,demo.Target) end
+    end
     if self.ScanElapsed<T.TestRoom.StatInterval then return end;self.ScanElapsed=0
     local wanted={}
     for _,player in ipairs(Players:GetPlayers()) do
@@ -3599,14 +3759,30 @@ function Presentation.DemoAnimation(self: any,name: string)
     if not controller then return end
     controller:Stop();controller.AutoLocomotion=false;self.Demo=true;controller:Play(name)
 end
+function Presentation.PreviewAbility(self: any,id: string,variant: string,origin: Vector3,destination: Vector3,target: Instance?,cancel: boolean?)
+    self:StopDemoAnimation()
+    local a=self.Data.Abilities[id]
+    if not a then return end
+    local controller=self:LocalController()
+    if controller then controller:Play("CastWindup",nil,nil,C.Ability.Profiles[id]) end
+    local windup=self.Abilities:Preview(id,variant,origin,destination,target,"Begin")
+    self.AbilityDemo={Id=id,Variant=variant,Origin=origin,Destination=destination,Target=target,Cancel=cancel,
+        Windup=windup,EndsAt=workspace:GetServerTimeNow()+a.CastTimeSeconds}
+end
 function Presentation.StopDemoAnimation(self: any)
+    if self.AbilityDemo then
+        if self.AbilityDemo.Windup then self.AbilityDemo.Windup:Finish() end
+        self.AbilityDemo=nil
+        local active=self:LocalController();if active then active:Stop("CastWindup",C.Composition.CancelFade) end
+    end
+    self.Abilities:ClearPreviews()
     if not self.Demo then return end
     self.Demo=false
     local controller=self:LocalController()
     if controller then controller:Stop();controller.AutoState=nil;controller.AutoLocomotion=true end
 end
 function Presentation.Destroy(self: any)
-    self.Camera:Destroy();self.VFX:Destroy()
+    self.Abilities:Destroy();self.Camera:Destroy();self.VFX:Destroy()
     for _,controller in pairs(self.Controllers) do controller:Destroy() end
     table.clear(self.Controllers)
 end
@@ -3763,6 +3939,189 @@ return Prompts
 ```
 
 
+## src/StarterPlayer/StarterPlayerScripts/Visuals/AbilityPresentation.lua
+
+**ModuleScript** at `StarterPlayer/StarterPlayerScripts/Visuals/AbilityPresentation`. Create matching Folder parents.
+
+```lua
+--!strict
+-- Original, cosmetic choreography. Only server-authored ability packets enter Event.
+local Shared=game:GetService("ReplicatedStorage").Shared
+local C=require(Shared.VfxConfig)
+local VfxService=require(script.Parent.VfxService)
+local Status=require(script.Parent.StatusPresentation)
+local Families={Seer=require(script.Parent.PathwayEffects.Seer),Marauder=require(script.Parent.PathwayEffects.Marauder),Apprentice=require(script.Parent.PathwayEffects.Apprentice)}
+local Ability={}
+local function finite(n: any): boolean return type(n)=="number" and n==n and math.abs(n)<math.huge end
+local function point(p: any): boolean
+    return typeof(p)=="Vector3" and finite(p.X) and finite(p.Y) and finite(p.Z) and p.Magnitude<=C.Safety.PositionLimit
+end
+function Ability.new(service: any,blocks: any,data: any,callbacks: any): any
+    local self: any=setmetatable({Service=service,Blocks=blocks,Data=data,Callbacks=callbacks,Records={},Previews={},LocalPath=nil,
+        Status=Status.new(service,callbacks.Clock)},{__index=Ability})
+    return self
+end
+function Ability.Frame(self: any,position: Vector3): CFrame
+    local camera=self.Callbacks.Camera()
+    if not camera then return CFrame.new(position) end
+    local direction=Vector3.new(camera.CFrame.Position.X-position.X,0,camera.CFrame.Position.Z-position.Z)
+    return if direction.Magnitude>C.Blocks.Common.MinimumLength then CFrame.lookAt(position,position+direction) else CFrame.new(position)
+end
+function Ability.Layers(self: any,a: any,e: any): (any,number)
+    local function layer(name: string,position: Vector3,opts: any?): any
+        return {Name=name,Position=position,Palette=a.PathwayId,Options=opts or {}}
+    end
+    local profile=self.Service:Profile()
+    local context={Layer=layer,Frame=function(position: Vector3) return self:Frame(position) end,Simplified=profile.Low or profile.Mobile}
+    if e.Phase=="Begin" then
+        local at=e.Position+Vector3.yAxis*C.Ability.HandHeight
+        local glyph=if a.PathwayId=="Seer" then C.Ability.EyeGlyph elseif a.PathwayId=="Marauder" then C.Ability.TheftGlyph else C.Ability.DoorGlyph
+        local lowGlyph=if a.PathwayId=="Seer" then C.Ability.LowEyeGlyph elseif a.PathwayId=="Marauder" then glyph else C.Ability.LowDoorGlyph
+        local root=e.Character and (e.Character.PrimaryPart or e.Character:FindFirstChild("HumanoidRootPart"))
+        return {layer("SigilStencil",at,{Frame=self:Frame(at),Glyph=glyph,LowGlyph=lowGlyph,Scale=C.Ability.WindupScale,
+            Follow=root,Offset=Vector3.yAxis*C.Ability.HandHeight})},
+            math.max(C.Composition.CancelFade,e.EndsAt-self.Callbacks.Clock())
+    end
+    local layers,duration=Families[a.PathwayId].Build(a,e,context)
+    if layers then return layers,duration or C.Composition.ResultLife end
+    local name=C.Ability.Defaults[a.PathwayId]
+    local at=e.Position
+    if name=="RingBurst" or name=="DoorFrame" then at+=Vector3.yAxis*C.Ability.GroundOffset end
+    local opts: any={Scale=C.Ability.DefaultScale}
+    if name~="RingBurst" then opts.Frame=self:Frame(at) end
+    -- Obscured readings are a small incomplete mark, never a successful reveal.
+    if e.Outcome=="Obscured" then name="SigilStencil";opts.Glyph=C.Ability.TheftGlyph;opts.LowGlyph=opts.Glyph;opts.Frame=self:Frame(at) end
+    return {layer(name,at,opts)},C.Composition.ResultLife
+end
+function Ability.Stop(self: any,record: any)
+    if record.Handle then record.Handle:Finish();record.Handle=nil end
+    if record.Controller then record.Controller:Stop("CastWindup",C.Composition.CancelFade) end
+    if record.Active and record.Owner==self.Callbacks.LocalUserId and self.Callbacks.Cast then self.Callbacks.Cast({Phase="End",Token=record.Token}) end
+    record.Active=false
+end
+function Ability.Valid(self: any,e: any): any
+    if type(e)~="table" or e.Kind~="AbilityVisual" or type(e.AbilityId)~="string" or not self.Data.Abilities[e.AbilityId] then return nil end
+    if not finite(e.Owner) or e.Owner%1~=0 or not finite(e.Token) or e.Token<1 or e.Token%1~=0 then return nil end
+    if not finite(e.At) or not point(e.Position) or not finite(e.Tier) or e.Tier%1~=0 or e.Tier<1 or e.Tier>#C.Tier then return nil end
+    local age=self.Callbacks.Clock()-e.At
+    if age>C.Protocol.MaxAge or age< -C.Protocol.FutureTolerance then return nil end
+    local player=self.Callbacks.Player(e.Owner)
+    if not player or player.Character~=e.Character or typeof(e.Character)~="Instance" or not e.Character:IsA("Model") or not e.Character.Parent then return nil end
+    if e.Phase=="Begin" then
+        if not finite(e.EndsAt) or e.EndsAt<e.At or e.EndsAt-e.At>C.Lifetime.Maximum then return nil end
+    elseif e.Phase=="Result" then
+        if not point(e.Origin) or not point(e.Destination) or type(e.Outcome)~="string" then return nil end
+    elseif e.Phase=="Reveal" then
+        if e.Owner~=self.Callbacks.LocalUserId or type(e.Targets)~="table" or #e.Targets>C.Protocol.MaxReveals or not finite(e.ExpiresAt) then return nil end
+        for _,target in ipairs(e.Targets) do if type(target)~="table" or not point(target.Position) then return nil end end
+    elseif e.Phase~="Cancel" then return nil end
+    return player
+end
+function Ability.Record(self: any,e: any): any
+    local record=self.Records[e.Owner]
+    if record and record.Character~=e.Character then self:Stop(record);record=nil end
+    if record and e.Token<record.Token then return nil end
+    if record and e.Token==record.Token and record.AbilityId~=e.AbilityId then return nil end
+    if not record or e.Token>record.Token then
+        if record then self:Stop(record) end
+        local count=0;local oldestOwner=nil;local oldest=math.huge
+        for owner,item in pairs(self.Records) do
+            count+=1;if item.At<oldest then oldest=item.At;oldestOwner=owner end
+        end
+        if count>=C.Protocol.MaxOwners and oldestOwner then self:Stop(self.Records[oldestOwner]);self.Records[oldestOwner]=nil end
+        record={Owner=e.Owner,Token=e.Token,AbilityId=e.AbilityId,Character=e.Character,At=e.At,Active=false,Completed=false,Revealed=false}
+        self.Records[e.Owner]=record
+    end
+    return record
+end
+function Ability.Event(self: any,e: any): boolean
+    local player=self:Valid(e)
+    if not player then return false end
+    local record=self:Record(e)
+    if not record then return false end
+    local a=self.Data.Abilities[e.AbilityId]
+    if e.Phase=="Reveal" then
+        if record.Revealed then return false end
+        record.Revealed=true;self.Status:Reveal(e,a.PathwayId);return true
+    end
+    if e.Phase=="Begin" then
+        if record.Active or record.Completed or e.EndsAt<=self.Callbacks.Clock() then return false end
+        record.Active=true;record.EndsAt=e.EndsAt
+        local visible=self.Service:Visible(e.Position)
+        if visible or e.Owner==self.Callbacks.LocalUserId then
+            record.Controller=self.Callbacks.Controller(player.Character)
+            if record.Controller then record.Controller:Play("CastWindup",nil,nil,C.Ability.Profiles[a.Id]) end
+            local layers,duration=self:Layers(a,e)
+            record.Handle=self.Blocks:Compose(layers,e.Tier,C.Composition.WindupPriority,math.min(duration,C.Lifetime.Maximum))
+            if record.Handle then record.Handle.CasterId=e.Owner;record.Handle.Character=e.Character end
+        end
+        if e.Owner==self.Callbacks.LocalUserId and self.Callbacks.Cast then self.Callbacks.Cast(e) end
+        return true
+    end
+    if record.Completed then return false end
+    self:Stop(record);record.Completed=true;record.At=e.At
+    if e.Phase=="Cancel" then return true end
+    local visible=self.Service:Visible(e.Position) or self.Service:Visible(e.Origin) or self.Service:Visible(e.Destination)
+    if not visible then return true end
+    local controller=self.Callbacks.Controller(player.Character)
+    if controller then controller:Play("CastRelease",nil,nil,C.Ability.Profiles[a.Id]) end
+    local layers,duration=self:Layers(a,e)
+    record.Result=self.Blocks:Compose(layers,e.Tier,C.Composition.Priority,duration)
+    if record.Result then record.Result.CasterId=e.Owner;record.Result.Character=e.Character end
+    self.Callbacks.Audio(a.SFXHook)
+    return true
+end
+function Ability.Update(self: any,state: any)
+    local path=if state and state.Ready then tostring(state.PathwayId)..":"..tostring(state.Sequence) else nil
+    if self.LocalPath~=path or not state or state.Dead or not state.Ready then
+        self.Status:Clear()
+        local record=self.Records[self.Callbacks.LocalUserId]
+        if record then self:Stop(record);record.Completed=true;if record.Result then record.Result:Finish() end end
+        local finishing={}
+        for _,handle in pairs(self.Service.Active) do if handle.CasterId==self.Callbacks.LocalUserId then table.insert(finishing,handle) end end
+        for _,handle in ipairs(finishing) do handle:Finish() end
+    end
+    self.LocalPath=path
+end
+function Ability.Step(self: any)
+    local now=self.Callbacks.Clock()
+    for owner,record in pairs(self.Records) do
+        local player=self.Callbacks.Player(owner)
+        if not player or player.Character~=record.Character or not record.Character.Parent then
+            self:Stop(record);if record.Result then record.Result:Finish() end;self.Records[owner]=nil
+        elseif record.Active and now>record.EndsAt+C.Protocol.ResultGrace then self:Stop(record);record.Completed=true end
+        if now-record.At>C.Protocol.MaxAge then self:Stop(record);self.Records[owner]=nil end
+    end
+    self.Status:Step()
+    local finishing={}
+    for _,handle in pairs(self.Service.Active) do
+        if handle.Character and not handle.Character.Parent then table.insert(finishing,handle) end
+    end
+    for _,handle in ipairs(finishing) do handle:Finish() end
+    for i=#self.Previews,1,-1 do if not self.Previews[i].Active then table.remove(self.Previews,i) end end
+end
+function Ability.Preview(self: any,id: string,variant: string,origin: Vector3,destination: Vector3,target: Instance?,phase: string?): any
+    local a=self.Data.Abilities[id]
+    if not a then return nil end
+    local now=self.Callbacks.Clock()
+    local event={Phase=phase or "Result",Position=if a.Target=="NPC" then destination else origin,Origin=origin,Destination=if a.Target=="NPC" then origin else destination,
+        Outcome=variant,Target=target,Tier=VfxService.PowerTier(a.UnlockSequence),EndsAt=now+a.CastTimeSeconds}
+    local layers,duration=self:Layers(a,event)
+    local handle=self.Blocks:Compose(layers,event.Tier,C.Composition.Priority,duration)
+    if handle then table.insert(self.Previews,handle) end
+    return handle
+end
+function Ability.ClearPreviews(self: any)
+    for _,handle in ipairs(self.Previews) do handle:Finish() end;table.clear(self.Previews)
+end
+function Ability.Destroy(self: any)
+    for _,record in pairs(self.Records) do self:Stop(record);if record.Result then record.Result:Finish() end end
+    table.clear(self.Records);self:ClearPreviews();self.Status:Clear()
+end
+return Ability
+```
+
+
 ## src/StarterPlayer/StarterPlayerScripts/Visuals/AnimationController.lua
 
 **ModuleScript** at `StarterPlayer/StarterPlayerScripts/Visuals/AnimationController`. Create matching Folder parents.
@@ -3778,7 +4137,7 @@ local AnimationController={}
 AnimationController.__index=AnimationController
 type MotorState={Motor: Motor6D,Role: string,Base: CFrame?,Applied: CFrame?}
 type EntryState={Name: string,Entry: any,Elapsed: number,Target: number,Fade: number,Spring: any,
-    Track: AnimationTrack?,Animation: Animation?,AssetAge: number,AssetFailed: boolean}
+    Track: AnimationTrack?,Animation: Animation?,AssetAge: number,AssetFailed: boolean,Profile: string?}
 type Fields={Character: Model,Humanoid: Humanoid?,Root: BasePart?,Animator: Animator?,Motors: {MotorState},
     States: {[string]: EntryState},Connections: {RBXScriptConnection},ReducedMotion: boolean,
     AutoLocomotion: boolean,AutoState: string?,PauseLeft: number,Destroyed: boolean,WasAirborne: boolean,LastVertical: number}
@@ -3847,17 +4206,25 @@ function AnimationController.Restore(self: Controller)
         m.Base=nil;m.Applied=nil
     end
 end
-function AnimationController.Play(self: Controller,name: string,weight: number?,fade: number?): boolean
+function AnimationController.Play(self: Controller,name: string,weight: number?,fade: number?,profile: string?): boolean
     if self.Destroyed then return false end
     name=resolve(name)
     local entry=C.Entries[name]
     if not entry then return false end
+    local override=profile and C.CastProfiles[profile] and C.CastProfiles[profile][name]
+    if override then
+        entry=table.clone(entry)
+        for key,value in pairs(override) do
+            if key~="AnimationId" or value~="" then entry[key]=value end
+        end
+    end
     local target=if weight and finite(weight) then math.clamp(weight,0,C.Blend.MaxWeight) else C.Blend.MaxWeight
     local transition=if fade and finite(fade) then math.clamp(fade,C.Blend.MinFade,C.Blend.MaxFade) else entry.FadeIn
     local state: EntryState?=self.States[name]
+    if state and state.Profile~=profile then dispose(state);self.States[name]=nil;state=nil end
     if not state then
         local created: EntryState={Name=name,Entry=entry,Elapsed=0,Target=target,Fade=transition,Spring=Spring.new(0),
-            Track=nil,Animation=nil,AssetAge=0,AssetFailed=false}
+            Track=nil,Animation=nil,AssetAge=0,AssetFailed=false,Profile=profile}
         self.States[name]=created;state=created
         local id=contentId(entry.AnimationId)
         if id and self.Animator then
@@ -4143,6 +4510,7 @@ return CameraFeel
 local C: any=require(game:GetService("ReplicatedStorage").Shared.VfxConfig)
 local Blocks={}
 Blocks.Names={"RingBurst","RisingMotes","ThreadBeam","DoorFrame","StarBurst","GlitchFlicker","GroundRune","ImpactFlash","ScreenEdgePulse","ShockwaveRing","AfterimageTrail"}
+Blocks.AbilityNames={"SigilStencil"}
 local TAU=math.pi*2
 local function take(handle: any,class: string,parent: Instance?): any
     local object=handle:Acquire(class,parent)
@@ -4164,7 +4532,10 @@ end
 local function setLine(line: any,a: Vector3,b: Vector3,transparency: number)
     line.A.Position=a;line.B.Position=b;line.Beam.Transparency=NumberSequence.new(transparency)
 end
-local function reserve(name: string,c: any,detail: number,low: boolean): (any,number,number)
+local function stencil(c: any,low: boolean,opts: any): any
+    return c.Paths[(if low then opts.LowGlyph or opts.Glyph else opts.Glyph) or C.Ability.EyeGlyph] or c.Paths[C.Ability.EyeGlyph]
+end
+local function reserve(name: string,c: any,detail: number,low: boolean,opts: any?): (any,number,number)
     local segments=math.max(C.Blocks.Common.MinSegments,math.floor(C.Blocks.Common.Segments*detail))
     local n=0
     if name=="RingBurst" or name=="ShockwaveRing" then n=segments
@@ -4173,7 +4544,10 @@ local function reserve(name: string,c: any,detail: number,low: boolean): (any,nu
     elseif name=="StarBurst" then n=c.Points*2
     elseif name=="GlitchFlicker" then n=4
     elseif name=="ImpactFlash" then n=2
-    elseif name=="ThreadBeam" then n=1 end
+    elseif name=="ThreadBeam" then n=1
+    elseif name=="SigilStencil" then
+        for _,path in ipairs(stencil(c,low,opts or {})) do n+=math.max(0,#path-1) end
+    end
     local motes=if name=="RisingMotes" then math.max(1,math.floor(c.Count*detail)) else 0
     local trail=if name=="AfterimageTrail" and not low then 1 else 0
     local afterHead=if name=="AfterimageTrail" then 1 else 0
@@ -4194,17 +4568,23 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
         if self.LastPulse and now-self.LastPulse<C.Safety.MinimumPulseInterval then return nil end
     end
     local opts=options or {}
-    local detail=self.Service:Detail(position)
+    local detail=math.min(self.Service:Detail(position),opts.Detail or math.huge)
     local low=detail<=C.Quality.Low
-    local costs,segments,motes=reserve(name,c,detail,low)
-    local h=self.Service:Begin(name,position,tier or 1,c.Priority,costs)
+    if opts.Duration then c=table.clone(c);c.Duration=opts.Duration end
+    if opts.Width or opts.Height then
+        c=table.clone(c);c.Width=opts.Width or c.Width;c.Height=opts.Height or c.Height
+    end
+    local costs,segments,motes=reserve(name,c,detail,low,opts)
+    local h=opts.Lease or self.Service:Begin(name,position,tier or 1,c.Priority,costs)
     if not h then return nil end
+    h.Scale*=opts.Scale or 1
     if pulse then self.LastPulse=now end
     h.Duration=c.Duration
     local p=C.Palettes[paletteName or "Seer"] or C.Palettes.Seer
+    if opts.Tint then p=table.clone(p);p.Primary=opts.Tint;p.Accent=opts.Tint end
     local scale=h.Scale
     local common=C.Blocks.Common
-    local width=common.Width*scale
+    local width=math.max(common.Width*scale,opts.MinWidth or 0)
     local host: any=nil
     if costs.Part>0 then
         host=take(h,"Part",nil)
@@ -4212,7 +4592,24 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
         host.CFrame=if typeof(opts.Frame)=="CFrame" then opts.Frame else CFrame.new(position)
     end
     local update: (number,number,number)->() = function() end
-    if name=="RingBurst" or name=="ShockwaveRing" or name=="GroundRune" then
+    if name=="SigilStencil" then
+        local paths=stencil(c,low,opts)
+        local lines={}
+        for _,path in ipairs(paths) do
+            for i=1,#path-1 do table.insert(lines,{Line=segment(h,host,width,p.Accent),A=path[i],B=path[i+1]}) end
+        end
+        update=function(_dt: number,age: number,_t: number)
+            if opts.MoveTo then
+                local t=if h.ReducedMotion then 1 else math.clamp(age/c.Duration,0,1)
+                host.CFrame=(if typeof(opts.Frame)=="CFrame" then opts.Frame else CFrame.new(position))+(opts.MoveTo-position)*t
+            end
+            local fade=common.Alpha+(1-common.Alpha)*alpha(age,c.Duration,common.FadeStart)
+            for _,entry in ipairs(lines) do
+                local function vertex(v: any): Vector3 return point((v[1]-0.5)*c.Size*scale,(0.5-v[2])*c.Size*scale,0) end
+                setLine(entry.Line,vertex(entry.A),vertex(entry.B),fade)
+            end
+        end
+    elseif name=="RingBurst" or name=="ShockwaveRing" or name=="GroundRune" then
         local lines={}
         for _=1,segments do table.insert(lines,segment(h,host,width,p.Accent)) end
         local spokes={}
@@ -4221,7 +4618,7 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
         end
         update=function(_dt: number,age: number,t: number)
             local radius=c.Radius*scale
-            if name~="GroundRune" then radius*=c.Start+(1-c.Start)*t end
+            if name~="GroundRune" and not h.ReducedMotion then radius*=c.Start+(1-c.Start)*t end
             local fade=common.Alpha+(1-common.Alpha)*alpha(age,c.Duration,common.FadeStart)
             for i,line in ipairs(lines) do
                 local a=(i-1)/segments*TAU
@@ -4257,7 +4654,7 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
             end
         end
     elseif name=="ThreadBeam" then
-        local line=segment(h,host,c.Width*scale,p.Accent)
+        local line=segment(h,host,math.max(c.Width*scale,opts.MinWidth or 0),p.Accent)
         local endpoint=if typeof(opts.EndPosition)=="Vector3" then host.CFrame:PointToObjectSpace(opts.EndPosition) else point(c.Length*scale,0,0)
         local arch=Vector3.yAxis*c.Height*scale
         local a=Vector3.zero
@@ -4272,7 +4669,7 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
         end
         line.A.CFrame=tangentFrame(a,tangent0);line.B.CFrame=tangentFrame(endpoint,tangent1)
         line.Beam.CurveSize0=tangent0.Magnitude;line.Beam.CurveSize1=tangent1.Magnitude
-        line.Beam.Segments=c.Segments;line.Beam.Width1=c.Width*scale*c.Taper
+        line.Beam.Segments=c.Segments;line.Beam.Width1=math.max(c.Width*scale*c.Taper,opts.MinWidth or 0)
         update=function(_dt: number,age: number,_t: number)
             line.Beam.Transparency=NumberSequence.new(common.Alpha+(1-common.Alpha)*alpha(age,c.Duration,common.FadeStart))
         end
@@ -4348,8 +4745,96 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
             if trail then trail.Enabled=not h.ReducedMotion end
         end
     end
+    local wrapped=function(dt: number,age: number,t: number)
+        if host and opts.Follow then
+            if not opts.Follow.Parent then h:Finish();return end
+            host.CFrame=CFrame.new(opts.Follow.Position+(opts.Offset or Vector3.zero))*(if opts.Frame then opts.Frame.Rotation else CFrame.identity)
+        end
+        update(dt,age,t)
+    end
+    h.Update=wrapped
+    wrapped(0,0,0)
+    return h
+end
+-- One atomic reservation for the entire cast. Endpoints instantiate lazily and
+-- park independently when outside the viewport/120-stud limit.
+function Blocks.Compose(self: any,layers: {any},tier: number,priority: number,duration: number): any
+    if #layers==0 or #layers>C.Composition.MaxLayers or duration~=duration or duration<=0 or duration>C.Lifetime.Maximum then return nil end
+    local profile=self.Service:Profile()
+    local accepted={}
+    for _,layer in ipairs(layers) do
+        local pulse=layer.Name=="ImpactFlash" or layer.Name=="ScreenEdgePulse"
+        if not pulse or (not profile.ReducedMotion and (not self.LastPulse or os.clock()-self.LastPulse>=C.Safety.MinimumPulseInterval)) then
+            table.insert(accepted,layer)
+        end
+    end
+    layers=accepted
+    if #layers==0 then return nil end
+    local detail=if profile.Mobile then math.min(profile.Detail,C.Composition.MobileDetail) else profile.Detail
+    local costs={};local anchors={}
+    for _,layer in ipairs(layers) do
+        local config=C.Blocks[layer.Name]
+        if not config or typeof(layer.Position)~="Vector3" then return nil end
+        local layerDetail=math.min(detail,(layer.Options and layer.Options.Detail) or math.huge)
+        local budget=reserve(layer.Name,config,layerDetail,layerDetail<=C.Quality.Low,layer.Options)
+        for class,count in pairs(budget) do costs[class]=(costs[class] or 0)+count end
+        table.insert(anchors,layer.Position)
+    end
+    for _,layer in ipairs(layers) do
+        if layer.Options and layer.Options.MoveTo then table.insert(anchors,layer.Options.MoveTo) end
+    end
+    local h=self.Service:Begin("AbilityComposition",anchors[1],tier,priority,costs,anchors)
+    if not h then return nil end
+    h.Duration=duration
+    local groups={}
+    for _,layer in ipairs(layers) do table.insert(groups,{Layer=layer,Anchor=layer.Position,Objects={},Built=false,Child=nil,Visible=false}) end
+    h.ResolveAnchors=function()
+        for i,group in ipairs(groups) do
+            local layer=group.Layer
+            if layer.Options and layer.Options.Follow then
+                if not layer.Options.Follow.Parent then h:Finish();return end
+                layer.Position=layer.Options.Follow.Position+(layer.Options.Offset or Vector3.zero)
+            end
+            local anchor=layer.Position
+            if layer.Options and layer.Options.MoveTo then
+                local t=if h.ReducedMotion then 1 else math.clamp(h.Age/duration,0,1)
+                anchor+=(layer.Options.MoveTo-anchor)*t
+            end
+            group.Anchor=anchor;h.Anchors[i]=anchor
+        end
+    end
+    local function update(dt: number,age: number,_progress: number)
+        for _,group in ipairs(groups) do
+            local layer=group.Layer
+            local visible=self.Service:Visible(group.Anchor)
+            if layer.Options and layer.Options.EndPosition then visible=visible and self.Service:Visible(layer.Options.EndPosition) end
+            if visible and not group.Built then
+                local child: any={Scale=h.Scale,Detail=detail,ReducedMotion=h.ReducedMotion,Duration=duration}
+                function child:Acquire(class: string,parent: Instance?): any
+                    local object=h:Acquire(class,parent)
+                    if object then table.insert(group.Objects,{Object=object,Parent=object.Parent}) end
+                    return object
+                end
+                function child:Finish() h:Finish() end
+                local opts=table.clone(layer.Options or {})
+                opts.Lease=child;opts.Detail=math.min(detail,opts.Detail or math.huge);opts.Duration=duration
+                child.Detail=opts.Detail
+                opts.MinWidth=if profile.Mobile then C.Composition.MobileMinWidth else C.Composition.MinWidth
+                group.Child=self:Play(layer.Name,layer.Position,layer.Palette,tier,opts)
+                group.Built=true
+            end
+            if group.Visible~=visible then
+                for _,entry in ipairs(group.Objects) do entry.Object.Parent=if visible then entry.Parent else nil end
+                group.Visible=visible
+            end
+            if visible and group.Child and group.Child.Update then
+                group.Child.Update(dt,age,math.clamp(age/duration,0,1))
+            end
+        end
+    end
     h.Update=update
-    update(0,0,0)
+    local ok=pcall(function() h.ResolveAnchors();if h.Active then update(0,0,0) end end)
+    if not ok then self.Service.Errors+=1;h:Finish();return nil end
     return h
 end
 return Blocks
@@ -4471,6 +4956,142 @@ return MotionSpring
 ```
 
 
+## src/StarterPlayer/StarterPlayerScripts/Visuals/PathwayEffects/Apprentice.lua
+
+**ModuleScript** at `StarterPlayer/StarterPlayerScripts/Visuals/PathwayEffects/Apprentice`. Create matching Folder parents.
+
+```lua
+--!strict
+-- Door/travel motifs; does not create gateways, move rigs or change collisions.
+local C=require(game:GetService("ReplicatedStorage").Shared.VfxConfig)
+local Apprentice={}
+function Apprentice.Build(a: any,e: any,c: any): (any,number?)
+    if a.Id=="Apprentice_9" then
+        local target=e.Target
+        if typeof(target)~="Instance" or not target:IsA("BasePart") or not target.Parent then return nil,nil end
+        local at=target.Position-Vector3.yAxis*(target.Size.Y/2)
+        return {c.Layer("DoorFrame",at,{Frame=CFrame.new(at)*target.CFrame.Rotation,Scale=1/C.Tier[e.Tier].Scale,
+            Width=target.Size.X+C.Ability.DoorMargin,Height=target.Size.Y+C.Ability.DoorMargin})},C.Composition.ResultLife
+    elseif a.Id=="Apprentice_5" then
+        local layers={}
+        for _,endpoint in ipairs({e.Origin,e.Destination}) do
+            local at=endpoint+Vector3.yAxis*C.Ability.GroundOffset
+            table.insert(layers,c.Layer("DoorFrame",at,{Frame=c.Frame(at),Scale=C.Ability.TravelScale}))
+        end
+        return layers,C.Ability.EndpointLife
+    end
+    return nil,nil
+end
+return Apprentice
+```
+
+
+## src/StarterPlayer/StarterPlayerScripts/Visuals/PathwayEffects/Marauder.lua
+
+**ModuleScript** at `StarterPlayer/StarterPlayerScripts/Visuals/PathwayEffects/Marauder`. Create matching Folder parents.
+
+```lua
+--!strict
+-- Original transfer geometry. Captured/released outcomes are supplied by the server.
+local C=require(game:GetService("ReplicatedStorage").Shared.VfxConfig)
+local Marauder={}
+function Marauder.Build(a: any,e: any,c: any): (any,number?)
+    if a.Id~="Marauder_9" and a.Id~="Marauder_6" then return nil,nil end
+    local from=e.Position+Vector3.yAxis*C.Ability.HandHeight
+    local to=e.Destination+Vector3.yAxis*C.Ability.HandHeight
+    if e.Outcome=="Released" then from,to=to,from end
+    return {c.Layer("ThreadBeam",from,{EndPosition=to,Scale=C.Ability.TransferScale,Tint=C.Ability.TheftTint}),
+        c.Layer("SigilStencil",from,{Frame=c.Frame(from),Glyph=C.Ability.TheftGlyph,LowGlyph=C.Ability.TheftGlyph,
+            MoveTo=to,Scale=C.Ability.DefaultScale})},if a.Id=="Marauder_9" then C.Ability.PickpocketLife else C.Ability.TheftLife
+end
+return Marauder
+```
+
+
+## src/StarterPlayer/StarterPlayerScripts/Visuals/PathwayEffects/Seer.lua
+
+**ModuleScript** at `StarterPlayer/StarterPlayerScripts/Visuals/PathwayEffects/Seer`. Create matching Folder parents.
+
+```lua
+--!strict
+-- Canon-inspired motifs; geometry/poses are original gameplay presentation [UNVERIFIED].
+local C=require(game:GetService("ReplicatedStorage").Shared.VfxConfig)
+local Seer={}
+function Seer.Build(a: any,e: any,c: any): (any,number?)
+    if a.Id=="Seer_9_Secondary" then
+        local at=e.Destination+Vector3.yAxis*C.Ability.ReadHeight
+        local layers={c.Layer("SigilStencil",at,{Frame=c.Frame(at),Glyph=C.Ability.EyeGlyph,LowGlyph=C.Ability.LowEyeGlyph,Scale=C.Ability.EyeScale})}
+        if not c.Simplified then table.insert(layers,c.Layer("GroundRune",e.Destination+Vector3.yAxis*C.Ability.GroundOffset,
+            {Scale=C.Ability.DefaultScale,Detail=C.Ability.ReadGroundDetail})) end
+        return layers,C.Composition.ResultLife
+    elseif a.Id=="Seer_7" then
+        local layers={}
+        for _,at in ipairs({e.Origin,e.Destination}) do
+            table.insert(layers,c.Layer("RingBurst",at+Vector3.yAxis*C.Ability.GroundOffset,{Scale=C.Ability.FlameScale,Tint=C.Ability.FlameRim}))
+            table.insert(layers,c.Layer("RisingMotes",at,{Scale=C.Ability.FlameScale,Tint=C.Ability.FlameTint}))
+        end
+        return layers,C.Ability.EndpointLife
+    end
+    return nil,nil
+end
+return Seer
+```
+
+
+## src/StarterPlayer/StarterPlayerScripts/Visuals/StatusPresentation.lua
+
+**ModuleScript** at `StarterPlayer/StarterPlayerScripts/Visuals/StatusPresentation`. Create matching Folder parents.
+
+```lua
+--!strict
+-- Private sensing targets are granted by the server. No discovery/raycast runs here.
+local C=require(game:GetService("ReplicatedStorage").Shared.VfxConfig)
+local Status={}
+function Status.new(service: any,clock: ()->number): any
+    return setmetatable({Service=service,Clock=clock,Entries={}},{__index=Status})
+end
+function Status.Reveal(self: any,event: any,pathway: string)
+    local life=math.clamp((event.ExpiresAt or 0)-self.Clock(),0,C.Protocol.RevealLife)
+    if life<=0 then return end
+    local palette=C.Palettes[pathway]
+    local count=0
+    for target,entry in pairs(self.Entries) do
+        if not entry.Active then self.Entries[target]=nil else count+=1 end
+    end
+    for _,item in ipairs(event.Targets) do
+        local target=item.Target
+        if typeof(target)~="Instance" or not target.Parent or not self.Service:Visible(item.Position) then continue end
+        local previous=self.Entries[target]
+        if previous and previous.Active then previous.Age=0;previous.Duration=life;continue end
+        if count>=C.Protocol.MaxStatuses then break end
+        local h=self.Service:Begin("PrivateReveal",item.Position,1,C.Ability.RevealPriority,{Highlight=1})
+        if not h then continue end
+        count+=1;self.Entries[target]=h;h.Duration=life
+        local highlight=h:Acquire("Highlight")
+        highlight.Adornee=target;highlight.FillColor=palette.Primary;highlight.OutlineColor=palette.Accent
+        highlight.FillTransparency=C.Ability.RevealFill;highlight.OutlineTransparency=C.Ability.RevealOutline
+        h.Update=function(_dt: number,_age: number,t: number)
+            if not target.Parent then h:Finish();return end
+            if target:IsA("BasePart") then h.Position=target.Position
+            elseif target:IsA("Model") then
+                local root=target.PrimaryPart or target:FindFirstChild("HumanoidRootPart")
+                if root and root:IsA("BasePart") then h.Position=root.Position end
+            end
+            highlight.FillTransparency=C.Ability.RevealFill+(1-C.Ability.RevealFill)*t
+            highlight.OutlineTransparency=C.Ability.RevealOutline+(1-C.Ability.RevealOutline)*t
+        end
+    end
+end
+function Status.Step(self: any)
+    for target,entry in pairs(self.Entries) do if not entry.Active then self.Entries[target]=nil end end
+end
+function Status.Clear(self: any)
+    for _,entry in pairs(self.Entries) do entry:Finish() end;table.clear(self.Entries)
+end
+return Status
+```
+
+
 ## src/StarterPlayer/StarterPlayerScripts/Visuals/VfxService.lua
 
 **ModuleScript** at `StarterPlayer/StarterPlayerScripts/Visuals/VfxService`. Create matching Folder parents.
@@ -4553,7 +5174,7 @@ function Handle.Finish(self: any)
     for _,entry in ipairs(self.Objects) do
         park(entry.Object,entry.Class);table.insert(owner.Pools[entry.Class],entry.Object)
     end
-    table.clear(self.Objects);self.Update=nil;self.OnFinish=nil
+    table.clear(self.Objects);self.Update=nil;self.OnFinish=nil;self.ResolveAnchors=nil;self.Anchors=nil;self.Character=nil;self.CasterId=nil
 end
 Handle.Stop=Handle.Finish
 function Service.new(options: any?): any
@@ -4561,7 +5182,7 @@ function Service.new(options: any?): any
     local folder=Instance.new("Folder");folder.Name="LocalVisualFramework";folder.Parent=workspace
     local mobile=if settings.Mobile~=nil then settings.Mobile else UserInputService.TouchEnabled
     local limits=if mobile then Config.Pools.Mobile else Config.Pools.Desktop
-    local self: any=setmetatable({Folder=folder,Camera=settings.Camera,Mobile=mobile,
+    local self: any=setmetatable({Folder=folder,Camera=settings.Camera,Mobile=mobile,MobileOverride=settings.Mobile,
         LowGraphics=settings.LowGraphics==true,ReducedMotion=settings.ReducedMotion==true,
         Pools={},Allocated={},Limits=limits,Active={},Serial=0,Evicted=0,Dropped=0,Errors=0,Destroyed=false,ProfileKey=""},Service)
     for class in pairs(limits) do self.Pools[class]={};self.Allocated[class]=0 end
@@ -4569,6 +5190,21 @@ function Service.new(options: any?): any
     return self
 end
 function Service._Refresh(self: any)
+    local mobile=if self.MobileOverride~=nil then self.MobileOverride else UserInputService.TouchEnabled
+    if mobile~=self.Mobile then
+        local finishing={}
+        for _,effect in pairs(self.Active) do table.insert(finishing,effect) end
+        for _,effect in ipairs(finishing) do effect:Finish() end
+        self.Mobile=mobile;self.Limits=if mobile then Config.Pools.Mobile else Config.Pools.Desktop
+        for class,pool in pairs(self.Pools) do
+            while self.Allocated[class]>self.Limits[class] do
+                local object=table.remove(pool)
+                if not object then break end
+                object:Destroy();self.Allocated[class]-=1
+            end
+        end
+        self.ProfileKey=""
+    end
     local level=qualityLevel()
     local q=Config.Quality
     local low=self.LowGraphics or level<=q.LowLevel
@@ -4609,8 +5245,17 @@ function Service.PowerTier(sequence: number): number
     if sequence>=Config.TierSequences.Middle then return 2 end
     return #Config.Tier
 end
-function Service.Begin(self: any,name: string,position: Vector3,tier: number,priority: number,costs: {[string]:number}?): any
-    if not self:Visible(position) then self.Dropped+=1;return nil end
+function Service.Begin(self: any,name: string,position: Vector3,tier: number,priority: number,costs: {[string]:number}?,anchors: {Vector3}?): any
+    if not validPosition(position) then self.Dropped+=1;return nil end
+    if anchors then
+        if #anchors==0 or #anchors>Config.Composition.MaxAnchors then self.Dropped+=1;return nil end
+        local visible=false
+        for _,anchor in ipairs(anchors) do
+            if not validPosition(anchor) then self.Dropped+=1;return nil end
+            visible=self:Visible(anchor) or visible
+        end
+        if not visible then self.Dropped+=1;return nil end
+    elseif not self:Visible(position) then self.Dropped+=1;return nil end
     self:_Refresh()
     if not finite(tier) then self.Dropped+=1;return nil end
     local request=costs or Config.DefaultCosts
@@ -4628,7 +5273,7 @@ function Service.Begin(self: any,name: string,position: Vector3,tier: number,pri
     local effect: any=setmetatable({Owner=self,Id=id,Name=name,Position=position,Tier=resolvedTier,
         Scale=Config.Tier[resolvedTier].Scale,Detail=self:Detail(position),Low=self.CurrentProfile.Low,
         ReducedMotion=self.ReducedMotion,Priority=priority,Costs=table.clone(request),Acquired={},Objects={},
-        Age=0,Duration=Config.Lifetime.Default,Active=true,Update=nil,OnFinish=nil},Handle)
+        Age=0,Duration=Config.Lifetime.Default,Active=true,Update=nil,OnFinish=nil,Anchors=anchors and table.clone(anchors)},Handle)
     self.Active[id]=effect
     return effect
 end
@@ -4644,8 +5289,16 @@ function Service.Step(self: any,dt: number)
     for _,effect in ipairs(snapshot) do
         if not effect.Active then continue end
         effect.Age+=dt
+        if effect.ResolveAnchors then
+            local ok=pcall(effect.ResolveAnchors)
+            if not ok then self.Errors+=1;effect:Finish() end
+            if not effect.Active then continue end
+        end
         local duration=if finite(effect.Duration) then math.clamp(effect.Duration,0,Config.Lifetime.Maximum) else Config.Lifetime.Default
-        if not self:Visible(effect.Position) then effect:Finish();continue end
+        local visible=false
+        if effect.Anchors then for _,anchor in ipairs(effect.Anchors) do visible=self:Visible(anchor) or visible end
+        else visible=self:Visible(effect.Position) end
+        if not visible then effect:Finish();continue end
         local progress=if duration>0 then math.clamp(effect.Age/duration,0,1) else 1
         if effect.Update then
             local ok=pcall(effect.Update,math.min(dt,Config.Lifetime.MaxStep),effect.Age,progress)
@@ -4687,6 +5340,8 @@ local Lighting=game:GetService("Lighting")
 local Shared=game:GetService("ReplicatedStorage").Shared
 local T=require(Shared.Theme)
 local A=require(Shared.AnimConfig)
+local V=require(Shared.VfxConfig)
+local Data=require(Shared.GameData)
 local Kit=require(script.Parent.Parent.UI.Kit)
 local Blocks=require(script.Parent.EffectBlocks)
 local TestRoom={}
@@ -4729,6 +5384,28 @@ function TestRoom.new(parent: Instance,presentation: any,callbacks: any): any
         elseif self.GrayEffect then self.GrayEffect:Destroy();self.GrayEffect=nil end
         self.GrayButton.Text="Silhouette view: "..(if self.Gray then "grayscale" else "color")
     end)
+    local function abilityPreview(id: string,variant: string,cancel: boolean?,mode: string?)
+        if not self.Stage then self:StageAtCamera() end
+        local camera=workspace.CurrentCamera
+        if not camera then return end
+        local origin=self.Position
+        local destination=origin+camera.CFrame.RightVector*T.TestRoom.AbilityOffset
+        local target=self.Dummy
+        if id=="Apprentice_9" then target=self.PreviewDoor end
+        if mode=="HiddenOrigin" then origin=camera.CFrame.Position-camera.CFrame.LookVector*T.TestRoom.PreviewDistance
+        elseif mode=="DistantArrival" then destination=camera.CFrame.Position+camera.CFrame.LookVector*(V.Quality.MaximumDistance+T.TestRoom.PreviewBeyond) end
+        presentation:PreviewAbility(id,variant,origin,destination,target,cancel)
+    end
+    for _,id in ipairs(V.Ability.Pilots) do
+        row("Ability · "..Data.Abilities[id].Name,function() abilityPreview(id,if id=="Marauder_9" then "Taken" elseif id=="Marauder_6" then "Captured" else "Confirmed") end)
+    end
+    row("Ability Theft · release stored power",function() abilityPreview("Marauder_6","Released") end)
+    row("Cancel windup · no release",function() abilityPreview("Seer_9_Secondary","Confirmed",true) end)
+    row("Travel · origin behind camera",function() abilityPreview("Apprentice_5","Confirmed",false,"HiddenOrigin") end)
+    row("Travel · arrival beyond 120 studs",function() abilityPreview("Apprentice_5","Confirmed",false,"DistantArrival") end)
+    for _,id in ipairs({"Seer_1","Marauder_1","Apprentice_1"}) do
+        row("Generic fallback · "..Data.Abilities[id].PathwayId.." tier 3",function() abilityPreview(id,"Confirmed") end)
+    end
     for _,name in ipairs(Blocks.Names) do
         for tier=1,#require(Shared.VfxConfig).Tier do
             row(name.." · Tier "..tier,function()
@@ -4780,6 +5457,12 @@ function TestRoom.StageAtCamera(self: any)
     local body=Kit.New("Part",self.Dummy,{Name="Torso",Anchored=true,CanCollide=false,CanTouch=false,CanQuery=false,
         Size=Vector3.new(size[4],size[5],size[6]),Position=center,Color=T.Colors.Slate,CastShadow=false})
     self.Dummy.PrimaryPart=body
+    local doorSize=T.TestRoom.PreviewDoorSize
+    local doorCenter=center+camera.CFrame.RightVector*T.TestRoom.AbilityOffset+Vector3.yAxis*(T.TestRoom.FloorOffset+doorSize[2]/2)
+    local toward=Vector3.new(camera.CFrame.Position.X-doorCenter.X,0,camera.CFrame.Position.Z-doorCenter.Z)
+    local doorFrame=if toward.Magnitude>T.TestRoom.OrientationEpsilon then CFrame.lookAt(doorCenter,doorCenter+toward) else CFrame.new(doorCenter)
+    self.PreviewDoor=Kit.New("Part",self.Stage,{Name="LocalPreviewDoor",Anchored=true,CanCollide=false,CanTouch=false,CanQuery=false,
+        Size=Vector3.new(doorSize[1],doorSize[2],doorSize[3]),CFrame=doorFrame,Color=T.Colors.Slate,Transparency=T.TestRoom.FloorAlpha,CastShadow=false})
     Kit.New("Part",self.Dummy,{Name="Head",Anchored=true,CanCollide=false,CanTouch=false,CanQuery=false,
         Size=Vector3.one*T.TestRoom.HeadSize,Position=center+Vector3.new(0,T.TestRoom.HeadHeight,0),Color=T.Colors.Muted,CastShadow=false})
     Kit.New("Humanoid",self.Dummy,{RequiresNeck=false,DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None})

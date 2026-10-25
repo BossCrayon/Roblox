@@ -40,6 +40,21 @@
     "explorer_path": "ServerScriptService/Services/WorldService"
   },
   {
+    "file": "src/ServerScriptService/Services/EffectService.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ServerScriptService/Services/EffectService"
+  },
+  {
+    "file": "src/ServerScriptService/Services/VisualEventService.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "ServerScriptService/Services/VisualEventService"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/AbilityPresentation.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/AbilityPresentation"
+  },
+  {
     "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/AnimationController.lua",
     "script_class": "ModuleScript",
     "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/AnimationController"
@@ -63,6 +78,26 @@
     "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/MotionSpring.lua",
     "script_class": "ModuleScript",
     "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/MotionSpring"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/PathwayEffects/Apprentice.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/PathwayEffects/Apprentice"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/PathwayEffects/Marauder.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/PathwayEffects/Marauder"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/PathwayEffects/Seer.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/PathwayEffects/Seer"
+  },
+  {
+    "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/StatusPresentation.lua",
+    "script_class": "ModuleScript",
+    "explorer_path": "StarterPlayer/StarterPlayerScripts/Visuals/StatusPresentation"
   },
   {
     "file": "src/StarterPlayer/StarterPlayerScripts/Visuals/VfxService.lua",

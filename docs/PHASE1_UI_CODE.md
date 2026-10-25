@@ -2,7 +2,7 @@
 
 All 17 production Luau files are supplied in full, including later admin-control updates. Create Folder parents, keep every existing unchanged module, and **replace** same-name scripts rather than running duplicate Bootstrap/Mysteries entrypoints. Install while Play is stopped. Theme is deliberately first. The complete built place is `studio/Mysteries.rbxlx`.
 
-The reference concept images were not received. This implementation follows the Art Bible. Only Phase 1 is implemented; permanent label replacement and map redesign remain later phases.
+This UI source export includes later integrations. Install the current framework from docs/PHASE_B_VFX_CODE.md, or use docs/FULL_SOURCE.md for a blank place. The reference concept images were not received; the UI follows the Art Bible. Permanent label replacement and map redesign remain later phases.
 
 | File | Class | Explorer path |
 |---|---|---|
@@ -69,10 +69,12 @@ return freeze({
     Visuals={FlashGap=0.34,FlashOpacity=0.16,MaxDistance=120,LegacyPriority=1,
         LegacyLife=0.5,LegacyStart=1,LegacyEnd=7,LegacyAlpha=0.25,RevealPriority=3,
         GrayscaleSaturation=-1,AnimationViewDistance=120},
+    AbilityUI={StoredSize=14,StoredPad=3,StoredSymbol="◆",StoredPrefix="Stored: ",CastGrace=1,PowerNames={ArcBolt="Arc Bolt"}},
     TestRoom={Width=420,Height=540,Margin=12,Header=48,Row=44,Gap=8,Pad=12,StatusHeight=54,
         PreviewDistance=14,PreviewHeight=-2,PreviewSpacing=8,TargetOffset=8,
         FloorSize={32,0.15,26,2,3,1},HeadSize=1.5,HeadHeight=2.2,FloorAlpha=0.25,FloorOffset=-3,ButtonColumns=3,
-        DefaultTier=1,DefaultPalette="Seer",StatInterval=0.25,PreviewDamage=24,OrientationEpsilon=0.01},
+        DefaultTier=1,DefaultPalette="Seer",StatInterval=0.25,PreviewDamage=24,OrientationEpsilon=0.01,
+        AbilityOffset=-7,PreviewBeyond=10,PreviewDoorSize={7,9,0.3}},
     Input={Keys={Enum.KeyCode.Q,Enum.KeyCode.E,Enum.KeyCode.R,Enum.KeyCode.F,Enum.KeyCode.Z,Enum.KeyCode.X},
         KeyNames={"Q","E","R","F","Z","X"},Journal=Enum.KeyCode.B,Developer=Enum.KeyCode.F8,
         RayLength=500,FallbackAim=50,ConfirmGamepad=Enum.KeyCode.ButtonA},
@@ -538,18 +540,26 @@ function Hud.new(parent: Instance,data: any,callbacks: any): any
         local cost=Kit.Text(card,"",T.Type.Micro,T.Fonts.Number);cost.TextColor3=T.Colors.Spirituality;cost.TextXAlignment=Enum.TextXAlignment.Center
         local countdown=Kit.Text(face,"",T.Type.Number,T.Fonts.Number);countdown.AnchorPoint=Vector2.new(0.5,0.5);countdown.Position=UDim2.fromScale(0.5,0.5);countdown.BackgroundColor3=T.Colors.Ink;countdown.BackgroundTransparency=T.Style.PanelFade;countdown.Visible=false
         local segments={}
+        local stored=Kit.Text(face,T.AbilityUI.StoredSymbol,T.Type.Small,T.Fonts.Number)
+        stored.Name="StoredPower";stored.TextColor3=T.Colors.Bronze;stored.Visible=false;stored.TextXAlignment=Enum.TextXAlignment.Center
+        stored.Size=UDim2.fromOffset(T.AbilityUI.StoredSize,T.AbilityUI.StoredSize)
+        stored.Position=UDim2.new(1,-T.AbilityUI.StoredSize-T.AbilityUI.StoredPad,0,T.AbilityUI.StoredPad)
         for segment=1,T.Layout.Hotbar.Segments do
             local angle=(segment-1)/T.Layout.Hotbar.Segments*math.pi*2-math.pi/2
             table.insert(segments,Kit.New("Frame",face,{Name="CooldownSegment",BorderSizePixel=0,BackgroundColor3=T.Colors.Gold,
                 AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromScale(0.5+math.cos(angle)*T.Layout.Hotbar.RingRadius,0.5+math.sin(angle)*T.Layout.Hotbar.RingRadius),
                 Size=UDim2.fromOffset(T.Layout.Hotbar.SegmentWidth,T.Layout.Hotbar.SegmentHeight),Rotation=math.deg(angle)+90,Visible=false}))
         end
-        self.Slots[i]={Card=card,Face=face,Glyph=glyph,Seal=seal,EmptyGlyph=emptyGlyph,KeyBadge=badge,Key=key,Cost=cost,Countdown=countdown,Segments=segments,Id=false}
+        self.Slots[i]={Card=card,Face=face,Glyph=glyph,Seal=seal,EmptyGlyph=emptyGlyph,KeyBadge=badge,Key=key,Cost=cost,Countdown=countdown,Segments=segments,Stored=stored,Id=false}
         local function show()
             if callbacks.Touch then return end
             local id=self.State and self.State.Loadout and self.State.Loadout[i]
             local a=id and data.Abilities[id]
-            if a then self.TooltipText.Text=a.Name.." · "..tostring(a.SpiritualityCost).." spirituality";self.Tooltip.Visible=true end
+            if a then
+                self.TooltipText.Text=a.Name.." · "..tostring(a.SpiritualityCost).." spirituality"
+                if a.Id=="Marauder_6" and self.State.StolenPower then self.TooltipText.Text..=" · "..T.AbilityUI.StoredPrefix..(T.AbilityUI.PowerNames[self.State.StolenPower] or self.State.StolenPower) end
+                self.Tooltip.Visible=true
+            end
         end
         face.MouseEnter:Connect(show);face.SelectionGained:Connect(show)
         face.MouseLeave:Connect(function() self.Tooltip.Visible=false end);face.SelectionLost:Connect(function() self.Tooltip.Visible=false end)
@@ -633,6 +643,7 @@ function Hud.Render(self: any,state: any,receivedAt: number)
     Kit.Tween(self.DigestionFill,T.Timing.Fill,{Size=UDim2.fromScale(math.clamp(state.Digestion/100,0,1),1)})
     for i,slot in ipairs(self.Slots) do
         local id=state.Loadout[i];local a=id and self.Data.Abilities[id]
+        slot.Stored.Visible=id=="Marauder_6" and type(state.StolenPower)=="string"
         if slot.Id~=id then
             slot.Id=id;Kit.Clear(slot.Glyph)
             slot.Seal.Visible=not a;slot.KeyBadge.Visible=a~=nil;slot.Cost.Text=if a then "✦ "..tostring(a.SpiritualityCost) else ""
@@ -642,6 +653,14 @@ function Hud.Render(self: any,state: any,receivedAt: number)
                 icon.Size=UDim2.fromScale(1,1)
             end
         end
+    end
+    self:Step(os.clock())
+end
+function Hud.SetVisualCast(self: any,event: any)
+    if event and event.Phase=="Begin" then self.VisualCast=event
+    else
+        self.VisualCast=nil
+        if event then self.FinishedVisualToken=math.max(self.FinishedVisualToken or 0,event.Token) end
     end
     self:Step(os.clock())
 end
@@ -658,10 +677,13 @@ function Hud.Step(self: any,now: number)
         slot.Countdown.Text=if remaining>0 then string.format("%.1f",remaining) else ""
         for i,segment in ipairs(slot.Segments) do segment.Visible=i<=n end
     end
-    local a=state.Casting and self.Data.Abilities[state.Casting]
+    local visual=self.VisualCast
+    if visual and workspace:GetServerTimeNow()>visual.EndsAt+T.AbilityUI.CastGrace then self.VisualCast=nil;visual=nil end
+    local stale=(self.FinishedVisualToken or 0)>0 and (state.VisualToken or 0)<=(self.FinishedVisualToken or 0)
+    local a=if visual then self.Data.Abilities[visual.AbilityId] elseif not stale and state.Casting then self.Data.Abilities[state.Casting] else nil
     self.Cast.Visible=a~=nil
     if a then
-        local remaining=math.max(0,(state.CastRemaining or a.CastTimeSeconds)-elapsed)
+        local remaining=if visual then math.max(0,visual.EndsAt-workspace:GetServerTimeNow()) else math.max(0,(state.CastRemaining or a.CastTimeSeconds)-elapsed)
         self.CastText.Text=a.Name
         self.CastTrack.Size=UDim2.new(math.clamp(1-remaining/math.max(a.CastTimeSeconds,T.LegacyFX.MinBarFraction),0,1),0,0,T.Layout.Cast.Track)
     end
@@ -787,6 +809,9 @@ function Menus.Render(self: any)
         self.Confirm.Size=UDim2.new(0.5,-T.Layout.Modal.Gap/2,1,0);cancel.Size=self.Confirm.Size
         self:UpdatePreview()
     elseif self.Tab=="Journal" then
+        if type(state.StolenPower)=="string" then
+            self:TextRow(T.AbilityUI.StoredPrefix..(T.AbilityUI.PowerNames[state.StolenPower] or state.StolenPower).." · use Ability Theft again to release it.")
+        end
         self:TextRow("The acting method",true)
         if state.PathwayId then
             local seq=self.Data.Pathways[state.PathwayId].Sequences[state.Sequence]
@@ -1343,6 +1368,7 @@ local Blocks=require(Visuals.EffectBlocks)
 local AnimationController=require(Visuals.AnimationController)
 local CameraFeel=require(Visuals.CameraFeel)
 local HitPresentation=require(Visuals.HitPresentation)
+local AbilityPresentation=require(Visuals.AbilityPresentation)
 local Presentation={}
 function Presentation.new(gui: Instance,data: any,callbacks: any?): any
     local cb=callbacks or {}
@@ -1354,6 +1380,15 @@ function Presentation.new(gui: Instance,data: any,callbacks: any?): any
     end})
     self.Camera=CameraFeel.new()
     self.Hits=HitPresentation.new(self.VFX,self.Blocks)
+    self.Abilities=AbilityPresentation.new(self.VFX,self.Blocks,data,{
+        Clock=function() return workspace:GetServerTimeNow() end,
+        Camera=function() return workspace.CurrentCamera end,
+        LocalUserId=Players.LocalPlayer.UserId,
+        Player=function(id: number) return Players:GetPlayerByUserId(id) end,
+        Controller=function(character: Model) return self:Controller(character) end,
+        Audio=function(hook: string) self:Audio(hook) end,
+        Cast=cb.CastVisual,
+    })
     self.Camera.OnHitStop=function(seconds: number)
         local controller=self:LocalController()
         if controller then controller:Pause(seconds) end
@@ -1389,59 +1424,43 @@ function Presentation.SetSettings(self: any,reduced: boolean,low: boolean)
 end
 function Presentation.Update(self: any,state: any)
     local previous=self.State;self.State=state
+    self.Abilities:Update(state)
     if not state.Ready then return end
     local controller=self:LocalController()
-    if controller and not self.Demo then
-        if state.Casting and state.Casting~=self.Cast then controller:Play("CastWindup")
-        elseif not state.Casting and self.Cast then controller:Stop("CastWindup") end
-        if previous and previous.Ready and state.Health<previous.Health then
-            controller:Play("HitReact");self.Camera:Kick(1);self.Camera:HitStop()
-        end
+    if controller and not self.Demo and previous and previous.Ready and state.Health<previous.Health then
+        controller:Play("HitReact");self.Camera:Kick(1);self.Camera:HitStop()
     end
-    self.Cast=state.Casting or nil
 end
 function Presentation.Event(self: any,event: any)
+    if event.Kind=="AbilityVisual" then self.Abilities:Event(event);return end
     if not self.VFX:Visible(event.Position) then return end
     if event.Kind=="Damage" then
         self.Hits:Hit(event)
         if self.Callbacks.Damage then self.Callbacks.Damage(event) end
         if event.Owner==Players.LocalPlayer.UserId then self.Camera:Kick(1);self.Camera:HitStop() end
-        return
-    end
-    if event.Kind=="VoiceProfile" then self:Audio(event.Hook,event.Pitch);return end
-    local ability=self.Data.Abilities[event.Kind]
-    if ability then self:Audio(ability.SFXHook) end
-    if event.Owner then
-        local caster=Players:GetPlayerByUserId(event.Owner)
-        local controller=caster and self:Controller(caster.Character)
-        if controller and (ability or event.Kind=="Melee") then
-            controller:Stop("CastWindup");controller:Play("CastRelease")
-        end
-    end
-    if event.Kind=="Reveal" and typeof(event.Target)=="Instance" then
-        local h=self.VFX:Begin("Reveal",event.Position,1,T.Visuals.RevealPriority,{Highlight=1})
-        if not h then return end
-        h.Duration=C.Hit.RevealLife
-        local highlight=h:Acquire("Highlight")
-        highlight.Adornee=event.Target;highlight.FillColor=T.Colors.Sanity;highlight.OutlineColor=T.Colors.Fog
-        highlight.FillTransparency=T.LegacyFX.HighlightAlpha
+    elseif event.Kind=="VoiceProfile" then self:Audio(event.Hook,event.Pitch)
+    elseif event.Kind=="Reveal" and typeof(event.Target)=="Instance" then
+        -- Compatibility for old server reveal packets; current servers send private batches.
+        self.Abilities.Status:Reveal({Targets={{Target=event.Target,Position=event.Position}},
+            ExpiresAt=workspace:GetServerTimeNow()+C.Protocol.RevealLife},"Seer")
     elseif event.Kind~="Whisper" then
-        -- Preserve the old neutral pulse during Phase A. Pathway-specific layering
-        -- is deliberately deferred until the user continues to Phases B-D.
-        local h=self.VFX:Begin("LegacyPulse",event.Position,1,T.Visuals.LegacyPriority,{Part=1})
-        if not h then return end
-        h.Duration=T.Visuals.LegacyLife
-        local p=h:Acquire("Part")
-        p.Shape=Enum.PartType.Ball;p.Color=if ability then Kit.PathColor(ability.PathwayId) else T.Colors.Fog
-        p.Position=event.Position;p.Size=Vector3.one*T.Visuals.LegacyStart;p.Transparency=T.Visuals.LegacyAlpha
-        h.Update=function(_dt: number,_age: number,t: number)
-            p.Size=Vector3.one*(T.Visuals.LegacyStart+(T.Visuals.LegacyEnd-T.Visuals.LegacyStart)*t)
-            p.Transparency=T.Visuals.LegacyAlpha+(1-T.Visuals.LegacyAlpha)*t
-        end
+        local name=if event.Kind=="Defeat" then "RisingMotes" elseif event.Kind=="Substitute" then "RingBurst" else "ImpactFlash"
+        self.Blocks:Compose({{Name=name,Position=event.Position,Palette="Seer",Options={Scale=C.Ability.DefaultScale}}},1,
+            C.Composition.Priority,C.Composition.ResultLife)
     end
 end
 function Presentation.Step(self: any,dt: number)
-    self.VFX:Step(dt);self.ScanElapsed+=dt
+    self.VFX:Step(dt);self.Abilities:Step();self.ScanElapsed+=dt
+    if self.AbilityDemo and workspace:GetServerTimeNow()>=self.AbilityDemo.EndsAt then
+        local demo=self.AbilityDemo;self.AbilityDemo=nil
+        if demo.Windup then demo.Windup:Finish() end
+        local controller=self:LocalController()
+        if controller then
+            controller:Stop("CastWindup",C.Composition.CancelFade)
+            if not demo.Cancel then controller:Play("CastRelease",nil,nil,C.Ability.Profiles[demo.Id]) end
+        end
+        if not demo.Cancel then self.Abilities:Preview(demo.Id,demo.Variant,demo.Origin,demo.Destination,demo.Target) end
+    end
     if self.ScanElapsed<T.TestRoom.StatInterval then return end;self.ScanElapsed=0
     local wanted={}
     for _,player in ipairs(Players:GetPlayers()) do
@@ -1460,14 +1479,30 @@ function Presentation.DemoAnimation(self: any,name: string)
     if not controller then return end
     controller:Stop();controller.AutoLocomotion=false;self.Demo=true;controller:Play(name)
 end
+function Presentation.PreviewAbility(self: any,id: string,variant: string,origin: Vector3,destination: Vector3,target: Instance?,cancel: boolean?)
+    self:StopDemoAnimation()
+    local a=self.Data.Abilities[id]
+    if not a then return end
+    local controller=self:LocalController()
+    if controller then controller:Play("CastWindup",nil,nil,C.Ability.Profiles[id]) end
+    local windup=self.Abilities:Preview(id,variant,origin,destination,target,"Begin")
+    self.AbilityDemo={Id=id,Variant=variant,Origin=origin,Destination=destination,Target=target,Cancel=cancel,
+        Windup=windup,EndsAt=workspace:GetServerTimeNow()+a.CastTimeSeconds}
+end
 function Presentation.StopDemoAnimation(self: any)
+    if self.AbilityDemo then
+        if self.AbilityDemo.Windup then self.AbilityDemo.Windup:Finish() end
+        self.AbilityDemo=nil
+        local active=self:LocalController();if active then active:Stop("CastWindup",C.Composition.CancelFade) end
+    end
+    self.Abilities:ClearPreviews()
     if not self.Demo then return end
     self.Demo=false
     local controller=self:LocalController()
     if controller then controller:Stop();controller.AutoState=nil;controller.AutoLocomotion=true end
 end
 function Presentation.Destroy(self: any)
-    self.Camera:Destroy();self.VFX:Destroy()
+    self.Abilities:Destroy();self.Camera:Destroy();self.VFX:Destroy()
     for _,controller in pairs(self.Controllers) do controller:Destroy() end
     table.clear(self.Controllers)
 end
@@ -1584,6 +1619,7 @@ menus=Menus.new(safeRoot,data,{Intent=send,Modal=function(open: boolean)
 end,ReducedMotion=function(reduced: boolean) visualSettings(reduced,menus.LowGraphics) end,
     LowGraphics=function(low: boolean) visualSettings(menus.ReducedMotion,low) end})
 presentation=Presentation.new(gui,data,{Damage=function(event: any) feedback:Damage(event) end,
+    CastVisual=function(event: any) hud:SetVisualCast(event) end,
     ScreenEdgePulse=function() feedback:Flash() end})
 testRoom=VfxTestRoom.new(safeRoot,presentation,{Modal=function(open: boolean) roomModal=open;updateModal() end,
     ReducedMotion=function(reduced: boolean) menus.ReducedMotion=reduced;visualSettings(reduced,menus.LowGraphics) end,
@@ -1685,6 +1721,7 @@ type Fields = {
     Data: any, Domain: any, States: {[Player]: any}, FX: RemoteEvent,
     Folder: Folder, NPCFolder: Folder, Transient: Folder, Entities: {[Model]: any},
     Spawns: {any}, Clock: number, OnInteraction: ((Player, string) -> ())?,
+    Visuals: any?,
 }
 type World = typeof(setmetatable({} :: Fields, World))
 
@@ -2032,6 +2069,8 @@ local Sessions=require(script.Parent.Domain.SessionStore)
 local RateLimiter=require(script.Parent.Domain.RateLimiter)
 local World=require(script.Parent.Services.WorldService)
 local Effects=require(script.Parent.Services.EffectService)
+local VisualEvents=require(script.Parent.Services.VisualEventService)
+local VfxConfig=require(ReplicatedStorage.Shared.VfxConfig)
 local domain=Domain.new(data)
 local states: {[Player]: any}={}
 local sessions: {[Player]: any}={}
@@ -2064,6 +2103,8 @@ local function notify(player: Player,text: string)
     if player.Parent then stateEvent:FireClient(player,{Message=string.sub(text,1,data.Runtime.MaxMessageLength)}) end
 end
 local world=World.new(data,domain,states,fx)
+local visualEvents=VisualEvents.new(world,VfxConfig.Protocol,function() return workspace:GetServerTimeNow() end)
+world.Visuals=visualEvents
 local effects=Effects.new(world,domain,notify)
 world:Build()
 local function applyStats(player: Player,s: any,refill: boolean)
@@ -2088,8 +2129,8 @@ local function sendState(player: Player)
         Digestion=p.Digestion,ActingProgress=p.ActingProgress,Health=s.Health,MaxHealth=s.Stats.Health,
         Spirituality=s.Spirituality,MaxSpirituality=s.Stats.Spirituality,Sanity=s.Sanity,Mode=s.Mode,
         Gold=p.Gold,WishCredits=p.WishCredits,Inventory=Domain.Copy(p.Inventory),Loadout=Domain.Copy(p.AbilityLoadout),
-        Cooldowns=cooldowns,Statuses=statuses,Dead=s.Dead,RecordedCharges=s.RecordedPower and s.RecordedPower.Charges or 0,
-        Casting=s.Pending and s.Pending.Id or false,CastRemaining=s.Pending and math.max(0,s.Pending.EndsAt-now) or 0})
+        Cooldowns=cooldowns,Statuses=statuses,Dead=s.Dead,RecordedCharges=s.RecordedPower and s.RecordedPower.Charges or 0,StolenPower=s.StolenPower or false,
+        Casting=s.Pending and s.Pending.Id or false,CastRemaining=s.Pending and math.max(0,s.Pending.EndsAt-now) or 0,CastSerial=s.CastSerial,VisualToken=s.VisualToken or 0})
 end
 local function bindCharacter(player: Player,character: Model)
     if bound[player]==character then return end
@@ -2181,6 +2222,7 @@ local function releasePlayer(player: Player)
     if releasing[player] then return end
     releasing[player]=true;releaseCount+=1
     local s=states[player];local handle=sessions[player]
+    visualEvents:Remove(player)
     if s then s.Ready=false;s.Pending=nil end
     effects:RemoveGates(player);world:Cleanup(player)
     if handle and s then
@@ -2247,6 +2289,7 @@ intent.OnServerEvent:Connect(function(player: Player,action: any,payload: any)
         local pending,reason=domain:BeginCast(s,payload.Id,now)
         if not pending then notify(player,reason or "Cannot cast");return end
         pending.Input=input
+        visualEvents:Begin(context,now)
     elseif action=="Melee" then
         local root=world:Root(player)
         if not root or not world:FiniteVector(root.Position) or s.Mode~="Normal" or s.Pending or now-s.LastMelee<data.Runtime.MeleeCooldown then return end
@@ -2317,7 +2360,7 @@ task.spawn(function()
                 end)
             end
         end
-        world:Step(math.min(dt,1),now);effects:Step(now)
+        world:Step(math.min(dt,1),now);effects:Step(now);visualEvents:Step()
         if now>=nextState then
             nextState=now+data.Runtime.StateIntervalSeconds
             for player in pairs(states) do if player.Parent then sendState(player) end end

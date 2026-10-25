@@ -37,10 +37,13 @@ function Effects.Execute(self: Effects, context: any,now: number): (boolean,stri
     local a=context.Ability;local op=a.Operation
     local handler=op and handlers[op.Kind]
     if not handler then return false,"No executor exists for this ability" end
+    local visuals=self.World.Visuals
+    local before=visuals and visuals:Capture(context)
     local ok,message,evidence=handler(self,context,op,now)
+    if visuals then visuals:Result(context,before,ok,evidence,now) end
     if ok then
         local world=self.World
-        world:Effect(context.Position,a.Id,context.Player,context.Entity and context.Entity.Model)
+        if not visuals then world:Effect(context.Position,a.Id,context.Player,context.Entity and context.Entity.Model) end
         if op.Signal and evidence~=false then
             self.Domain:Act(context.State,op.Signal,"cast:"..tostring(context.State.CastSerial),now)
         end
@@ -77,7 +80,8 @@ handlers.Sense=function(self: any,c: any,op: any,now: number)
         end
     end
     buff(self,c,op,now)
-    for _,e in ipairs(enemies) do self.World.FX:FireClient(c.Player,{Kind="Reveal",Position=e.Root.Position,Target=e.Model}) end
+    if self.World.Visuals then self.World.Visuals:Reveal(c,enemies,now)
+    else for _,e in ipairs(enemies) do self.World.FX:FireClient(c.Player,{Kind="Reveal",Position=e.Root.Position,Target=e.Model}) end end
     if enemies[1] then
         local e=enemies[1]
         self.Notify(c.Player,"Reading: omen "..tostring(e.Model:GetAttribute("Omen")).." · target HP "..tostring(math.ceil(e.Humanoid.Health)))
@@ -86,11 +90,14 @@ handlers.Sense=function(self: any,c: any,op: any,now: number)
 end
 handlers.SenseDoors=function(self: any,c: any,op: any,now: number)
     buff(self,c,op,now)
+    local revealed={}
     for _,door in ipairs(CollectionService:GetTagged("MysticDoor")) do
         if door:IsA("BasePart") and (door.Position-c.Root.Position).Magnitude<=c.State.Stats.Perception then
-            self.World.FX:FireClient(c.Player,{Kind="Reveal",Position=door.Position,Target=door})
+            if self.World.Visuals then table.insert(revealed,{Part=door,Position=door.Position})
+            else self.World.FX:FireClient(c.Player,{Kind="Reveal",Position=door.Position,Target=door}) end
         end
     end
+    if self.World.Visuals then self.World.Visuals:Reveal(c,revealed,now) end
     return true,"Passages revealed"
 end
 handlers.Dodge=function(self: any,c: any,op: any,now: number)
@@ -308,6 +315,7 @@ handlers.OpenDoor=function(self: any,c: any,op: any,now: number)
     end
     if not nearest or self.OpenDoors[nearest] then return false,"Aim at a closed practice door" end
     nearest.CanCollide=false;nearest.Transparency=0.75;self.OpenDoors[nearest]=now+20
+    c.VisualTarget=nearest;c.VisualExpires=self.OpenDoors[nearest]
     return true,"Locked passage opened"
 end
 handlers.Travel=function(self: any,c: any,op: any,now: number)

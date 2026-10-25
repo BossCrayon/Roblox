@@ -26,9 +26,17 @@ assert len(modules)==len(list((root/'src').rglob('*.lua')))-2,'Missing ModuleScr
 for element in [*scripts,*clients,*modules]:
     source=element.find('./Properties/*[@name="Source"]')
     assert source is not None and source.text and source.text.startswith('--!strict'), 'Missing source/strict directive'
-expected={p.name.removesuffix('.lua').removesuffix('.server').removesuffix('.client'):p.read_text() for p in (root/'src').rglob('*.lua')}
-for element in [*scripts,*clients,*modules]:
+expected={str(p.relative_to(root/'src').parent/p.name.removesuffix('.lua').removesuffix('.server').removesuffix('.client')):p.read_text()
+          for p in (root/'src').rglob('*.lua')}
+seen=set()
+def inspect(element,parent=''):
     name=element.find('./Properties/string[@name="Name"]').text
-    source=element.find('./Properties/*[@name="Source"]').text
-    assert source==expected[name], 'Stale or mismatched source: '+name
+    path=parent+'/'+name if parent else name
+    if element.get('class') in {'Script','LocalScript','ModuleScript'}:
+        source=element.find('./Properties/*[@name="Source"]').text
+        assert path in expected and source==expected[path], 'Stale or mismatched source: '+path
+        seen.add(path)
+    for child in element.findall('./Item'): inspect(child,path)
+for element in place.findall('./Item'): inspect(element)
+assert seen==set(expected),'Missing Explorer paths in generated place'
 print('PASS: generated place contains server/client entrypoints and all '+str(len(modules))+' ModuleScripts',flush=True)

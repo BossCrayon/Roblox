@@ -147,6 +147,7 @@ return function(data: any,load: any,sharedNode: any)
         return tween
     end},Players={LocalPlayer={UserId=7}}}
     local environment={game={GetService=function(_self,id) return assert(services[id],id) end},Enum=enum,Color3=color,
+        workspace={GetServerTimeNow=function() return now end},
         Instance={new=object},UDim=udim,UDim2=u2,Vector2={new=v2,zero=v2(0,0)},ColorSequence={new=function(...) return {...} end},
         TweenInfo={new=function(t) return {Time=t} end},NumberSequence={new=function(...) return {...} end},task=scheduler,os={clock=function() return now end}}
     local Kit=load("Client/UI/Kit",environment)
@@ -243,6 +244,20 @@ return function(data: any,load: any,sharedNode: any)
     local service={Enabled=true,PromptShown=signal(),PromptHidden=signal(),PromptButtonHoldBegan=signal(),PromptButtonHoldEnded=signal()}
     services.ProximityPromptService=service;services.RunService={RenderStepped=signal()};services.UserInputService={InputEnded=signal()}
     environment.workspace=world
+    function world:GetServerTimeNow() return now end
+    local visualState=table.clone(state);visualState.PathwayId="Marauder";visualState.Sequence=6
+    visualState.Loadout={[1]="Marauder_6"};visualState.StolenPower="ArcBolt";visualState.Casting=false;visualState.VisualToken=0
+    hud:Render(visualState,now)
+    check(hud.Slots[1].Stored.Visible,"Confirmed stolen power has a persistent slot badge")
+    visualState.StolenPower=false;hud:Render(visualState,now)
+    check(not hud.Slots[1].Stored.Visible,"Release clears stored-power badge from snapshot")
+    hud:SetVisualCast({Phase="Begin",AbilityId="Marauder_6",EndsAt=now+0.5,Token=1})
+    check(hud.Cast.Visible and hud.CastText.Text=="Ability Theft","Accepted visual event starts HUD without waiting for snapshot")
+    visualState.Casting="Marauder_6";visualState.VisualToken=1;visualState.CastRemaining=0.3
+    hud:SetVisualCast({Phase="End",Token=1})
+    check(not hud.Cast.Visible,"Late pre-result snapshot cannot resurrect completed HUD cast")
+    visualState.VisualToken=2;hud:Render(visualState,now)
+    check(hud.Cast.Visible,"A newer confirmed snapshot may show a fresh cast")
     local Prompts=load("Client/UI/Prompts",environment)
     local prompts=Prompts.new(root);prompts.Layout=layout
     service.PromptShown:Fire(prompt,enum.ProximityPromptInputType.Keyboard)

@@ -3,6 +3,7 @@
 local C: any=require(game:GetService("ReplicatedStorage").Shared.VfxConfig)
 local Blocks={}
 Blocks.Names={"RingBurst","RisingMotes","ThreadBeam","DoorFrame","StarBurst","GlitchFlicker","GroundRune","ImpactFlash","ScreenEdgePulse","ShockwaveRing","AfterimageTrail"}
+Blocks.AbilityNames={"SigilStencil"}
 local TAU=math.pi*2
 local function take(handle: any,class: string,parent: Instance?): any
     local object=handle:Acquire(class,parent)
@@ -24,7 +25,10 @@ end
 local function setLine(line: any,a: Vector3,b: Vector3,transparency: number)
     line.A.Position=a;line.B.Position=b;line.Beam.Transparency=NumberSequence.new(transparency)
 end
-local function reserve(name: string,c: any,detail: number,low: boolean): (any,number,number)
+local function stencil(c: any,low: boolean,opts: any): any
+    return c.Paths[(if low then opts.LowGlyph or opts.Glyph else opts.Glyph) or C.Ability.EyeGlyph] or c.Paths[C.Ability.EyeGlyph]
+end
+local function reserve(name: string,c: any,detail: number,low: boolean,opts: any?): (any,number,number)
     local segments=math.max(C.Blocks.Common.MinSegments,math.floor(C.Blocks.Common.Segments*detail))
     local n=0
     if name=="RingBurst" or name=="ShockwaveRing" then n=segments
@@ -33,7 +37,10 @@ local function reserve(name: string,c: any,detail: number,low: boolean): (any,nu
     elseif name=="StarBurst" then n=c.Points*2
     elseif name=="GlitchFlicker" then n=4
     elseif name=="ImpactFlash" then n=2
-    elseif name=="ThreadBeam" then n=1 end
+    elseif name=="ThreadBeam" then n=1
+    elseif name=="SigilStencil" then
+        for _,path in ipairs(stencil(c,low,opts or {})) do n+=math.max(0,#path-1) end
+    end
     local motes=if name=="RisingMotes" then math.max(1,math.floor(c.Count*detail)) else 0
     local trail=if name=="AfterimageTrail" and not low then 1 else 0
     local afterHead=if name=="AfterimageTrail" then 1 else 0
@@ -54,17 +61,23 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
         if self.LastPulse and now-self.LastPulse<C.Safety.MinimumPulseInterval then return nil end
     end
     local opts=options or {}
-    local detail=self.Service:Detail(position)
+    local detail=math.min(self.Service:Detail(position),opts.Detail or math.huge)
     local low=detail<=C.Quality.Low
-    local costs,segments,motes=reserve(name,c,detail,low)
-    local h=self.Service:Begin(name,position,tier or 1,c.Priority,costs)
+    if opts.Duration then c=table.clone(c);c.Duration=opts.Duration end
+    if opts.Width or opts.Height then
+        c=table.clone(c);c.Width=opts.Width or c.Width;c.Height=opts.Height or c.Height
+    end
+    local costs,segments,motes=reserve(name,c,detail,low,opts)
+    local h=opts.Lease or self.Service:Begin(name,position,tier or 1,c.Priority,costs)
     if not h then return nil end
+    h.Scale*=opts.Scale or 1
     if pulse then self.LastPulse=now end
     h.Duration=c.Duration
     local p=C.Palettes[paletteName or "Seer"] or C.Palettes.Seer
+    if opts.Tint then p=table.clone(p);p.Primary=opts.Tint;p.Accent=opts.Tint end
     local scale=h.Scale
     local common=C.Blocks.Common
-    local width=common.Width*scale
+    local width=math.max(common.Width*scale,opts.MinWidth or 0)
     local host: any=nil
     if costs.Part>0 then
         host=take(h,"Part",nil)
@@ -72,7 +85,24 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
         host.CFrame=if typeof(opts.Frame)=="CFrame" then opts.Frame else CFrame.new(position)
     end
     local update: (number,number,number)->() = function() end
-    if name=="RingBurst" or name=="ShockwaveRing" or name=="GroundRune" then
+    if name=="SigilStencil" then
+        local paths=stencil(c,low,opts)
+        local lines={}
+        for _,path in ipairs(paths) do
+            for i=1,#path-1 do table.insert(lines,{Line=segment(h,host,width,p.Accent),A=path[i],B=path[i+1]}) end
+        end
+        update=function(_dt: number,age: number,_t: number)
+            if opts.MoveTo then
+                local t=if h.ReducedMotion then 1 else math.clamp(age/c.Duration,0,1)
+                host.CFrame=(if typeof(opts.Frame)=="CFrame" then opts.Frame else CFrame.new(position))+(opts.MoveTo-position)*t
+            end
+            local fade=common.Alpha+(1-common.Alpha)*alpha(age,c.Duration,common.FadeStart)
+            for _,entry in ipairs(lines) do
+                local function vertex(v: any): Vector3 return point((v[1]-0.5)*c.Size*scale,(0.5-v[2])*c.Size*scale,0) end
+                setLine(entry.Line,vertex(entry.A),vertex(entry.B),fade)
+            end
+        end
+    elseif name=="RingBurst" or name=="ShockwaveRing" or name=="GroundRune" then
         local lines={}
         for _=1,segments do table.insert(lines,segment(h,host,width,p.Accent)) end
         local spokes={}
@@ -81,7 +111,7 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
         end
         update=function(_dt: number,age: number,t: number)
             local radius=c.Radius*scale
-            if name~="GroundRune" then radius*=c.Start+(1-c.Start)*t end
+            if name~="GroundRune" and not h.ReducedMotion then radius*=c.Start+(1-c.Start)*t end
             local fade=common.Alpha+(1-common.Alpha)*alpha(age,c.Duration,common.FadeStart)
             for i,line in ipairs(lines) do
                 local a=(i-1)/segments*TAU
@@ -117,7 +147,7 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
             end
         end
     elseif name=="ThreadBeam" then
-        local line=segment(h,host,c.Width*scale,p.Accent)
+        local line=segment(h,host,math.max(c.Width*scale,opts.MinWidth or 0),p.Accent)
         local endpoint=if typeof(opts.EndPosition)=="Vector3" then host.CFrame:PointToObjectSpace(opts.EndPosition) else point(c.Length*scale,0,0)
         local arch=Vector3.yAxis*c.Height*scale
         local a=Vector3.zero
@@ -132,7 +162,7 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
         end
         line.A.CFrame=tangentFrame(a,tangent0);line.B.CFrame=tangentFrame(endpoint,tangent1)
         line.Beam.CurveSize0=tangent0.Magnitude;line.Beam.CurveSize1=tangent1.Magnitude
-        line.Beam.Segments=c.Segments;line.Beam.Width1=c.Width*scale*c.Taper
+        line.Beam.Segments=c.Segments;line.Beam.Width1=math.max(c.Width*scale*c.Taper,opts.MinWidth or 0)
         update=function(_dt: number,age: number,_t: number)
             line.Beam.Transparency=NumberSequence.new(common.Alpha+(1-common.Alpha)*alpha(age,c.Duration,common.FadeStart))
         end
@@ -208,8 +238,96 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
             if trail then trail.Enabled=not h.ReducedMotion end
         end
     end
+    local wrapped=function(dt: number,age: number,t: number)
+        if host and opts.Follow then
+            if not opts.Follow.Parent then h:Finish();return end
+            host.CFrame=CFrame.new(opts.Follow.Position+(opts.Offset or Vector3.zero))*(if opts.Frame then opts.Frame.Rotation else CFrame.identity)
+        end
+        update(dt,age,t)
+    end
+    h.Update=wrapped
+    wrapped(0,0,0)
+    return h
+end
+-- One atomic reservation for the entire cast. Endpoints instantiate lazily and
+-- park independently when outside the viewport/120-stud limit.
+function Blocks.Compose(self: any,layers: {any},tier: number,priority: number,duration: number): any
+    if #layers==0 or #layers>C.Composition.MaxLayers or duration~=duration or duration<=0 or duration>C.Lifetime.Maximum then return nil end
+    local profile=self.Service:Profile()
+    local accepted={}
+    for _,layer in ipairs(layers) do
+        local pulse=layer.Name=="ImpactFlash" or layer.Name=="ScreenEdgePulse"
+        if not pulse or (not profile.ReducedMotion and (not self.LastPulse or os.clock()-self.LastPulse>=C.Safety.MinimumPulseInterval)) then
+            table.insert(accepted,layer)
+        end
+    end
+    layers=accepted
+    if #layers==0 then return nil end
+    local detail=if profile.Mobile then math.min(profile.Detail,C.Composition.MobileDetail) else profile.Detail
+    local costs={};local anchors={}
+    for _,layer in ipairs(layers) do
+        local config=C.Blocks[layer.Name]
+        if not config or typeof(layer.Position)~="Vector3" then return nil end
+        local layerDetail=math.min(detail,(layer.Options and layer.Options.Detail) or math.huge)
+        local budget=reserve(layer.Name,config,layerDetail,layerDetail<=C.Quality.Low,layer.Options)
+        for class,count in pairs(budget) do costs[class]=(costs[class] or 0)+count end
+        table.insert(anchors,layer.Position)
+    end
+    for _,layer in ipairs(layers) do
+        if layer.Options and layer.Options.MoveTo then table.insert(anchors,layer.Options.MoveTo) end
+    end
+    local h=self.Service:Begin("AbilityComposition",anchors[1],tier,priority,costs,anchors)
+    if not h then return nil end
+    h.Duration=duration
+    local groups={}
+    for _,layer in ipairs(layers) do table.insert(groups,{Layer=layer,Anchor=layer.Position,Objects={},Built=false,Child=nil,Visible=false}) end
+    h.ResolveAnchors=function()
+        for i,group in ipairs(groups) do
+            local layer=group.Layer
+            if layer.Options and layer.Options.Follow then
+                if not layer.Options.Follow.Parent then h:Finish();return end
+                layer.Position=layer.Options.Follow.Position+(layer.Options.Offset or Vector3.zero)
+            end
+            local anchor=layer.Position
+            if layer.Options and layer.Options.MoveTo then
+                local t=if h.ReducedMotion then 1 else math.clamp(h.Age/duration,0,1)
+                anchor+=(layer.Options.MoveTo-anchor)*t
+            end
+            group.Anchor=anchor;h.Anchors[i]=anchor
+        end
+    end
+    local function update(dt: number,age: number,_progress: number)
+        for _,group in ipairs(groups) do
+            local layer=group.Layer
+            local visible=self.Service:Visible(group.Anchor)
+            if layer.Options and layer.Options.EndPosition then visible=visible and self.Service:Visible(layer.Options.EndPosition) end
+            if visible and not group.Built then
+                local child: any={Scale=h.Scale,Detail=detail,ReducedMotion=h.ReducedMotion,Duration=duration}
+                function child:Acquire(class: string,parent: Instance?): any
+                    local object=h:Acquire(class,parent)
+                    if object then table.insert(group.Objects,{Object=object,Parent=object.Parent}) end
+                    return object
+                end
+                function child:Finish() h:Finish() end
+                local opts=table.clone(layer.Options or {})
+                opts.Lease=child;opts.Detail=math.min(detail,opts.Detail or math.huge);opts.Duration=duration
+                child.Detail=opts.Detail
+                opts.MinWidth=if profile.Mobile then C.Composition.MobileMinWidth else C.Composition.MinWidth
+                group.Child=self:Play(layer.Name,layer.Position,layer.Palette,tier,opts)
+                group.Built=true
+            end
+            if group.Visible~=visible then
+                for _,entry in ipairs(group.Objects) do entry.Object.Parent=if visible then entry.Parent else nil end
+                group.Visible=visible
+            end
+            if visible and group.Child and group.Child.Update then
+                group.Child.Update(dt,age,math.clamp(age/duration,0,1))
+            end
+        end
+    end
     h.Update=update
-    update(0,0,0)
+    local ok=pcall(function() h.ResolveAnchors();if h.Active then update(0,0,0) end end)
+    if not ok then self.Service.Errors+=1;h:Finish();return nil end
     return h
 end
 return Blocks

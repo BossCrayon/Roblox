@@ -1,7 +1,7 @@
 --!strict
 -- Exercises actual EffectService handlers with deterministic engine-adapter stand-ins.
 -- Does not simulate Roblox physics, rendering, networking, or DataStoreService.
-return function(data: any,Domain: any,loadEffects: any,loadWorld: any)
+return function(data: any,Domain: any,loadEffects: any,loadWorld: any,VisualEvents: any)
     local checks=0
     local function check(value: any,message: string) assert(value,message);checks+=1 end
     local VM={};local V={}
@@ -139,6 +139,33 @@ return function(data: any,Domain: any,loadEffects: any,loadWorld: any)
         kinds[a.Operation.Kind]=true
     end
     local n=0;for _ in pairs(kinds) do n+=1 end
+    -- Run the real server evidence adapter through every executor as production does.
+    for id,a in pairs(data.Abilities) do
+        local f=fixture(a)
+        local broadcasts={};local private={}
+        f.World.FX.FireAllClients=function(_self,event) table.insert(broadcasts,event) end
+        f.World.FX.FireClient=function(_self,owner,event) table.insert(private,{Owner=owner,Event=event}) end
+        local protocol={MaxReveals=16,RevealLife=5}
+        f.World.Visuals=VisualEvents.new(f.World,protocol,function() return 1000 end)
+        local context=f.Effect:Validate(f.Player,f.State,a,f.Input)
+        local pending=domain:BeginCast(f.State,id,100)
+        check(context and pending,"Production evidence fixture accepts validated cast")
+        local reserved=f.State.Spirituality
+        f.World.Visuals:Begin(context,100)
+        local ok=f.Effect:Execute(context,101)
+        check(ok and broadcasts[1].Phase=="Begin" and broadcasts[#broadcasts].Phase=="Result","Every executor emits accepted Begin/Result evidence")
+        check(f.World.Effects==0,"Production adapter replaces old ability pulse event without duplicate traffic")
+        check(f.State.Pending==pending and f.State.Spirituality>=0,"Presentation leaves pending gameplay cast and valid resource state intact")
+        check(broadcasts[#broadcasts].AbilityId==id and broadcasts[#broadcasts].Origin.X==0,"Evidence carries correct stable ability ID and pre-execution root")
+        if a.Operation.Kind=="Travel" or a.Operation.Kind=="FlameJump" then
+            check(broadcasts[#broadcasts].Destination.X==f.Root.Position.X and f.Root.Position.X~=0,"Travel evidence carries actual validated destination")
+        elseif a.Operation.Kind=="OpenDoor" then
+            check(broadcasts[#broadcasts].Target==f.Door and broadcasts[#broadcasts].ExpiresAt>1000,"Door evidence names actual server-selected door and expiry")
+        elseif a.Operation.Kind=="Sense" or a.Operation.Kind=="SenseDoors" then
+            check(#private>0 and private[1].Owner==f.Player and private[1].Event.Phase=="Reveal","Sensing targets only travel to authorized caster")
+        end
+        domain:CancelCast(f.State,false)
+    end
     local f=fixture(data.Abilities.Marauder_9)
     local c=f.Effect:Validate(f.Player,f.State,data.Abilities.Marauder_9,f.Input)
     check(f.Effect:Execute(c,100),"First pickpocket succeeds")

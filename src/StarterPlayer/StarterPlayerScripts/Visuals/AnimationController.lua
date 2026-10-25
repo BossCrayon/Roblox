@@ -8,7 +8,7 @@ local AnimationController={}
 AnimationController.__index=AnimationController
 type MotorState={Motor: Motor6D,Role: string,Base: CFrame?,Applied: CFrame?}
 type EntryState={Name: string,Entry: any,Elapsed: number,Target: number,Fade: number,Spring: any,
-    Track: AnimationTrack?,Animation: Animation?,AssetAge: number,AssetFailed: boolean}
+    Track: AnimationTrack?,Animation: Animation?,AssetAge: number,AssetFailed: boolean,Profile: string?}
 type Fields={Character: Model,Humanoid: Humanoid?,Root: BasePart?,Animator: Animator?,Motors: {MotorState},
     States: {[string]: EntryState},Connections: {RBXScriptConnection},ReducedMotion: boolean,
     AutoLocomotion: boolean,AutoState: string?,PauseLeft: number,Destroyed: boolean,WasAirborne: boolean,LastVertical: number}
@@ -77,17 +77,25 @@ function AnimationController.Restore(self: Controller)
         m.Base=nil;m.Applied=nil
     end
 end
-function AnimationController.Play(self: Controller,name: string,weight: number?,fade: number?): boolean
+function AnimationController.Play(self: Controller,name: string,weight: number?,fade: number?,profile: string?): boolean
     if self.Destroyed then return false end
     name=resolve(name)
     local entry=C.Entries[name]
     if not entry then return false end
+    local override=profile and C.CastProfiles[profile] and C.CastProfiles[profile][name]
+    if override then
+        entry=table.clone(entry)
+        for key,value in pairs(override) do
+            if key~="AnimationId" or value~="" then entry[key]=value end
+        end
+    end
     local target=if weight and finite(weight) then math.clamp(weight,0,C.Blend.MaxWeight) else C.Blend.MaxWeight
     local transition=if fade and finite(fade) then math.clamp(fade,C.Blend.MinFade,C.Blend.MaxFade) else entry.FadeIn
     local state: EntryState?=self.States[name]
+    if state and state.Profile~=profile then dispose(state);self.States[name]=nil;state=nil end
     if not state then
         local created: EntryState={Name=name,Entry=entry,Elapsed=0,Target=target,Fade=transition,Spring=Spring.new(0),
-            Track=nil,Animation=nil,AssetAge=0,AssetFailed=false}
+            Track=nil,Animation=nil,AssetAge=0,AssetFailed=false,Profile=profile}
         self.States[name]=created;state=created
         local id=contentId(entry.AnimationId)
         if id and self.Animator then

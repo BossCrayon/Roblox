@@ -32,6 +32,8 @@ local Sessions=require(script.Parent.Domain.SessionStore)
 local RateLimiter=require(script.Parent.Domain.RateLimiter)
 local World=require(script.Parent.Services.WorldService)
 local Effects=require(script.Parent.Services.EffectService)
+local VisualEvents=require(script.Parent.Services.VisualEventService)
+local VfxConfig=require(ReplicatedStorage.Shared.VfxConfig)
 local domain=Domain.new(data)
 local states: {[Player]: any}={}
 local sessions: {[Player]: any}={}
@@ -64,6 +66,8 @@ local function notify(player: Player,text: string)
     if player.Parent then stateEvent:FireClient(player,{Message=string.sub(text,1,data.Runtime.MaxMessageLength)}) end
 end
 local world=World.new(data,domain,states,fx)
+local visualEvents=VisualEvents.new(world,VfxConfig.Protocol,function() return workspace:GetServerTimeNow() end)
+world.Visuals=visualEvents
 local effects=Effects.new(world,domain,notify)
 world:Build()
 local function applyStats(player: Player,s: any,refill: boolean)
@@ -88,8 +92,8 @@ local function sendState(player: Player)
         Digestion=p.Digestion,ActingProgress=p.ActingProgress,Health=s.Health,MaxHealth=s.Stats.Health,
         Spirituality=s.Spirituality,MaxSpirituality=s.Stats.Spirituality,Sanity=s.Sanity,Mode=s.Mode,
         Gold=p.Gold,WishCredits=p.WishCredits,Inventory=Domain.Copy(p.Inventory),Loadout=Domain.Copy(p.AbilityLoadout),
-        Cooldowns=cooldowns,Statuses=statuses,Dead=s.Dead,RecordedCharges=s.RecordedPower and s.RecordedPower.Charges or 0,
-        Casting=s.Pending and s.Pending.Id or false,CastRemaining=s.Pending and math.max(0,s.Pending.EndsAt-now) or 0})
+        Cooldowns=cooldowns,Statuses=statuses,Dead=s.Dead,RecordedCharges=s.RecordedPower and s.RecordedPower.Charges or 0,StolenPower=s.StolenPower or false,
+        Casting=s.Pending and s.Pending.Id or false,CastRemaining=s.Pending and math.max(0,s.Pending.EndsAt-now) or 0,CastSerial=s.CastSerial,VisualToken=s.VisualToken or 0})
 end
 local function bindCharacter(player: Player,character: Model)
     if bound[player]==character then return end
@@ -181,6 +185,7 @@ local function releasePlayer(player: Player)
     if releasing[player] then return end
     releasing[player]=true;releaseCount+=1
     local s=states[player];local handle=sessions[player]
+    visualEvents:Remove(player)
     if s then s.Ready=false;s.Pending=nil end
     effects:RemoveGates(player);world:Cleanup(player)
     if handle and s then
@@ -247,6 +252,7 @@ intent.OnServerEvent:Connect(function(player: Player,action: any,payload: any)
         local pending,reason=domain:BeginCast(s,payload.Id,now)
         if not pending then notify(player,reason or "Cannot cast");return end
         pending.Input=input
+        visualEvents:Begin(context,now)
     elseif action=="Melee" then
         local root=world:Root(player)
         if not root or not world:FiniteVector(root.Position) or s.Mode~="Normal" or s.Pending or now-s.LastMelee<data.Runtime.MeleeCooldown then return end
@@ -317,7 +323,7 @@ task.spawn(function()
                 end)
             end
         end
-        world:Step(math.min(dt,1),now);effects:Step(now)
+        world:Step(math.min(dt,1),now);effects:Step(now);visualEvents:Step()
         if now>=nextState then
             nextState=now+data.Runtime.StateIntervalSeconds
             for player in pairs(states) do if player.Parent then sendState(player) end end

@@ -13,9 +13,11 @@ files = [
     'src/ServerScriptService/Domain/AdminProgression.lua',
     'src/ServerScriptService/Bootstrap.server.lua',
     'src/ServerScriptService/Services/WorldService.lua',
+    'src/ServerScriptService/Services/EffectService.lua',
+    'src/ServerScriptService/Services/VisualEventService.lua',
 ]
 files.extend(str(p.relative_to(root)) for p in sorted(
-    (root / 'src/StarterPlayer/StarterPlayerScripts/Visuals').glob('*.lua')))
+    (root / 'src/StarterPlayer/StarterPlayerScripts/Visuals').rglob('*.lua')))
 files.extend([
     'src/StarterPlayer/StarterPlayerScripts/UI/Feedback.lua',
     'src/StarterPlayer/StarterPlayerScripts/UI/Menus.lua',
@@ -48,8 +50,8 @@ parts = [
     'the unchanged foundation modules; do not run duplicate Mysteries or Bootstrap '
     'entrypoints. Theme is listed first. The ready-to-open place is '
     '`studio/Mysteries.rbxlx`.\n',
-    'This is Phase A only. The test room previews reusable building blocks; '
-    'pathway-specific ability choreography starts in Phase B. Animation, texture '
+    'This framework source handoff includes later integration updates; use docs/PHASE_B_VFX_CODE.md for the current Phase B handoff. '
+    'The test room previews reusable building blocks and six Phase B ability packages. Animation, texture '
     'and sound slots are empty/0 until original assets are supplied.\n',
     '| File name | Class | Exact Explorer path |\n|---|---|---|',
 ]

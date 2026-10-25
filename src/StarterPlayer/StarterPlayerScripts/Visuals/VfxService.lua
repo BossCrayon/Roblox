@@ -75,7 +75,7 @@ function Handle.Finish(self: any)
     for _,entry in ipairs(self.Objects) do
         park(entry.Object,entry.Class);table.insert(owner.Pools[entry.Class],entry.Object)
     end
-    table.clear(self.Objects);self.Update=nil;self.OnFinish=nil
+    table.clear(self.Objects);self.Update=nil;self.OnFinish=nil;self.ResolveAnchors=nil;self.Anchors=nil;self.Character=nil;self.CasterId=nil
 end
 Handle.Stop=Handle.Finish
 function Service.new(options: any?): any
@@ -83,7 +83,7 @@ function Service.new(options: any?): any
     local folder=Instance.new("Folder");folder.Name="LocalVisualFramework";folder.Parent=workspace
     local mobile=if settings.Mobile~=nil then settings.Mobile else UserInputService.TouchEnabled
     local limits=if mobile then Config.Pools.Mobile else Config.Pools.Desktop
-    local self: any=setmetatable({Folder=folder,Camera=settings.Camera,Mobile=mobile,
+    local self: any=setmetatable({Folder=folder,Camera=settings.Camera,Mobile=mobile,MobileOverride=settings.Mobile,
         LowGraphics=settings.LowGraphics==true,ReducedMotion=settings.ReducedMotion==true,
         Pools={},Allocated={},Limits=limits,Active={},Serial=0,Evicted=0,Dropped=0,Errors=0,Destroyed=false,ProfileKey=""},Service)
     for class in pairs(limits) do self.Pools[class]={};self.Allocated[class]=0 end
@@ -91,6 +91,21 @@ function Service.new(options: any?): any
     return self
 end
 function Service._Refresh(self: any)
+    local mobile=if self.MobileOverride~=nil then self.MobileOverride else UserInputService.TouchEnabled
+    if mobile~=self.Mobile then
+        local finishing={}
+        for _,effect in pairs(self.Active) do table.insert(finishing,effect) end
+        for _,effect in ipairs(finishing) do effect:Finish() end
+        self.Mobile=mobile;self.Limits=if mobile then Config.Pools.Mobile else Config.Pools.Desktop
+        for class,pool in pairs(self.Pools) do
+            while self.Allocated[class]>self.Limits[class] do
+                local object=table.remove(pool)
+                if not object then break end
+                object:Destroy();self.Allocated[class]-=1
+            end
+        end
+        self.ProfileKey=""
+    end
     local level=qualityLevel()
     local q=Config.Quality
     local low=self.LowGraphics or level<=q.LowLevel
@@ -131,8 +146,17 @@ function Service.PowerTier(sequence: number): number
     if sequence>=Config.TierSequences.Middle then return 2 end
     return #Config.Tier
 end
-function Service.Begin(self: any,name: string,position: Vector3,tier: number,priority: number,costs: {[string]:number}?): any
-    if not self:Visible(position) then self.Dropped+=1;return nil end
+function Service.Begin(self: any,name: string,position: Vector3,tier: number,priority: number,costs: {[string]:number}?,anchors: {Vector3}?): any
+    if not validPosition(position) then self.Dropped+=1;return nil end
+    if anchors then
+        if #anchors==0 or #anchors>Config.Composition.MaxAnchors then self.Dropped+=1;return nil end
+        local visible=false
+        for _,anchor in ipairs(anchors) do
+            if not validPosition(anchor) then self.Dropped+=1;return nil end
+            visible=self:Visible(anchor) or visible
+        end
+        if not visible then self.Dropped+=1;return nil end
+    elseif not self:Visible(position) then self.Dropped+=1;return nil end
     self:_Refresh()
     if not finite(tier) then self.Dropped+=1;return nil end
     local request=costs or Config.DefaultCosts
@@ -150,7 +174,7 @@ function Service.Begin(self: any,name: string,position: Vector3,tier: number,pri
     local effect: any=setmetatable({Owner=self,Id=id,Name=name,Position=position,Tier=resolvedTier,
         Scale=Config.Tier[resolvedTier].Scale,Detail=self:Detail(position),Low=self.CurrentProfile.Low,
         ReducedMotion=self.ReducedMotion,Priority=priority,Costs=table.clone(request),Acquired={},Objects={},
-        Age=0,Duration=Config.Lifetime.Default,Active=true,Update=nil,OnFinish=nil},Handle)
+        Age=0,Duration=Config.Lifetime.Default,Active=true,Update=nil,OnFinish=nil,Anchors=anchors and table.clone(anchors)},Handle)
     self.Active[id]=effect
     return effect
 end
@@ -166,8 +190,16 @@ function Service.Step(self: any,dt: number)
     for _,effect in ipairs(snapshot) do
         if not effect.Active then continue end
         effect.Age+=dt
+        if effect.ResolveAnchors then
+            local ok=pcall(effect.ResolveAnchors)
+            if not ok then self.Errors+=1;effect:Finish() end
+            if not effect.Active then continue end
+        end
         local duration=if finite(effect.Duration) then math.clamp(effect.Duration,0,Config.Lifetime.Maximum) else Config.Lifetime.Default
-        if not self:Visible(effect.Position) then effect:Finish();continue end
+        local visible=false
+        if effect.Anchors then for _,anchor in ipairs(effect.Anchors) do visible=self:Visible(anchor) or visible end
+        else visible=self:Visible(effect.Position) end
+        if not visible then effect:Finish();continue end
         local progress=if duration>0 then math.clamp(effect.Age/duration,0,1) else 1
         if effect.Update then
             local ok=pcall(effect.Update,math.min(dt,Config.Lifetime.MaxStep),effect.Age,progress)

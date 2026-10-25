@@ -76,7 +76,7 @@ if '--stats' not in sys.argv and '--catalog' not in sys.argv:
                   moduleOverrides["Server/Services/WorldService"]=environment
                   cache[nodes["Server/Services/WorldService"]]=nil
                   return moduleRequire(nodes["Server/Services/WorldService"])
-              end)''']
+              end,moduleRequire(nodes["Server/Services/VisualEventService"]))''']
     lines += ['local uiTests=assert(loadstring(' + literal((root/'tests/ui.luau').read_text()) + ', "ui"))()',
               '''uiTests(data,function(path,environment)
                   moduleOverrides[path]=environment
@@ -97,6 +97,12 @@ if '--stats' not in sys.argv and '--catalog' not in sys.argv:
               end,nodes[""])''']
     lines += ['local animationTests=assert(loadstring(' + literal((root/'tests/animation_controller.luau').read_text()) + ', "animation_controller"))()',
               '''animationTests(function(path,environment)
+                  moduleOverrides[path]=environment
+                  cache[nodes[path]]=nil
+                  return moduleRequire(nodes[path])
+              end,nodes[""])''']
+    lines += ['local phaseBTests=assert(loadstring(' + literal((root/'tests/phase_b.luau').read_text()) + ', "phase_b"))()',
+              '''phaseBTests(data,function(path,environment)
                   moduleOverrides[path]=environment
                   cache[nodes[path]]=nil
                   return moduleRequire(nodes[path])

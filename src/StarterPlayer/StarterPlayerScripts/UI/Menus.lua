@@ -108,6 +108,9 @@ function Menus.Render(self: any)
         self.Confirm.Size=UDim2.new(0.5,-T.Layout.Modal.Gap/2,1,0);cancel.Size=self.Confirm.Size
         self:UpdatePreview()
     elseif self.Tab=="Journal" then
+        if type(state.StolenPower)=="string" then
+            self:TextRow(T.AbilityUI.StoredPrefix..(T.AbilityUI.PowerNames[state.StolenPower] or state.StolenPower).." · use Ability Theft again to release it.")
+        end
         self:TextRow("The acting method",true)
         if state.PathwayId then
             local seq=self.Data.Pathways[state.PathwayId].Sequences[state.Sequence]

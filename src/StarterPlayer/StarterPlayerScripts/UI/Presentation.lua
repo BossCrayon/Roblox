@@ -11,6 +11,7 @@ local Blocks=require(Visuals.EffectBlocks)
 local AnimationController=require(Visuals.AnimationController)
 local CameraFeel=require(Visuals.CameraFeel)
 local HitPresentation=require(Visuals.HitPresentation)
+local AbilityPresentation=require(Visuals.AbilityPresentation)
 local Presentation={}
 function Presentation.new(gui: Instance,data: any,callbacks: any?): any
     local cb=callbacks or {}
@@ -22,6 +23,15 @@ function Presentation.new(gui: Instance,data: any,callbacks: any?): any
     end})
     self.Camera=CameraFeel.new()
     self.Hits=HitPresentation.new(self.VFX,self.Blocks)
+    self.Abilities=AbilityPresentation.new(self.VFX,self.Blocks,data,{
+        Clock=function() return workspace:GetServerTimeNow() end,
+        Camera=function() return workspace.CurrentCamera end,
+        LocalUserId=Players.LocalPlayer.UserId,
+        Player=function(id: number) return Players:GetPlayerByUserId(id) end,
+        Controller=function(character: Model) return self:Controller(character) end,
+        Audio=function(hook: string) self:Audio(hook) end,
+        Cast=cb.CastVisual,
+    })
     self.Camera.OnHitStop=function(seconds: number)
         local controller=self:LocalController()
         if controller then controller:Pause(seconds) end
@@ -57,59 +67,43 @@ function Presentation.SetSettings(self: any,reduced: boolean,low: boolean)
 end
 function Presentation.Update(self: any,state: any)
     local previous=self.State;self.State=state
+    self.Abilities:Update(state)
     if not state.Ready then return end
     local controller=self:LocalController()
-    if controller and not self.Demo then
-        if state.Casting and state.Casting~=self.Cast then controller:Play("CastWindup")
-        elseif not state.Casting and self.Cast then controller:Stop("CastWindup") end
-        if previous and previous.Ready and state.Health<previous.Health then
-            controller:Play("HitReact");self.Camera:Kick(1);self.Camera:HitStop()
-        end
+    if controller and not self.Demo and previous and previous.Ready and state.Health<previous.Health then
+        controller:Play("HitReact");self.Camera:Kick(1);self.Camera:HitStop()
     end
-    self.Cast=state.Casting or nil
 end
 function Presentation.Event(self: any,event: any)
+    if event.Kind=="AbilityVisual" then self.Abilities:Event(event);return end
     if not self.VFX:Visible(event.Position) then return end
     if event.Kind=="Damage" then
         self.Hits:Hit(event)
         if self.Callbacks.Damage then self.Callbacks.Damage(event) end
         if event.Owner==Players.LocalPlayer.UserId then self.Camera:Kick(1);self.Camera:HitStop() end
-        return
-    end
-    if event.Kind=="VoiceProfile" then self:Audio(event.Hook,event.Pitch);return end
-    local ability=self.Data.Abilities[event.Kind]
-    if ability then self:Audio(ability.SFXHook) end
-    if event.Owner then
-        local caster=Players:GetPlayerByUserId(event.Owner)
-        local controller=caster and self:Controller(caster.Character)
-        if controller and (ability or event.Kind=="Melee") then
-            controller:Stop("CastWindup");controller:Play("CastRelease")
-        end
-    end
-    if event.Kind=="Reveal" and typeof(event.Target)=="Instance" then
-        local h=self.VFX:Begin("Reveal",event.Position,1,T.Visuals.RevealPriority,{Highlight=1})
-        if not h then return end
-        h.Duration=C.Hit.RevealLife
-        local highlight=h:Acquire("Highlight")
-        highlight.Adornee=event.Target;highlight.FillColor=T.Colors.Sanity;highlight.OutlineColor=T.Colors.Fog
-        highlight.FillTransparency=T.LegacyFX.HighlightAlpha
+    elseif event.Kind=="VoiceProfile" then self:Audio(event.Hook,event.Pitch)
+    elseif event.Kind=="Reveal" and typeof(event.Target)=="Instance" then
+        -- Compatibility for old server reveal packets; current servers send private batches.
+        self.Abilities.Status:Reveal({Targets={{Target=event.Target,Position=event.Position}},
+            ExpiresAt=workspace:GetServerTimeNow()+C.Protocol.RevealLife},"Seer")
     elseif event.Kind~="Whisper" then
-        -- Preserve the old neutral pulse during Phase A. Pathway-specific layering
-        -- is deliberately deferred until the user continues to Phases B-D.
-        local h=self.VFX:Begin("LegacyPulse",event.Position,1,T.Visuals.LegacyPriority,{Part=1})
-        if not h then return end
-        h.Duration=T.Visuals.LegacyLife
-        local p=h:Acquire("Part")
-        p.Shape=Enum.PartType.Ball;p.Color=if ability then Kit.PathColor(ability.PathwayId) else T.Colors.Fog
-        p.Position=event.Position;p.Size=Vector3.one*T.Visuals.LegacyStart;p.Transparency=T.Visuals.LegacyAlpha
-        h.Update=function(_dt: number,_age: number,t: number)
-            p.Size=Vector3.one*(T.Visuals.LegacyStart+(T.Visuals.LegacyEnd-T.Visuals.LegacyStart)*t)
-            p.Transparency=T.Visuals.LegacyAlpha+(1-T.Visuals.LegacyAlpha)*t
-        end
+        local name=if event.Kind=="Defeat" then "RisingMotes" elseif event.Kind=="Substitute" then "RingBurst" else "ImpactFlash"
+        self.Blocks:Compose({{Name=name,Position=event.Position,Palette="Seer",Options={Scale=C.Ability.DefaultScale}}},1,
+            C.Composition.Priority,C.Composition.ResultLife)
     end
 end
 function Presentation.Step(self: any,dt: number)
-    self.VFX:Step(dt);self.ScanElapsed+=dt
+    self.VFX:Step(dt);self.Abilities:Step();self.ScanElapsed+=dt
+    if self.AbilityDemo and workspace:GetServerTimeNow()>=self.AbilityDemo.EndsAt then
+        local demo=self.AbilityDemo;self.AbilityDemo=nil
+        if demo.Windup then demo.Windup:Finish() end
+        local controller=self:LocalController()
+        if controller then
+            controller:Stop("CastWindup",C.Composition.CancelFade)
+            if not demo.Cancel then controller:Play("CastRelease",nil,nil,C.Ability.Profiles[demo.Id]) end
+        end
+        if not demo.Cancel then self.Abilities:Preview(demo.Id,demo.Variant,demo.Origin,demo.Destination,demo.Target) end
+    end
     if self.ScanElapsed<T.TestRoom.StatInterval then return end;self.ScanElapsed=0
     local wanted={}
     for _,player in ipairs(Players:GetPlayers()) do
@@ -128,14 +122,30 @@ function Presentation.DemoAnimation(self: any,name: string)
     if not controller then return end
     controller:Stop();controller.AutoLocomotion=false;self.Demo=true;controller:Play(name)
 end
+function Presentation.PreviewAbility(self: any,id: string,variant: string,origin: Vector3,destination: Vector3,target: Instance?,cancel: boolean?)
+    self:StopDemoAnimation()
+    local a=self.Data.Abilities[id]
+    if not a then return end
+    local controller=self:LocalController()
+    if controller then controller:Play("CastWindup",nil,nil,C.Ability.Profiles[id]) end
+    local windup=self.Abilities:Preview(id,variant,origin,destination,target,"Begin")
+    self.AbilityDemo={Id=id,Variant=variant,Origin=origin,Destination=destination,Target=target,Cancel=cancel,
+        Windup=windup,EndsAt=workspace:GetServerTimeNow()+a.CastTimeSeconds}
+end
 function Presentation.StopDemoAnimation(self: any)
+    if self.AbilityDemo then
+        if self.AbilityDemo.Windup then self.AbilityDemo.Windup:Finish() end
+        self.AbilityDemo=nil
+        local active=self:LocalController();if active then active:Stop("CastWindup",C.Composition.CancelFade) end
+    end
+    self.Abilities:ClearPreviews()
     if not self.Demo then return end
     self.Demo=false
     local controller=self:LocalController()
     if controller then controller:Stop();controller.AutoState=nil;controller.AutoLocomotion=true end
 end
 function Presentation.Destroy(self: any)
-    self.Camera:Destroy();self.VFX:Destroy()
+    self.Abilities:Destroy();self.Camera:Destroy();self.VFX:Destroy()
     for _,controller in pairs(self.Controllers) do controller:Destroy() end
     table.clear(self.Controllers)
 end
