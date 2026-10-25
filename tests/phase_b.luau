@@ -27,6 +27,7 @@ return function(data: any,load: any,shared: any)
     CM.__mul=function(a,b) return cf(a.Position+b.Position) end
     CM.__add=function(a,b) return cf(a.Position+b) end
     function cm:PointToObjectSpace(p) return p-self.Position end
+    function cm:PointToWorldSpace(p) return p+self.Position end
     local frames={new=cf,identity=cf(),lookAt=function(p) return cf(p) end,fromMatrix=function(p) return cf(p) end,Angles=function() return cf() end}
     local function instance(class)
         local props={ClassName=class,_kind="Instance",Parent=true,Name=class,CFrame=cf(),Size=v(7,9,1),Transparency=0,LocalTransparencyModifier=0,Color={R=0.5,G=0.5,B=0.5}}
@@ -97,6 +98,7 @@ return function(data: any,load: any,shared: any)
     local T=load("Theme",env)
     local Service=load("Client/Visuals/VfxService",env)
     local Blocks=load("Client/Visuals/EffectBlocks",env)
+    load("Client/Visuals/Choreography",env)
     load("Client/Visuals/PathwayEffects/Seer",env);load("Client/Visuals/PathwayEffects/Marauder",env);load("Client/Visuals/PathwayEffects/Apprentice",env)
     load("Client/Visuals/Choreography",env)
     load("Client/Visuals/StatusPresentation",env)
@@ -141,6 +143,29 @@ return function(data: any,load: any,shared: any)
     service:Step(0.75)
     check(#entering.Objects>0 and entering.Objects[1].Object.Position.X<=120,"Symbol instantiates lazily only after entering visibility range")
     entering:Finish()
+    -- Cinematic beats share one reservation and never allocate after cancellation.
+    local staged=blocks:Compose({
+        {Name="RisingMotes",Position=v(10,0,0),Palette="Seer",Options={Intake=true,Life=0.15}},
+        {Name="DoorFrame",Position=v(10,0,0),Palette="Apprentice",Options={Delay=0.2}},
+    },1,3,1)
+    check(staged and service:Stats().Active==1,"Staged transformation consumes exactly one effect slot")
+    local allocated=#staged.Objects
+    service:Step(0.1)
+    check(#staged.Objects==allocated,"Delayed release allocates no premature beams")
+    service:Step(0.15)
+    check(#staged.Objects>allocated,"Release lazily builds within reserved beam budget")
+    check(staged.Objects[1].Object.Parent==nil,"Finished intake geometry parks before release")
+    staged:Finish()
+    local cancelled=blocks:Compose({{Name="DoorFrame",Position=v(10,0,0),Options={Delay=0.4}}},1,3,1)
+    cancelled:Finish();service:Step(0.5)
+    check(service:Stats().Active==0 and service:Stats().Reserved.Part==0,"Cancelling future beats drains reservations without deferred callbacks")
+    local endpoint=v(20,1,-8)
+    local dash=blocks:Compose({{Name="AfterimageTrail",Position=v(10,1,0),Options={EndPosition=endpoint}}},1,3,0.6)
+    service:Step(C.Cinematic.TrailTravel)
+    local trailHead=dash.Objects[2].Object
+    check(math.abs(trailHead.Position.X-endpoint.X)<0.001 and math.abs(trailHead.Position.Z-endpoint.Z)<0.001,
+        "Dash trail reaches the server endpoint instead of local +X")
+    dash:Finish()
     -- Lowest quality must retain four-effect cap, including multi-layer casts.
     quality=1;service:Profile()
     for _=1,4 do check(blocks:Compose({layer(10)},1,3,0.75)~=nil,"Low-quality effect slot admits within cap") end

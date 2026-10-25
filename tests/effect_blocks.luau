@@ -26,7 +26,9 @@ return function(load: any,sharedNode: any)
     end
     CM.__index=cm;CM.__mul=function(a,b) return cf(a.Position+b.Position) end
     function cm:PointToObjectSpace(at) return at-self.Position end
-    local cframe={new=cf,identity=cf(),fromMatrix=function(at,right,up,back)
+    local cframe={new=cf,identity=cf(),Angles=function(x,y,z)
+        local value=cf();value.Angles={x,y,z};return value
+    end,fromMatrix=function(at,right,up,back)
         local value=cf(at);value.RightVector=right;value.UpVector=up;value.BackVector=back;return value
     end}
     local enum=setmetatable({},{__index=function(self,k)

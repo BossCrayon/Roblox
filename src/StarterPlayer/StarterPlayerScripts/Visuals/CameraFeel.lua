@@ -39,7 +39,9 @@ function CameraFeel.Step(self: any,delta: number)
     local camera=workspace.CurrentCamera
     if not camera then return end
     local remaining=1-self.Elapsed/self.Life
-    local envelope=remaining*remaining
+    -- A short attack and a firm settle, with the existing displacement/FOV caps.
+    local attack=math.clamp((self.Elapsed+self.Hold)/C.Attack,0,1)
+    local envelope=attack*remaining^C.SettlePower
     local time=self.Elapsed*C.Frequency*math.pi*2
     local ratio=C.FrequencyRatio
     local phase=C.Phase

@@ -1,8 +1,9 @@
 --!strict
 -- Original threshold/recording language. No visual creates a dimension, wall or gameplay gate.
 local C=require(game:GetService("ReplicatedStorage").Shared.VfxConfig)
+local Choreography=require(script.Parent.Parent.Choreography)
 local Apprentice={}
-function Apprentice.Build(a: any,e: any,c: any): (any,number?)
+local function build(a: any,e: any,c: any): (any,number?)
     local id=a.Id
     local function pair(nested: boolean,stars: boolean): {any}
         local layers={}
@@ -198,5 +199,9 @@ function Apprentice.Build(a: any,e: any,c: any): (any,number?)
         return layers,C.Ability.Life
     end
     return nil,nil
+end
+function Apprentice.Build(a: any,e: any,c: any): (any,number?)
+    local layers,life=build(a,e,c)
+    return Choreography.Finish(layers,life,a,c,"Apprentice")
 end
 return Apprentice

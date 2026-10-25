@@ -17,13 +17,36 @@ function Choreography.GestureHeight(a: any): number
 end
 function Choreography.Extend(a: any,e: any,c: any): any
     local gestureY=Choreography.GestureHeight(a)
+    local sequence=tonumber(string.match(a.Id,"_(%d+)")) or 9
+    local scale=if sequence<=2 then C.Cinematic.AngelScale elseif sequence<=4 then C.Cinematic.SaintScale else 1
+    local layer=c.Layer
+    -- Every route retains its own vocabulary, endpoints and confirmed targets.
+    -- Timing lives inside one pooled composition, with no delayed task queue.
+    c.Layer=function(name: string,at: Vector3,options: any?): any
+        local opts=table.clone(options or {})
+        if not c.Simplified then
+            if name=="RisingMotes" or name=="ContourEcho" or name=="VeilRibbon" then
+                opts.Delay=opts.Delay or C.Cinematic.Aftermath
+            elseif name=="StarBurst" or name=="GlitchFlicker" or name=="RingBurst" then
+                opts.Delay=opts.Delay or C.Cinematic.Release
+            end
+            if name=="VeilRibbon" and sequence<=4 then opts.Height=C.Cinematic.VeilHeight end
+            if name=="GroundRune" then opts.InnerRing=sequence<=4 end
+        end
+        if name=="ThreadBeam" then opts.Draw=true end
+        if not opts.Radius and not opts.Width then opts.Scale=(opts.Scale or 1)*scale end
+        return layer(name,at,opts)
+    end
     c.Root=Choreography.Root
-    c.Self=e.Destination or e.Position
+    c.Self=e.Destination or e.Origin or e.Position
     c.Origin=e.Origin or e.Position
     c.Head=c.Self+Vector3.yAxis*C.Ability.HeadHeight
     c.Chest=c.Self+Vector3.yAxis*C.Ability.ChestHeight
-    c.Gesture=c.Self+Vector3.yAxis*gestureY
-    c.OriginGesture=c.Origin+Vector3.yAxis*gestureY
+    local timing=Anim.AbilityTimings[a.Id]
+    local offset=timing and timing.Origin
+    local gesture=if offset then Vector3.new(offset[1],offset[2],offset[3]) else Vector3.yAxis*gestureY
+    c.Gesture=c.Frame(c.Self):PointToWorldSpace(gesture)
+    c.OriginGesture=c.Frame(c.Origin):PointToWorldSpace(gesture)
     c.Target=e.Position
     c.TargetHead=e.Position+Vector3.yAxis*C.Ability.HeadHeight
     c.TargetChest=e.Position+Vector3.yAxis*C.Ability.ChestHeight
@@ -67,7 +90,7 @@ function Choreography.Extend(a: any,e: any,c: any): any
         return c.Layer("PaperFold",at,{Frame=c.Frame(at),Scale=scale or C.Ability.Medium,Break=broken})
     end
     c.Trail=function(at: Vector3,scale: number?,moveTo: Vector3?): any
-        return c.Layer("AfterimageTrail",at,{Frame=c.Frame(at),Scale=scale or C.Ability.Medium,MoveTo=moveTo})
+        return c.Layer("AfterimageTrail",at,{Frame=c.Frame(at),Scale=scale or C.Ability.Medium,EndPosition=moveTo})
     end
     c.Flash=function(at: Vector3,scale: number?): any
         return c.Layer("ImpactFlash",at,{Frame=c.Frame(at),Scale=scale or C.Ability.Small})
@@ -85,5 +108,16 @@ function Choreography.Extend(a: any,e: any,c: any): any
         return c.Layer("DoorFrame",at,{Frame=c.Frame(at),Scale=scale or C.Ability.Medium,Nested=nested})
     end
     return c
+end
+function Choreography.Finish(layers: any,life: number?,a: any,c: any,pathway: string): (any,number?)
+    if not layers or c.Simplified then return layers,life end
+    local sequence=tonumber(string.match(a.Id,"_(%d+)")) or 9
+    if sequence<=4 and #layers<C.Composition.MaxLayers then
+        local layer=if pathway=="Seer" then c.Veil(c.Gesture,C.Ability.Medium)
+            elseif pathway=="Marauder" then c.Glitch(c.Gesture,C.Ability.Large)
+            else c.Door(c.Ground(),C.Ability.Large)
+        table.insert(layers,layer)
+    end
+    return layers,life
 end
 return Choreography

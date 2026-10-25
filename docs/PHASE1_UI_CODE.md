@@ -81,9 +81,16 @@ return freeze({
         Pendant={0.28,0.4,0.12},AuraLife=0.8,LapelWidth=0.18,LapelDepth=0.1,LapelFraction=0.65,LapelAngle=15,
         CapeExtra=0.5,CapeDepth=0.2,CollarSeal={0.45,0.12,0.18},BodyScaleMin=0.8,BodyScaleMax=1.5,CoatClearance=0.1,
         Mythical={
+            -- Original cinematic interpretations; these silhouettes do not assert Sequence 0 anatomy at Sequence 2.
+            SpiritAlpha=0.76,GlowAlpha=0.42,RevealTime=0.62,IdlePeriod=3.8,IdleRise=0.09,
+            IdleDegrees=12,HaloSpeed=0.32,HandSpeed=0.55,WormSpeed=1.7,AlphaPulse=0.06,
+            ClockDiameter=5.4,ClockDepth=0.16,ClockSegments=12,ClockCanvas=256,ClockRadius=0.43,
+            ClockTickWidth=0.012,ClockTickHeight=0.065,ClockTickAlpha=0.18,ClockMaxDistance=80,
+            HaloStroke=2,HaloInset=0.08,HaloReveal=0.4,
+            AuraScale=0.55,AuraLife=1.6,AuraInterval=2.2,
             CloakAlpha=0.32,WormAlpha=0.22,ClockAlpha=0.25,DoorAlpha=0.28,
             SeerMask={1.32,1.55,0.35},SeerTentacle={0.28,1.95,0.28},SeerWorm={0.32,0.95,0.32},
-            MarauderRing={0.34,0.22,0.34},MarauderClockRim={0.28,2.9,0.18},MarauderHand={0.16,1.45,0.14},
+            MarauderRing={0.34,1.35,0.34},MarauderClockRim={5.4,5.4,0.18},MarauderHand={0.16,1.85,0.14},
             ApprenticeWorm={0.28,1.05,0.24},ApprenticeJamb={0.24,3.4,0.24},ApprenticeLintel={2.5,0.24,0.24},
         }},
     EnemyArt={Geometry={Coat={2.4,2.8,1.35},Sleeve={0.65,2.7,0.8},Boot={0.85,1.2,1},Mask={1.3,1.6,0.9},
@@ -118,7 +125,10 @@ return freeze({
         Reject={Id=0,Volume=0.18},JournalOpen={Id=0,Volume=0.15},Advance={Id=0,Volume=0.28},
         Hit={Id=0,Volume=0.16},Abilities={["Enemy.Intro"]=0,["Enemy.Phase"]=0,["Enemy.Death"]=0,["Enemy.Melee"]=0,["Enemy.Spell"]=0,["Trigger.SubstituteTriggered"]=0,["Trigger.GraftReflected"]=0,["Trigger.PayloadTriggered"]=0},MaxPlaying=8,AbilityVolume=0.4,MinPitch=0.5,MaxPitch=2},
     Camera={MinZoom=8,MaxZoom=32},
+    Choreography={WindupSnap=0.08,WindupStart=0.75,WindupFade=0.045,ReleaseStrike=0.2,FollowEnd=0.55,
+        Recovery=0.82,FollowOvershoot=0.24,MeleeDuration=0.34,UltimateDuration=0.9},
     CameraFeel={SmallStuds=0.10,MajorStuds=0.22,SmallDegrees=0.25,MajorDegrees=0.55,
+        Attack=0.018,SettlePower=3,
         SmallDuration=0.12,MajorDuration=0.22,FovKick=1.8,MaxFovKick=2.5,FovMin=1,FovMax=120,
         Frequency=11,HitStop=0.045,MaxHitStop=0.06,StepCap=0.05,Epsilon=0.00001,DefaultTier=1,MajorTier=3,
         BeforePriorityOffset=-1,AfterPriorityOffset=1,KickGap=0.10,
@@ -1871,7 +1881,14 @@ function Presentation.Update(self: any,state: any)
 end
 function Presentation.Event(self: any,event: any)
     if event.Kind=="AbilityVisual" or event.Kind=="StatusVisual" or event.Kind=="VisualTrigger" or event.Kind=="GateRemoval"
-        or event.Kind=="GateSnapshot" or event.Kind=="EchoSnapshot" then self.Abilities:Event(event);return end
+        or event.Kind=="GateSnapshot" or event.Kind=="EchoSnapshot" then
+        local accepted=self.Abilities:Event(event)
+        if accepted and event.Kind=="AbilityVisual" and event.Phase=="Result" and event.Owner==Players.LocalPlayer.UserId
+            and self.VFX:Visible(event.Position) then
+            self.Camera:Kick(event.Tier)
+        end
+        return
+    end
     if event.Kind=="PotionConfirmed" then
         if type(event.At)~="number" or math.abs(workspace:GetServerTimeNow()-event.At)>C.Protocol.MaxAge or not T.CharacterArt.Trim[event.PathwayId] then return end
         local controller=self:LocalController();if controller then controller:Play("CastRelease",nil,nil,T.Ritual.Pose) end
@@ -1894,17 +1911,17 @@ function Presentation.Event(self: any,event: any)
         local dir=if typeof(event.Direction)=="Vector3" and event.Direction.Magnitude>0.01 then event.Direction.Unit else Vector3.new(0,0,-1)
         local side=Vector3.new(-dir.Z,0,dir.X)
         local sign=if event.Combo==2 then -1 else 1
-        local arcStart=origin+dir*2.1+side*(sign*C.Melee.SwingArcOffset)+Vector3.new(0,0.45*sign,0)
-        local arcEnd=origin+dir*4.2-side*(sign*C.Melee.SwingArcOffset)-Vector3.new(0,0.35*sign,0)
+        local arcStart=origin+dir*C.Melee.ArcForward+side*(sign*C.Melee.ArcSpan)+Vector3.yAxis*(C.Melee.ArcHeight*sign)
+        local arcEnd=origin+dir*C.Melee.ArcEndForward-side*(sign*C.Melee.ArcSpan)-Vector3.yAxis*(C.Melee.ArcHeight*sign)
         local specs: {any}={
-            {Name="ThreadBeam",Position=arcStart,Palette=palette,Options={TargetPosition=arcEnd,Scale=C.Melee.SwingScale}},
-            {Name="AfterimageTrail",Position=origin+dir*1.4,Palette=palette,Options={TargetPosition=origin+dir*3.6,Scale=C.Melee.SwingScale}},
+            {Name="ThreadBeam",Position=arcStart,Palette=palette,Options={EndPosition=arcEnd,Scale=C.Melee.SlashScale,Curve=C.Melee.ArcCurve,Draw=true,Delay=C.Melee.Windup}},
+            {Name="AfterimageTrail",Position=arcStart,Palette=palette,Options={EndPosition=arcEnd,Scale=C.Melee.TrailScale,Delay=C.Melee.Windup}},
         }
         if event.Target then
-            table.insert(specs,{Name="ImpactFlash",Position=event.Position,Palette=palette,Options={Scale=C.Melee.ImpactScale}})
-            table.insert(specs,{Name="RingBurst",Position=event.Position,Palette=palette,Options={Scale=C.Melee.ImpactScale}})
+            table.insert(specs,{Name="ImpactFlash",Position=event.Position,Palette=palette,Options={Scale=C.Melee.ImpactScale,Delay=C.Melee.Windup}})
+            table.insert(specs,{Name="RingBurst",Position=event.Position,Palette=palette,Options={Scale=C.Melee.ImpactScale,Delay=C.Melee.Windup}})
         end
-        self.Blocks:Compose(specs,1,C.Composition.Priority,C.Melee.SwingLife)
+        self.Blocks:Compose(specs,1,C.Composition.Priority,C.Melee.TrailLife)
     elseif event.Kind=="Dash" then
         local ownerPlayer=if type(event.Owner)=="number" then Players:GetPlayerByUserId(event.Owner) else nil
         local character=ownerPlayer and ownerPlayer.Character
@@ -1914,7 +1931,7 @@ function Presentation.Event(self: any,event: any)
         local origin=if typeof(event.Origin)=="Vector3" then event.Origin else event.Position
         local dest=if typeof(event.Destination)=="Vector3" then event.Destination else event.Position
         local dashSpecs: {any}={
-            {Name="AfterimageTrail",Position=origin,Palette=palette,Options={TargetPosition=dest,Scale=C.Dash.Scale}},
+            {Name="AfterimageTrail",Position=origin,Palette=palette,Options={EndPosition=dest,Scale=C.Dash.Scale}},
             {Name="RingBurst",Position=origin,Palette=palette,Options={Scale=C.Dash.Scale*0.82}},
         }
         self.Blocks:Compose(dashSpecs,1,C.Composition.Priority,C.Dash.Life)
@@ -1924,18 +1941,36 @@ function Presentation.Event(self: any,event: any)
         local palette=if T.CharacterArt.Trim[event.PathwayId] then event.PathwayId else "Seer"
         local controller=self:Controller(character)
         if controller then controller:Play("CastRelease",nil,nil,"Ultimate"..palette) end
-        if event.Owner==Players.LocalPlayer.UserId then self.Camera:Kick(3) end
         local scale=if event.Stage=="Complete" then C.Ultimate.CompleteScale else C.Ultimate.IncompleteScale
         local stencil=if palette=="Seer" then "Worm" elseif palette=="Marauder" then "Clock" else "Arch"
         local motif=if palette=="Seer" then "VeilRibbon" elseif palette=="Marauder" then "GlitchFlicker" else "DoorFrame"
+        local facing=if character then character:FindFirstChild("HumanoidRootPart") else nil
+        local frame=CFrame.new(event.Position)*(if facing and facing:IsA("BasePart") then facing.CFrame.Rotation else CFrame.identity)
+        local ground=event.Position+Vector3.yAxis*C.Ultimate.GroundOffset
+        local gesture=event.Position+Vector3.yAxis*C.Ultimate.GestureHeight
+        -- Six layers, one reservation: intake -> unfold -> domain/aftermath.
+        -- This is a cinematic interpretation, never a client-side damage or time-stop grant.
         local ultSpecs: {any}={
-            {Name="GroundRune",Position=event.Position,Palette=palette,Options={Scale=scale,Stencil=stencil}},
-            {Name="SigilStencil",Position=event.Position+Vector3.new(0,2.2,0),Palette=palette,Options={Scale=scale,Stencil=stencil}},
-            {Name=motif,Position=event.Position,Palette=palette,Options={Scale=scale}},
-            {Name="RisingMotes",Position=event.Position,Palette=palette,Options={Scale=scale}},
-            {Name="ScreenEdgePulse",Position=event.Position,Palette=palette,Options={Scale=scale}},
+            {Name="RisingMotes",Position=gesture,Palette=palette,Options={Scale=C.Ultimate.IntakeScale,Intake=true,Life=C.Ultimate.Release}},
+            {Name="SigilStencil",Position=gesture,Palette=palette,Options={Scale=scale,Glyph=stencil,LowGlyph=stencil,Frame=CFrame.new(gesture)*frame.Rotation}},
+            {Name=motif,Position=ground,Palette=palette,Options={Scale=scale,Frame=CFrame.new(ground)*frame.Rotation,
+                Height=C.Ultimate.VeilHeight,Delay=C.Ultimate.Release}},
+            {Name="GroundRune",Position=ground,Palette=palette,Options={Scale=scale,InnerRing=true,Delay=C.Ultimate.Release}},
+            {Name="ShockwaveRing",Position=ground,Palette=palette,Options={Scale=scale*C.Ultimate.DomainScale,Delay=C.Ultimate.Aftermath}},
+            {Name=if palette=="Seer" then "CardFan" elseif palette=="Marauder" then "SigilStencil" else "StarBurst",
+                Position=gesture,Palette=palette,Options={Scale=scale,Glyph="Clock",Frame=CFrame.new(gesture)*frame.Rotation,Delay=C.Ultimate.Aftermath}},
         }
-        self.Blocks:Compose(ultSpecs,3,C.Composition.Priority+1,C.Ultimate.Life)
+        local handle=self.Blocks:Compose(ultSpecs,3,C.Composition.Priority+1,C.Ultimate.Life)
+        if handle and event.Owner==Players.LocalPlayer.UserId then
+            local update=handle.Update;local released=false
+            handle.Update=function(dt: number,age: number,t: number)
+                update(dt,age,t)
+                if not released and age>=C.Ultimate.Release then
+                    released=true
+                    if self.VFX:Visible(event.Position) then self.Camera:Kick(3);self.Camera:HitStop() end
+                end
+            end
+        end
     elseif event.Kind=="VoiceProfile" then self:Audio(event.Hook,event.Pitch)
     elseif event.Kind=="Reveal" and typeof(event.Target)=="Instance" then
         -- Compatibility for old server reveal packets; current servers send private batches.

@@ -1,8 +1,9 @@
 --!strict
 -- Canon-inspired concepts; exact geometry and bounded gameplay interpretations [UNVERIFIED].
 local C=require(game:GetService("ReplicatedStorage").Shared.VfxConfig)
+local Choreography=require(script.Parent.Parent.Choreography)
 local Seer={}
-function Seer.Build(a: any,e: any,c: any): (any,number?)
+local function build(a: any,e: any,c: any): (any,number?)
     local id=a.Id
     if id=="Seer_9" then
         if e.Outcome=="Obscured" then
@@ -176,5 +177,9 @@ function Seer.Build(a: any,e: any,c: any): (any,number?)
         return layers,C.Ability.Life
     end
     return nil,nil
+end
+function Seer.Build(a: any,e: any,c: any): (any,number?)
+    local layers,life=build(a,e,c)
+    return Choreography.Finish(layers,life,a,c,"Seer")
 end
 return Seer

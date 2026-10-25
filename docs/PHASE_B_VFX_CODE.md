@@ -93,9 +93,16 @@ return freeze({
         Pendant={0.28,0.4,0.12},AuraLife=0.8,LapelWidth=0.18,LapelDepth=0.1,LapelFraction=0.65,LapelAngle=15,
         CapeExtra=0.5,CapeDepth=0.2,CollarSeal={0.45,0.12,0.18},BodyScaleMin=0.8,BodyScaleMax=1.5,CoatClearance=0.1,
         Mythical={
+            -- Original cinematic interpretations; these silhouettes do not assert Sequence 0 anatomy at Sequence 2.
+            SpiritAlpha=0.76,GlowAlpha=0.42,RevealTime=0.62,IdlePeriod=3.8,IdleRise=0.09,
+            IdleDegrees=12,HaloSpeed=0.32,HandSpeed=0.55,WormSpeed=1.7,AlphaPulse=0.06,
+            ClockDiameter=5.4,ClockDepth=0.16,ClockSegments=12,ClockCanvas=256,ClockRadius=0.43,
+            ClockTickWidth=0.012,ClockTickHeight=0.065,ClockTickAlpha=0.18,ClockMaxDistance=80,
+            HaloStroke=2,HaloInset=0.08,HaloReveal=0.4,
+            AuraScale=0.55,AuraLife=1.6,AuraInterval=2.2,
             CloakAlpha=0.32,WormAlpha=0.22,ClockAlpha=0.25,DoorAlpha=0.28,
             SeerMask={1.32,1.55,0.35},SeerTentacle={0.28,1.95,0.28},SeerWorm={0.32,0.95,0.32},
-            MarauderRing={0.34,0.22,0.34},MarauderClockRim={0.28,2.9,0.18},MarauderHand={0.16,1.45,0.14},
+            MarauderRing={0.34,1.35,0.34},MarauderClockRim={5.4,5.4,0.18},MarauderHand={0.16,1.85,0.14},
             ApprenticeWorm={0.28,1.05,0.24},ApprenticeJamb={0.24,3.4,0.24},ApprenticeLintel={2.5,0.24,0.24},
         }},
     EnemyArt={Geometry={Coat={2.4,2.8,1.35},Sleeve={0.65,2.7,0.8},Boot={0.85,1.2,1},Mask={1.3,1.6,0.9},
@@ -130,7 +137,10 @@ return freeze({
         Reject={Id=0,Volume=0.18},JournalOpen={Id=0,Volume=0.15},Advance={Id=0,Volume=0.28},
         Hit={Id=0,Volume=0.16},Abilities={["Enemy.Intro"]=0,["Enemy.Phase"]=0,["Enemy.Death"]=0,["Enemy.Melee"]=0,["Enemy.Spell"]=0,["Trigger.SubstituteTriggered"]=0,["Trigger.GraftReflected"]=0,["Trigger.PayloadTriggered"]=0},MaxPlaying=8,AbilityVolume=0.4,MinPitch=0.5,MaxPitch=2},
     Camera={MinZoom=8,MaxZoom=32},
+    Choreography={WindupSnap=0.08,WindupStart=0.75,WindupFade=0.045,ReleaseStrike=0.2,FollowEnd=0.55,
+        Recovery=0.82,FollowOvershoot=0.24,MeleeDuration=0.34,UltimateDuration=0.9},
     CameraFeel={SmallStuds=0.10,MajorStuds=0.22,SmallDegrees=0.25,MajorDegrees=0.55,
+        Attack=0.018,SettlePower=3,
         SmallDuration=0.12,MajorDuration=0.22,FovKick=1.8,MaxFovKick=2.5,FovMin=1,FovMax=120,
         Frequency=11,HitStop=0.045,MaxHitStop=0.06,StepCap=0.05,Epsilon=0.00001,DefaultTier=1,MajorTier=3,
         BeforePriorityOffset=-1,AfterPriorityOffset=1,KickGap=0.10,
@@ -274,16 +284,26 @@ end
 local function releaseCurve(entry: any,time: number,_speed: number): Pose
     if not entry.FollowPose then return still(entry,time,_speed) end
     local progress=math.clamp(time/math.max(0.01,entry.Duration),0,1)
-    if entry.AnticipationPose and progress<0.24 then
-        return lerpPose(entry.AnticipationPose,entry.Pose,progress/0.24)
-    elseif progress<0.62 then
-        local t=if entry.AnticipationPose then (progress-0.24)/0.38 else progress/0.62
-        return lerpPose(entry.Pose,entry.FollowPose,t)
+    local beat=T.Choreography
+    if entry.AnticipationPose and progress<beat.ReleaseStrike then
+        local t=progress/beat.ReleaseStrike
+        return lerpPose(entry.AnticipationPose,entry.Pose,t*t)
+    elseif progress<beat.FollowEnd then
+        local t=if entry.AnticipationPose then (progress-beat.ReleaseStrike)/(beat.FollowEnd-beat.ReleaseStrike) else progress/beat.FollowEnd
+        return lerpPose(entry.Pose,entry.FollowPose,1-(1-t)^3)
     end
-    local recovery=(progress-0.62)/0.38
+    local recovery=(progress-beat.FollowEnd)/(1-beat.FollowEnd)
     return lerpPose(entry.FollowPose,entry.RecoveryPose or {
         Root={0,0,0,0},Waist={0,0,0,0},Neck={0,0,0,0},LeftShoulder={0,0,0,0},RightShoulder={0,0,0,0},LeftHip={0,0,0,0},RightHip={0,0,0,0},
-    },recovery*0.65)
+    },recovery*beat.Recovery)
+end
+local function windupCurve(entry: any,time: number,_speed: number): Pose
+    local gain=T.Choreography.WindupStart+(1-T.Choreography.WindupStart)*math.min(1,time/T.Choreography.WindupSnap)
+    local result: Pose={}
+    for role,value in pairs(entry.Pose) do
+        result[role]=frame(value[1]*gain,value[2]*gain,value[3]*gain,value[4]*gain)
+    end
+    return result
 end
 local function breathe(entry: any,time: number,_speed: number): Pose
     local wave=math.sin(time*math.pi*2/entry.Period)
@@ -719,9 +739,9 @@ local function makeFollow(w: any,r: any): {[string]: {number}}
         local wv=w[role] or {0,0,0,0}
         out[role]={
             rv[1]*0.55,
-            rv[2]+(rv[2]-wv[2])*0.18,
-            rv[3]+(rv[3]-wv[3])*0.18,
-            rv[4]+(rv[4]-wv[4])*0.18,
+            rv[2]+(rv[2]-wv[2])*T.Choreography.FollowOvershoot,
+            rv[3]+(rv[3]-wv[3])*T.Choreography.FollowOvershoot,
+            rv[4]+(rv[4]-wv[4])*T.Choreography.FollowOvershoot,
         }
     end
     return out
@@ -750,6 +770,7 @@ for pathway,rows in pairs(families) do
             }
             local wind=table.clone(source.CastWindup)
             local cast=table.clone(source.CastRelease)
+            wind.Procedural=windupCurve;wind.FadeIn=T.Choreography.WindupFade
             cast.Duration=release[pathway][index][choice]
             config.CastProfiles[profile]={CastWindup=wind,CastRelease=cast}
             config.AbilityProfiles[id]=profile
@@ -763,6 +784,12 @@ for pathway,rows in pairs(families) do
             config.GestureOrigins[id]={Offset=spec.Origin,Stencil=spec.Stencil,Family=family}
         end
     end
+end
+for _,profile in ipairs({"MeleeRight","MeleeLeft"}) do
+    config.CastProfiles[profile].CastRelease.Duration=T.Choreography.MeleeDuration
+end
+for _,profile in ipairs({"UltimateSeer","UltimateMarauder","UltimateApprentice"}) do
+    config.CastProfiles[profile].CastRelease.Duration=T.Choreography.UltimateDuration
 end
 return freeze(config)
 ```
@@ -808,11 +835,16 @@ return freeze({
             Deceived="Deceived",TimeSlow="Slowed",Stasis="Stasis",Burning="Burning",Grafted="Grafted",Disguised="Disguised",Concealed="Concealed",
             Vision="Spirit sight",CipherSight="Cipher sight",Substitute="Substitute armed",Composed="Composed",Shielded="Shielded",MythicalForm="Mythical Form",Invulnerable="Evading"}},
     Composition={MaxLayers=6,MaxAnchors=12,MobileDetail=0.35,Priority=3,WindupPriority=2,ResultLife=0.85,CancelFade=0.12,MinWidth=0.04,MobileMinWidth=0.06},
-    Melee={TrailLife=0.34,ImpactLife=0.32,ArcSpan=2.4,ArcForward=2.6,ArcHeight=0.45,SlashScale=0.42,ImpactScale=0.48},
+    Melee={TrailLife=0.34,ImpactLife=0.32,ArcSpan=2.4,ArcForward=2.6,ArcHeight=0.45,SlashScale=0.42,ImpactScale=0.48,
+        Windup=0.06,ArcEndForward=3.6,ArcCurve=1.1,TrailScale=0.30},
     Dash={Life=0.42,Scale=0.42},
-    Ultimate={Life=1.35,IncompleteScale=0.65,CompleteScale=0.95},
+    Ultimate={Life=1.8,IncompleteScale=0.85,CompleteScale=1.3,Release=0.18,Aftermath=0.46,
+        GestureHeight=1.8,GroundOffset=-2.7,IntakeScale=0.65,DomainScale=1.45,VeilHeight=5.4},
+    Cinematic={Intake=0.16,Release=0.08,Aftermath=0.24,SigilSpin=0.45,RuneSpin=0.18,
+        VeilSway=0.22,DoorDepth=0.30,DoorOpen=0.16,BeamDraw=0.09,TrailTravel=0.16,
+        SaintScale=1.12,AngelScale=1.25,VeilHeight=3.8,IntakeRadius=0.2,Afterglow=0.7},
     Ability={GroundOffset=-2.8,HandHeight=0.5,ReadHeight=1.8,DefaultScale=0.38,
-        WindupScale=0.24,EyeScale=1,ReadGroundDetail=0.35,TransferScale=0.3,DoorScale=1,
+        WindupScale=0.42,EyeScale=1,ReadGroundDetail=0.35,TransferScale=0.3,DoorScale=1,
         FlameScale=0.45,TravelScale=1,EndpointLife=0.75,PickpocketLife=0.65,TheftLife=0.85,
         FlameTint=T.Colors.Warm,FlameRim=T.Colors.Fog,TheftTint=T.Colors.Crimson,DoorMargin=0.12,EndpointOffset=0.1,
         RevealFill=0.9,RevealOutline=0.15,RevealPriority=2,StoredScale=0.24,StoredAlpha=0.35,
@@ -878,7 +910,7 @@ return freeze({
         ScreenEdgePulse={Duration=0.5,Priority=4},
         ShockwaveRing={Duration=0.8,Priority=2,Radius=4,Start=0.4},
         AfterimageTrail={Duration=1,Priority=2,Length=5,Height=2,Width=0.12,Head=0.18},
-        SigilStencil={Duration=0.85,Priority=3,Size=1.5,Paths={
+        SigilStencil={Duration=0.85,Priority=3,Size=1.5,IntakeCount=2,IntakeSize=0.09,Paths={
             Eye=T.Glyphs.Eye,Split=T.Glyphs.Split,Door=T.Glyphs.Door,
             Book=T.Glyphs.Book,Star=T.Glyphs.Star,Thread=T.Glyphs.Thread,Seal=T.Glyphs.Seal,
             Card=T.Glyphs.Card,Flame=T.Glyphs.Flame,Mask=T.Glyphs.Mask,Scale=T.Glyphs.Scale,
@@ -3337,7 +3369,14 @@ function Presentation.Update(self: any,state: any)
 end
 function Presentation.Event(self: any,event: any)
     if event.Kind=="AbilityVisual" or event.Kind=="StatusVisual" or event.Kind=="VisualTrigger" or event.Kind=="GateRemoval"
-        or event.Kind=="GateSnapshot" or event.Kind=="EchoSnapshot" then self.Abilities:Event(event);return end
+        or event.Kind=="GateSnapshot" or event.Kind=="EchoSnapshot" then
+        local accepted=self.Abilities:Event(event)
+        if accepted and event.Kind=="AbilityVisual" and event.Phase=="Result" and event.Owner==Players.LocalPlayer.UserId
+            and self.VFX:Visible(event.Position) then
+            self.Camera:Kick(event.Tier)
+        end
+        return
+    end
     if event.Kind=="PotionConfirmed" then
         if type(event.At)~="number" or math.abs(workspace:GetServerTimeNow()-event.At)>C.Protocol.MaxAge or not T.CharacterArt.Trim[event.PathwayId] then return end
         local controller=self:LocalController();if controller then controller:Play("CastRelease",nil,nil,T.Ritual.Pose) end
@@ -3360,17 +3399,17 @@ function Presentation.Event(self: any,event: any)
         local dir=if typeof(event.Direction)=="Vector3" and event.Direction.Magnitude>0.01 then event.Direction.Unit else Vector3.new(0,0,-1)
         local side=Vector3.new(-dir.Z,0,dir.X)
         local sign=if event.Combo==2 then -1 else 1
-        local arcStart=origin+dir*2.1+side*(sign*C.Melee.SwingArcOffset)+Vector3.new(0,0.45*sign,0)
-        local arcEnd=origin+dir*4.2-side*(sign*C.Melee.SwingArcOffset)-Vector3.new(0,0.35*sign,0)
+        local arcStart=origin+dir*C.Melee.ArcForward+side*(sign*C.Melee.ArcSpan)+Vector3.yAxis*(C.Melee.ArcHeight*sign)
+        local arcEnd=origin+dir*C.Melee.ArcEndForward-side*(sign*C.Melee.ArcSpan)-Vector3.yAxis*(C.Melee.ArcHeight*sign)
         local specs: {any}={
-            {Name="ThreadBeam",Position=arcStart,Palette=palette,Options={TargetPosition=arcEnd,Scale=C.Melee.SwingScale}},
-            {Name="AfterimageTrail",Position=origin+dir*1.4,Palette=palette,Options={TargetPosition=origin+dir*3.6,Scale=C.Melee.SwingScale}},
+            {Name="ThreadBeam",Position=arcStart,Palette=palette,Options={EndPosition=arcEnd,Scale=C.Melee.SlashScale,Curve=C.Melee.ArcCurve,Draw=true,Delay=C.Melee.Windup}},
+            {Name="AfterimageTrail",Position=arcStart,Palette=palette,Options={EndPosition=arcEnd,Scale=C.Melee.TrailScale,Delay=C.Melee.Windup}},
         }
         if event.Target then
-            table.insert(specs,{Name="ImpactFlash",Position=event.Position,Palette=palette,Options={Scale=C.Melee.ImpactScale}})
-            table.insert(specs,{Name="RingBurst",Position=event.Position,Palette=palette,Options={Scale=C.Melee.ImpactScale}})
+            table.insert(specs,{Name="ImpactFlash",Position=event.Position,Palette=palette,Options={Scale=C.Melee.ImpactScale,Delay=C.Melee.Windup}})
+            table.insert(specs,{Name="RingBurst",Position=event.Position,Palette=palette,Options={Scale=C.Melee.ImpactScale,Delay=C.Melee.Windup}})
         end
-        self.Blocks:Compose(specs,1,C.Composition.Priority,C.Melee.SwingLife)
+        self.Blocks:Compose(specs,1,C.Composition.Priority,C.Melee.TrailLife)
     elseif event.Kind=="Dash" then
         local ownerPlayer=if type(event.Owner)=="number" then Players:GetPlayerByUserId(event.Owner) else nil
         local character=ownerPlayer and ownerPlayer.Character
@@ -3380,7 +3419,7 @@ function Presentation.Event(self: any,event: any)
         local origin=if typeof(event.Origin)=="Vector3" then event.Origin else event.Position
         local dest=if typeof(event.Destination)=="Vector3" then event.Destination else event.Position
         local dashSpecs: {any}={
-            {Name="AfterimageTrail",Position=origin,Palette=palette,Options={TargetPosition=dest,Scale=C.Dash.Scale}},
+            {Name="AfterimageTrail",Position=origin,Palette=palette,Options={EndPosition=dest,Scale=C.Dash.Scale}},
             {Name="RingBurst",Position=origin,Palette=palette,Options={Scale=C.Dash.Scale*0.82}},
         }
         self.Blocks:Compose(dashSpecs,1,C.Composition.Priority,C.Dash.Life)
@@ -3390,18 +3429,36 @@ function Presentation.Event(self: any,event: any)
         local palette=if T.CharacterArt.Trim[event.PathwayId] then event.PathwayId else "Seer"
         local controller=self:Controller(character)
         if controller then controller:Play("CastRelease",nil,nil,"Ultimate"..palette) end
-        if event.Owner==Players.LocalPlayer.UserId then self.Camera:Kick(3) end
         local scale=if event.Stage=="Complete" then C.Ultimate.CompleteScale else C.Ultimate.IncompleteScale
         local stencil=if palette=="Seer" then "Worm" elseif palette=="Marauder" then "Clock" else "Arch"
         local motif=if palette=="Seer" then "VeilRibbon" elseif palette=="Marauder" then "GlitchFlicker" else "DoorFrame"
+        local facing=if character then character:FindFirstChild("HumanoidRootPart") else nil
+        local frame=CFrame.new(event.Position)*(if facing and facing:IsA("BasePart") then facing.CFrame.Rotation else CFrame.identity)
+        local ground=event.Position+Vector3.yAxis*C.Ultimate.GroundOffset
+        local gesture=event.Position+Vector3.yAxis*C.Ultimate.GestureHeight
+        -- Six layers, one reservation: intake -> unfold -> domain/aftermath.
+        -- This is a cinematic interpretation, never a client-side damage or time-stop grant.
         local ultSpecs: {any}={
-            {Name="GroundRune",Position=event.Position,Palette=palette,Options={Scale=scale,Stencil=stencil}},
-            {Name="SigilStencil",Position=event.Position+Vector3.new(0,2.2,0),Palette=palette,Options={Scale=scale,Stencil=stencil}},
-            {Name=motif,Position=event.Position,Palette=palette,Options={Scale=scale}},
-            {Name="RisingMotes",Position=event.Position,Palette=palette,Options={Scale=scale}},
-            {Name="ScreenEdgePulse",Position=event.Position,Palette=palette,Options={Scale=scale}},
+            {Name="RisingMotes",Position=gesture,Palette=palette,Options={Scale=C.Ultimate.IntakeScale,Intake=true,Life=C.Ultimate.Release}},
+            {Name="SigilStencil",Position=gesture,Palette=palette,Options={Scale=scale,Glyph=stencil,LowGlyph=stencil,Frame=CFrame.new(gesture)*frame.Rotation}},
+            {Name=motif,Position=ground,Palette=palette,Options={Scale=scale,Frame=CFrame.new(ground)*frame.Rotation,
+                Height=C.Ultimate.VeilHeight,Delay=C.Ultimate.Release}},
+            {Name="GroundRune",Position=ground,Palette=palette,Options={Scale=scale,InnerRing=true,Delay=C.Ultimate.Release}},
+            {Name="ShockwaveRing",Position=ground,Palette=palette,Options={Scale=scale*C.Ultimate.DomainScale,Delay=C.Ultimate.Aftermath}},
+            {Name=if palette=="Seer" then "CardFan" elseif palette=="Marauder" then "SigilStencil" else "StarBurst",
+                Position=gesture,Palette=palette,Options={Scale=scale,Glyph="Clock",Frame=CFrame.new(gesture)*frame.Rotation,Delay=C.Ultimate.Aftermath}},
         }
-        self.Blocks:Compose(ultSpecs,3,C.Composition.Priority+1,C.Ultimate.Life)
+        local handle=self.Blocks:Compose(ultSpecs,3,C.Composition.Priority+1,C.Ultimate.Life)
+        if handle and event.Owner==Players.LocalPlayer.UserId then
+            local update=handle.Update;local released=false
+            handle.Update=function(dt: number,age: number,t: number)
+                update(dt,age,t)
+                if not released and age>=C.Ultimate.Release then
+                    released=true
+                    if self.VFX:Visible(event.Position) then self.Camera:Kick(3);self.Camera:HitStop() end
+                end
+            end
+        end
     elseif event.Kind=="VoiceProfile" then self:Audio(event.Hook,event.Pitch)
     elseif event.Kind=="Reveal" and typeof(event.Target)=="Instance" then
         -- Compatibility for old server reveal packets; current servers send private batches.
@@ -4021,7 +4078,9 @@ function CameraFeel.Step(self: any,delta: number)
     local camera=workspace.CurrentCamera
     if not camera then return end
     local remaining=1-self.Elapsed/self.Life
-    local envelope=remaining*remaining
+    -- A short attack and a firm settle, with the existing displacement/FOV caps.
+    local attack=math.clamp((self.Elapsed+self.Hold)/C.Attack,0,1)
+    local envelope=attack*remaining^C.SettlePower
     local time=self.Elapsed*C.Frequency*math.pi*2
     local ratio=C.FrequencyRatio
     local phase=C.Phase
@@ -4128,33 +4187,86 @@ function Outfit.Build(self: any,character: Model,path: string,sequence: number,t
     local stage=if myth=="Incomplete" or myth=="Complete" then myth else ""
     local model=Instance.new("Model");model.Name="LocalMysteriesOutfit";model.Parent=character
     local count=0;local cloth=A.Cloth[path];local trim=A.Trim[path]
-    local function piece(name: string,base: BasePart,size: {number},offset: CFrame,color: Color3,material: Enum.Material?,alpha: number?)
+    local motions: {any}={};local faces: {any}={};local ornaments: {any}={}
+    local function piece(name: string,base: BasePart,size: {number},offset: CFrame,color: Color3,material: Enum.Material?,alpha: number?): any
         if count>=A.MaxParts then return end;count+=1
         local part=Instance.new("Part");part.Name=name;part.Size=Vector3.new(table.unpack(size));part.CFrame=base.CFrame*offset
         part.Anchored=false;part.CanCollide=false;part.CanQuery=false;part.CanTouch=false;part.Massless=true;part.CastShadow=false
         part.Material=material or Enum.Material.Fabric;part.Color=color;part.Transparency=alpha or 0;part.Parent=model
-        local weld=Instance.new("WeldConstraint");weld.Part0=base;weld.Part1=part;weld.Parent=part
+        local pose=offset
+        local lower=string.lower(name)
+        local clock=string.find(lower,"clock wheel") or string.find(lower,"bezel") or string.find(lower,"clock arc")
+        local halo=string.find(lower,"halo") or string.find(lower,"crown ring") or string.find(lower,"key-seal") or string.find(lower,"time ring")
+        local worm=string.find(lower,"worm") or string.find(lower,"tentacle")
+        local hand=string.find(lower,"hand")
+        if stage~="" and clock then
+            part.Shape=Enum.PartType.Cylinder
+            part.Size=Vector3.new(M.ClockDepth,size[1],size[2])
+            pose=offset*CFrame.Angles(0,math.pi/2,0)
+            if string.find(lower,"clock wheel") then
+                -- Two fixed, occluded faces: 12 radial sections, no extra Parts or unpooled Beams.
+                for _,face in ipairs({Enum.NormalId.Left,Enum.NormalId.Right}) do
+                    local gui=Instance.new("SurfaceGui");gui.Name="Twelve temporal sections";gui.Face=face
+                    gui.CanvasSize=Vector2.new(M.ClockCanvas,M.ClockCanvas);gui.AlwaysOnTop=false
+                    gui.LightInfluence=1;gui.MaxDistance=M.ClockMaxDistance;gui.Enabled=false;gui.Parent=part
+                    table.insert(faces,gui)
+                    for i=1,M.ClockSegments do
+                        local angle=(i-1)*math.pi*2/M.ClockSegments
+                        local tick=Instance.new("Frame");tick.Name="Clock sector "..i
+                        tick.AnchorPoint=Vector2.new(0.5,0.5)
+                        tick.Position=UDim2.fromScale(0.5+math.sin(angle)*M.ClockRadius,0.5-math.cos(angle)*M.ClockRadius)
+                        tick.Size=UDim2.fromScale(M.ClockTickWidth,M.ClockTickHeight);tick.Rotation=math.deg(angle)
+                        tick.BorderSizePixel=0;tick.BackgroundColor3=T.Colors.Bronze
+                        tick.BackgroundTransparency=M.ClockTickAlpha;tick.Parent=gui
+                    end
+                end
+            end
+        elseif stage~="" and halo then
+            part.Shape=Enum.PartType.Cylinder;part.Size=Vector3.new(size[2],size[1],size[3])
+            pose=offset*CFrame.Angles(0,0,math.pi/2)
+            part.Transparency=math.max(part.Transparency,M.SpiritAlpha)
+            for _,face in ipairs({Enum.NormalId.Left,Enum.NormalId.Right}) do
+                local gui=Instance.new("SurfaceGui");gui.Name="Spirit halo engraving";gui.Face=face
+                gui.CanvasSize=Vector2.new(M.ClockCanvas,M.ClockCanvas);gui.AlwaysOnTop=false
+                gui.LightInfluence=1;gui.MaxDistance=M.ClockMaxDistance;gui.Enabled=false;gui.Parent=part
+                table.insert(ornaments,gui)
+                local ring=Instance.new("Frame");ring.BackgroundTransparency=1
+                ring.Position=UDim2.fromScale(M.HaloInset,M.HaloInset)
+                ring.Size=UDim2.fromScale(1-M.HaloInset*2,1-M.HaloInset*2);ring.Parent=gui
+                local corner=Instance.new("UICorner");corner.CornerRadius=UDim.new(0.5,0);corner.Parent=ring
+                local stroke=Instance.new("UIStroke");stroke.Color=color;stroke.Thickness=M.HaloStroke;stroke.Transparency=M.GlowAlpha;stroke.Parent=ring
+            end
+        elseif stage~="" and worm then
+            part.Shape=Enum.PartType.Ball
+        end
+        local weld=Instance.new("Weld");weld.Part0=base;weld.Part1=part;weld.C0=pose;weld.Parent=part
+        table.insert(motions,{Part=part,Weld=weld,Base=pose,Alpha=part.Transparency,
+            Phase=count,Kind=if hand then "Hand" elseif halo then "Halo" elseif worm then "Worm" else "Float",
+            Sign=if string.find(lower,"minute") then -1 else 1})
+        if stage~="" and not self.Service.ReducedMotion and not self.Service.LowGraphics then part.Transparency=1 end
+        return part
     end
     local bodyScale=math.clamp(torso.Size.X/2,A.BodyScaleMin,A.BodyScaleMax)
     local coat={A.Coat[1]*bodyScale,math.max(A.Coat[2],torso.Size.Y),math.max(A.Coat[3],torso.Size.Z+A.CoatClearance)}
     if stage=="Complete" then
         if path=="Seer" then
-            -- Complete Angel Mythical Creature Form: Worms of Spirit (dark translucent cloak + blank mask + tentacled spirit-worm collective)
+            -- Original cinematic Angel interpretation: Worms of Spirit (dark translucent cloak + blank mask + tentacled spirit-worm collective)
             piece("Spirit cloak mantle",torso,{coat[1]*1.14,coat[2]*1.12,coat[3]*1.14},CFrame.identity,T.Colors.DeepPurple,Enum.Material.Glass,M.CloakAlpha)
             piece("Boiling fog shroud",torso,{coat[1]*1.22,coat[2]*0.95,coat[3]*1.2},CFrame.new(0,-0.15,0.12),T.Colors.Fog,Enum.Material.Neon,M.SpiritAlpha)
             piece("Cold blank mask",head,M.SeerMask,CFrame.new(0,0,-head.Size.Z/2-0.08),T.Colors.Text,Enum.Material.SmoothPlastic,0.08)
             piece("Antique spirit halo",head,A.Brim,CFrame.new(0,head.Size.Y/2+0.35,0.2)*CFrame.Angles(math.rad(72),0,0),T.Colors.Gold,Enum.Material.Neon,M.GlowAlpha)
-            for idx,angle in ipairs({-52,-18,18,52}) do
+            for idx,angle in ipairs({-45,0,45}) do
                 local rad=math.rad(angle)
-                piece("Worm of Spirit tentacle "..tostring(idx),torso,M.SeerTentacle,
-                    CFrame.new(math.sin(rad)*1.05,-coat[2]/2-0.55,math.cos(rad)*0.65)*CFrame.Angles(math.rad(24),rad,math.rad(angle*0.4)),
-                    if idx%2==0 then T.Colors.Fog else T.Colors.DeepPurple,Enum.Material.Neon,M.GlowAlpha)
-            end
-            for _,side in ipairs({-1,1}) do
-                piece("Spirit worm cluster",torso,M.SeerWorm,CFrame.new(side*0.95,0.25,0.25)*CFrame.Angles(math.rad(18),0,math.rad(side*32)),T.Colors.Gold,Enum.Material.Neon,M.GlowAlpha)
+                local first=piece("Worm of Spirit tentacle "..idx,torso,M.SeerWorm,
+                    CFrame.new(math.sin(rad)*1.05,-coat[2]/2-0.35,math.cos(rad)*0.65)*CFrame.Angles(math.rad(24),rad,math.rad(angle*0.4)),
+                    T.Colors.DeepPurple,Enum.Material.SmoothPlastic,M.WormAlpha)
+                if first then
+                    piece("Spirit tentacle tip "..idx,first,M.SeerWorm,CFrame.new(0,-M.SeerWorm[2]*0.8,0)*CFrame.Angles(math.rad(-24),0,rad),
+                        T.Colors.Fog,Enum.Material.Glass,M.GlowAlpha)
+                end
             end
         elseif path=="Marauder" then
-            -- Complete Angel Mythical Creature Form: Worms of Time (12-section ancient stone clock phantom + ringed Worms of Time)
+            -- Original cinematic Angel interpretation: Worms of Time (12-section ancient stone clock phantom + ringed Worms of Time)
             piece("Chronos dark shroud",torso,{coat[1]*1.1,coat[2]*1.06,coat[3]*1.1},CFrame.identity,T.Colors.Black,Enum.Material.SmoothPlastic,0.12)
             piece("Ancient stone clock wheel",torso,M.MarauderClockRim,CFrame.new(0,0.45,coat[3]/2+0.55),T.Colors.Stone,Enum.Material.Slate,0.08)
             piece("Clockwork bronze bezel",torso,{M.MarauderClockRim[1]*0.86,M.MarauderClockRim[2]*0.86,0.18},CFrame.new(0,0.45,coat[3]/2+0.48),T.Colors.Bronze,Enum.Material.Metal,0.05)
@@ -4166,7 +4278,7 @@ function Outfit.Build(self: any,character: Model,path: string,sequence: number,t
             end
             piece("Temporal crown ring",head,{1.65,0.14,1.65},CFrame.new(0,head.Size.Y/2+0.28,0)*CFrame.Angles(math.rad(14),0,math.rad(-16)),T.Colors.Bronze,Enum.Material.Neon,M.GlowAlpha)
         else
-            -- Complete Angel Mythical Creature Form: Worms of Star ("Door of All Doors" — nested astral doorways of starlight & teal)
+            -- Original cinematic Angel interpretation: Worms of Star ("Door of All Doors" — nested astral doorways of starlight & teal)
             piece("Astral light core",torso,{coat[1]*1.08,coat[2]*1.06,coat[3]*1.08},CFrame.identity,T.Colors.Starlight,Enum.Material.Neon,M.GlowAlpha)
             for _,side in ipairs({-1,1}) do
                 piece("Outer astral door jamb",torso,M.ApprenticeJamb,CFrame.new(side*1.55,0.35,coat[3]/2+0.42),T.Colors.Teal,Enum.Material.Neon,M.GlowAlpha)
@@ -4178,7 +4290,7 @@ function Outfit.Build(self: any,character: Model,path: string,sequence: number,t
             piece("Threshold starlight key-seal",head,{1.45,0.2,1.45},CFrame.new(0,head.Size.Y/2+0.36,0),T.Colors.Starlight,Enum.Material.Neon,M.GlowAlpha)
         end
     elseif stage=="Incomplete" then
-        -- Incomplete Saint Mythical Creature Manifestation (Sequence 4–3): Victorian attire fracturing into partial Worms
+        -- Original incomplete Saint visual manifestation (Sequence 4–3): Victorian attire fracturing into partial Worms
         piece("Victorian waistcoat",torso,coat,CFrame.identity,cloth)
         if path=="Seer" then
             piece("Top hat brim",head,A.Brim,CFrame.new(0,head.Size.Y/2+0.08,0),cloth)
@@ -4225,9 +4337,40 @@ function Outfit.Build(self: any,character: Model,path: string,sequence: number,t
         if sequence<=4 then piece("Sequence crest",torso,A.Pendant,CFrame.new(0,0.2,-coat[3]/2-0.15),trim) end
         if sequence<=2 then piece("Silvered collar seal",torso,A.CollarSeal,CFrame.new(0,coat[2]/2,-coat[3]/2-0.08),trim) end
     end
-    self.Records[character]={Model=model,Path=path,Sequence=sequence,Mythical=stage,Torso=torso,Head=head}
+    self.Records[character]={Model=model,Path=path,Sequence=sequence,Mythical=stage,Torso=torso,Head=head,
+        Motions=motions,Faces=faces,Ornaments=ornaments,Age=0,Time=0}
 end
 function Outfit.Step(self: any,dt: number)
+    local profile=self.Service:Profile()
+    local reduced=self.Service.ReducedMotion or profile.ReducedMotion
+    local low=self.Service.LowGraphics or profile.Low
+    for _,record in pairs(self.Records) do
+        if record.Mythical~="" and record.Torso.Parent and self.Service:Visible(record.Torso.Position) then
+            record.Age+=math.min(dt,A.Scan);record.Time+=math.min(dt,A.Scan)
+            local reveal=if reduced or low then 1 else math.clamp(record.Age/M.RevealTime,0,1)
+            for _,motion in ipairs(record.Motions) do
+                local wave=if reduced or low then 0 else math.sin(record.Time*math.pi*2/M.IdlePeriod+motion.Phase)
+                local spin=if reduced or low then 0 else record.Time
+                local offset=CFrame.identity
+                if motion.Kind=="Hand" then
+                    -- Rotate around the clock hub, not the hand's midpoint.
+                    local center=Vector3.new(0,0.45,motion.Base.Position.Z)
+                    offset=CFrame.new(center)*CFrame.Angles(0,0,spin*M.HandSpeed*motion.Sign)*CFrame.new(-center)
+                    motion.Weld.C0=offset*motion.Base
+                else
+                    offset=CFrame.new(0,wave*M.IdleRise,0)*CFrame.Angles(
+                        if motion.Kind=="Worm" then wave*math.rad(M.IdleDegrees) else 0,
+                        if motion.Kind=="Halo" then spin*M.HaloSpeed else 0,
+                        if motion.Kind=="Worm" then math.sin(spin*M.WormSpeed+motion.Phase)*math.rad(M.IdleDegrees) else 0)
+                    if reduced or low then offset=CFrame.identity end
+                    motion.Weld.C0=motion.Base*offset
+                end
+                motion.Part.Transparency=math.clamp(1-(1-motion.Alpha)*reveal+math.abs(wave)*M.AlphaPulse,0,1)
+            end
+            for _,face in ipairs(record.Faces) do face.Enabled=not low and reveal>=M.HaloReveal end
+            for _,face in ipairs(record.Ornaments) do face.Enabled=not low and reveal>=M.HaloReveal end
+        end
+    end
     self.Elapsed+=dt;if self.Elapsed<A.Scan then return end;self.Elapsed=0
     local camera=workspace.CurrentCamera;if not camera then return end
     local candidates={};local wanted={}
@@ -4242,7 +4385,7 @@ function Outfit.Step(self: any,dt: number)
     end
     table.sort(candidates,function(a,b) return a.Distance<b.Distance end)
     local now=os.clock();local aura=now>=self.AuraAt
-    if aura then self.AuraAt=now+A.AuraInterval end
+    if aura then self.AuraAt=now+M.AuraInterval end
     for i,item in ipairs(candidates) do
         if i>A.MaxPlayers then break end
         local character=item.Character;local path=character:GetAttribute("MysteriesPathway");local seq=character:GetAttribute("MysteriesSequence")
@@ -4256,11 +4399,16 @@ function Outfit.Step(self: any,dt: number)
         if not record or record.Path~=path or record.Sequence~=seq or record.Mythical~=myth or record.Torso~=torso or record.Head~=head then
             self:Build(character,path,seq,torso,head,myth)
         end
-        local profile=self.Service:Profile()
         if aura and (seq<=6 or myth~="") and not self.Service.LowGraphics and not self.Service.ReducedMotion and not profile.Low and self.Service:Visible(item.Root.Position) then
             local blockName=if myth=="Complete" then "SigilStencil" elseif myth=="Incomplete" or seq<=3 then "VeilRibbon" else "RisingMotes"
             local stencil=if path=="Seer" then "Worm" elseif path=="Marauder" then "Clock" else "Arch"
-            self.Blocks:Compose({{Name=blockName,Position=torso.Position,Palette=path,Options={Scale=if myth~="" then A.AuraScale*1.18 else A.AuraScale,Stencil=stencil}}},1,0,A.AuraLife)
+            local layers: {any}={{Name=blockName,Position=torso.Position,Palette=path,
+                Options={Scale=if myth~="" then M.AuraScale else A.AuraScale,Glyph=stencil,LowGlyph=stencil,Follow=torso}}}
+            if myth~="" then
+                table.insert(layers,{Name="VeilRibbon",Position=torso.Position,Palette=path,
+                    Options={Scale=M.AuraScale,Height=M.ApprenticeJamb[2],Coil=true,Follow=torso}})
+            end
+            self.Blocks:Compose(layers,1,0,if myth~="" then M.AuraLife else A.AuraLife)
             aura=false -- one subtle nearby aura per interval; it shares the global effect cap.
         end
     end
@@ -4299,13 +4447,36 @@ function Choreography.GestureHeight(a: any): number
 end
 function Choreography.Extend(a: any,e: any,c: any): any
     local gestureY=Choreography.GestureHeight(a)
+    local sequence=tonumber(string.match(a.Id,"_(%d+)")) or 9
+    local scale=if sequence<=2 then C.Cinematic.AngelScale elseif sequence<=4 then C.Cinematic.SaintScale else 1
+    local layer=c.Layer
+    -- Every route retains its own vocabulary, endpoints and confirmed targets.
+    -- Timing lives inside one pooled composition, with no delayed task queue.
+    c.Layer=function(name: string,at: Vector3,options: any?): any
+        local opts=table.clone(options or {})
+        if not c.Simplified then
+            if name=="RisingMotes" or name=="ContourEcho" or name=="VeilRibbon" then
+                opts.Delay=opts.Delay or C.Cinematic.Aftermath
+            elseif name=="StarBurst" or name=="GlitchFlicker" or name=="RingBurst" then
+                opts.Delay=opts.Delay or C.Cinematic.Release
+            end
+            if name=="VeilRibbon" and sequence<=4 then opts.Height=C.Cinematic.VeilHeight end
+            if name=="GroundRune" then opts.InnerRing=sequence<=4 end
+        end
+        if name=="ThreadBeam" then opts.Draw=true end
+        if not opts.Radius and not opts.Width then opts.Scale=(opts.Scale or 1)*scale end
+        return layer(name,at,opts)
+    end
     c.Root=Choreography.Root
-    c.Self=e.Destination or e.Position
+    c.Self=e.Destination or e.Origin or e.Position
     c.Origin=e.Origin or e.Position
     c.Head=c.Self+Vector3.yAxis*C.Ability.HeadHeight
     c.Chest=c.Self+Vector3.yAxis*C.Ability.ChestHeight
-    c.Gesture=c.Self+Vector3.yAxis*gestureY
-    c.OriginGesture=c.Origin+Vector3.yAxis*gestureY
+    local timing=Anim.AbilityTimings[a.Id]
+    local offset=timing and timing.Origin
+    local gesture=if offset then Vector3.new(offset[1],offset[2],offset[3]) else Vector3.yAxis*gestureY
+    c.Gesture=c.Frame(c.Self):PointToWorldSpace(gesture)
+    c.OriginGesture=c.Frame(c.Origin):PointToWorldSpace(gesture)
     c.Target=e.Position
     c.TargetHead=e.Position+Vector3.yAxis*C.Ability.HeadHeight
     c.TargetChest=e.Position+Vector3.yAxis*C.Ability.ChestHeight
@@ -4349,7 +4520,7 @@ function Choreography.Extend(a: any,e: any,c: any): any
         return c.Layer("PaperFold",at,{Frame=c.Frame(at),Scale=scale or C.Ability.Medium,Break=broken})
     end
     c.Trail=function(at: Vector3,scale: number?,moveTo: Vector3?): any
-        return c.Layer("AfterimageTrail",at,{Frame=c.Frame(at),Scale=scale or C.Ability.Medium,MoveTo=moveTo})
+        return c.Layer("AfterimageTrail",at,{Frame=c.Frame(at),Scale=scale or C.Ability.Medium,EndPosition=moveTo})
     end
     c.Flash=function(at: Vector3,scale: number?): any
         return c.Layer("ImpactFlash",at,{Frame=c.Frame(at),Scale=scale or C.Ability.Small})
@@ -4367,6 +4538,17 @@ function Choreography.Extend(a: any,e: any,c: any): any
         return c.Layer("DoorFrame",at,{Frame=c.Frame(at),Scale=scale or C.Ability.Medium,Nested=nested})
     end
     return c
+end
+function Choreography.Finish(layers: any,life: number?,a: any,c: any,pathway: string): (any,number?)
+    if not layers or c.Simplified then return layers,life end
+    local sequence=tonumber(string.match(a.Id,"_(%d+)")) or 9
+    if sequence<=4 and #layers<C.Composition.MaxLayers then
+        local layer=if pathway=="Seer" then c.Veil(c.Gesture,C.Ability.Medium)
+            elseif pathway=="Marauder" then c.Glitch(c.Gesture,C.Ability.Large)
+            else c.Door(c.Ground(),C.Ability.Large)
+        table.insert(layers,layer)
+    end
+    return layers,life
 end
 return Choreography
 ```
@@ -4423,7 +4605,8 @@ local function reserve(name: string,c: any,detail: number,low: boolean,opts: any
     elseif name=="SigilStencil" then
         for _,path in ipairs(stencil(c,low,opts or {})) do n+=math.max(0,#path-1) end
     end
-    local motes=if name=="RisingMotes" then math.max(1,math.floor(c.Count*detail)) else 0
+    local motes=if name=="RisingMotes" then math.max(1,math.floor(c.Count*detail))
+        elseif name=="SigilStencil" and opts and opts.Follow and not low then c.IntakeCount else 0
     local trail=if name=="AfterimageTrail" and not low then 1 else 0
     local afterHead=if name=="AfterimageTrail" then 1 else 0
     local host=if name=="ScreenEdgePulse" then 0 else 1
@@ -4506,28 +4689,51 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
     elseif name=="VeilRibbon" then
         local lines={}
         for _=1,costs.Beam do table.insert(lines,segment(h,host,c.Width*scale,p.Primary)) end
-        update=function(_dt: number,age: number,_t: number)
+        update=function(_dt: number,age: number,t: number)
             local fade=c.Alpha+(1-c.Alpha)*alpha(age,c.Duration,common.FadeStart)
             for i,line in ipairs(lines) do
                 local side=if i%2==0 then 1 else -1
-                setLine(line,point(side*c.Offset*scale,-c.Height*scale/2,0),point(side*c.Offset*scale,c.Height*scale/2,0),fade)
-                line.Beam.CurveSize0=c.Curve*scale;line.Beam.CurveSize1=-c.Curve*scale
+                if opts.Coil and not h.ReducedMotion then
+                    local angle=t*TAU+side*math.pi/2
+                    local radius=c.Offset*scale
+                    setLine(line,point(math.cos(angle)*radius,-c.Height*scale/2,math.sin(angle)*radius),
+                        point(-math.cos(angle)*radius,c.Height*scale/2,-math.sin(angle)*radius),fade)
+                else
+                    setLine(line,point(side*c.Offset*scale,-c.Height*scale/2,0),point(side*c.Offset*scale,c.Height*scale/2,0),fade)
+                end
+                local wave=if h.ReducedMotion or low then 0 else math.sin(t*TAU+i)*C.Cinematic.VeilSway
+                line.Beam.CurveSize0=(c.Curve+wave)*scale;line.Beam.CurveSize1=(-c.Curve+wave)*scale
             end
         end
     elseif name=="SigilStencil" then
         local paths=stencil(c,low,opts)
         local lines={}
+        local intake={}
+        for _=1,motes do
+            local part=take(h,"Part",nil) :: Part
+            part.Shape=Enum.PartType.Ball;part.Size=Vector3.one*c.IntakeSize*scale;part.Color=p.Accent
+            table.insert(intake,part)
+        end
         for _,path in ipairs(paths) do
             for i=1,#path-1 do table.insert(lines,{Line=segment(h,host,width,p.Accent),A=path[i],B=path[i+1]}) end
         end
         update=function(_dt: number,age: number,_t: number)
             if opts.MoveTo then
                 local t=if h.ReducedMotion then 1 else math.clamp(age/c.Duration,0,1)
-                host.CFrame=(if typeof(opts.Frame)=="CFrame" then opts.Frame else CFrame.new(position))+(opts.MoveTo-position)*t
+                host.CFrame=((if typeof(opts.Frame)=="CFrame" then opts.Frame else CFrame.new(position))+(opts.MoveTo-position)*t)
+                    *CFrame.Angles(0,0,if h.ReducedMotion or low then 0 else age*(opts.Spin or C.Cinematic.SigilSpin))
             end
             local fade=common.Alpha+(1-common.Alpha)*alpha(age,c.Duration,common.FadeStart)
+            local progress=math.min(1,age/C.Cinematic.Intake)
+            for i,part in ipairs(intake) do
+                local angle=(i-1)/motes*TAU+progress*math.pi
+                local radius=c.Size*scale*(1-progress)
+                part.CFrame=host.CFrame*CFrame.new(math.cos(angle)*radius,math.sin(angle)*radius,0)
+                part.Transparency=if h.ReducedMotion then 1 else common.Alpha+(1-common.Alpha)*progress
+            end
             for _,entry in ipairs(lines) do
-                local function vertex(v: any): Vector3 return point((v[1]-0.5)*c.Size*scale,(0.5-v[2])*c.Size*scale,0) end
+                local intakeScale=if h.ReducedMotion then 1 else 1+C.Cinematic.IntakeRadius*(1-math.clamp(age/C.Cinematic.Intake,0,1))
+                local function vertex(v: any): Vector3 return point((v[1]-0.5)*c.Size*scale*intakeScale,(0.5-v[2])*c.Size*scale*intakeScale,0) end
                 setLine(entry.Line,vertex(entry.A),vertex(entry.B),fade)
             end
         end
@@ -4551,7 +4757,13 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
             for i,line in ipairs(spokes) do
                 local a=(i-1)/c.Spokes*TAU
                 local direction=point(math.cos(a),0,math.sin(a))
-                setLine(line,direction*radius*c.Inner+Vector3.yAxis*common.HeightOffset,direction*radius+Vector3.yAxis*common.HeightOffset,fade)
+                if opts.InnerRing then
+                    local b=a+TAU/c.Spokes
+                    setLine(line,direction*radius*c.Inner+Vector3.yAxis*common.HeightOffset,
+                        point(math.cos(b),0,math.sin(b))*radius*c.Inner+Vector3.yAxis*common.HeightOffset,fade)
+                else
+                    setLine(line,direction*radius*c.Inner+Vector3.yAxis*common.HeightOffset,direction*radius+Vector3.yAxis*common.HeightOffset,fade)
+                end
             end
         end
     elseif name=="RisingMotes" then
@@ -4570,15 +4782,17 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
         update=function(_dt: number,age: number,t: number)
             for i,part in ipairs(pieces) do
                 local a=(i-1)/motes*TAU+(if h.ReducedMotion then 0 else t*c.Orbit)
-                local rise=if h.ReducedMotion then c.Height*(i/motes) else t*c.Height
-                part.CFrame=host.CFrame*CFrame.new(math.cos(a)*c.Radius*scale,rise*scale,math.sin(a)*c.Radius*scale)
+                local intake=if opts.Intake then 1-t else math.min(1,t/C.Cinematic.Intake)
+                local radius=c.Radius*(if h.ReducedMotion then 1 else C.Cinematic.IntakeRadius+(1-C.Cinematic.IntakeRadius)*intake)
+                local rise=if h.ReducedMotion then c.Height*(i/motes) elseif opts.Intake then (1-t)*c.Height else t*c.Height
+                part.CFrame=host.CFrame*CFrame.new(math.cos(a)*radius*scale,rise*scale,math.sin(a)*radius*scale)
                 part.Transparency=common.Alpha+(1-common.Alpha)*alpha(age,c.Duration,common.FadeStart)
             end
         end
     elseif name=="ThreadBeam" then
         local line=segment(h,host,math.max(c.Width*scale,opts.MinWidth or 0),p.Accent)
         local endpoint=if typeof(opts.EndPosition)=="Vector3" then host.CFrame:PointToObjectSpace(opts.EndPosition) else point(c.Length*scale,0,0)
-        local arch=Vector3.yAxis*c.Height*scale
+        local arch=Vector3.yAxis*(opts.Curve or c.Height)*scale
         local a=Vector3.zero
         local tangent0=endpoint/3+arch
         local tangent1=endpoint/3-arch
@@ -4593,6 +4807,9 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
         line.Beam.CurveSize0=tangent0.Magnitude;line.Beam.CurveSize1=tangent1.Magnitude
         line.Beam.Segments=c.Segments;line.Beam.Width1=math.max(c.Width*scale*c.Taper,opts.MinWidth or 0)
         update=function(_dt: number,age: number,_t: number)
+            local draw=if h.ReducedMotion or not opts.Draw then 1 else math.min(1,age/C.Cinematic.BeamDraw)
+            line.B.Position=endpoint*draw
+            line.Beam.Width0=math.max(c.Width*scale,opts.MinWidth or 0)*(1+C.Cinematic.Afterglow*(1-draw))
             line.Beam.Transparency=NumberSequence.new(common.Alpha+(1-common.Alpha)*alpha(age,c.Duration,common.FadeStart))
         end
     elseif name=="DoorFrame" then
@@ -4602,13 +4819,15 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
         update=function(_dt: number,age: number,_t: number)
             local fade=common.Alpha+(1-common.Alpha)*alpha(age,c.Duration,common.FadeStart)
             for i=1,layers do
-                local half=(c.Width/2-(i-1)*c.Inset)*scale
+                local opening=if h.ReducedMotion then 1 else C.Cinematic.DoorOpen+(1-C.Cinematic.DoorOpen)*math.min(1,age/C.Cinematic.Intake)
+                local half=(c.Width/2-(i-1)*c.Inset)*scale*opening
                 local base=c.Base*scale
                 local top=(c.Height-(i-1)*c.Inset)*scale
                 local offset=(i-1)*3
-                setLine(lines[offset+1],point(-half,base,0),point(-half,top,0),fade)
-                setLine(lines[offset+2],point(-half,top,0),point(half,top,0),fade)
-                setLine(lines[offset+3],point(half,top,0),point(half,base,0),fade)
+                local depth=(i-1)*C.Cinematic.DoorDepth*scale
+                setLine(lines[offset+1],point(-half,base,depth),point(-half,top,depth),fade)
+                setLine(lines[offset+2],point(-half,top,depth),point(half,top,depth),fade)
+                setLine(lines[offset+3],point(half,top,depth),point(half,base,depth),fade)
             end
         end
     elseif name=="StarBurst" or name=="ImpactFlash" then
@@ -4652,6 +4871,7 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
         local head=take(h,"Part",nil) :: Part
         head.Size=point(c.Head,c.Height,c.Head)*scale;head.Color=p.Primary
         local trail: Trail?=nil
+        local endpoint=if typeof(opts.EndPosition)=="Vector3" then host.CFrame:PointToObjectSpace(opts.EndPosition) else point(c.Length*scale,0,0)
         if costs.Trail>0 then
             local a=take(h,"Attachment",head) :: Attachment
             local b=take(h,"Attachment",head) :: Attachment
@@ -4662,7 +4882,8 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
             trail=ribbon
         end
         update=function(_dt: number,age: number,t: number)
-            head.CFrame=host.CFrame*CFrame.new((if h.ReducedMotion then 0 else t*c.Length)*scale,c.Height*scale/2,0)
+            local travel=if h.ReducedMotion then 1 else math.min(1,age/C.Cinematic.TrailTravel)
+            head.CFrame=host.CFrame*CFrame.new(endpoint*travel+Vector3.yAxis*c.Height*scale/2)
             head.Transparency=common.Alpha+(1-common.Alpha)*alpha(age,c.Duration,common.FadeStart)
             if trail then trail.Enabled=not h.ReducedMotion end
         end
@@ -4675,6 +4896,11 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
         if host and opts.Follow then
             if not opts.Follow.Parent then h:Finish();return end
             host.CFrame=CFrame.new(opts.Follow.Position+(opts.Offset or Vector3.zero))*(if opts.Frame then opts.Frame.Rotation else CFrame.identity)
+        end
+        if host and (name=="SigilStencil" or name=="GroundRune") and not opts.MoveTo then
+            local base=if opts.Follow then host.CFrame else opts.Frame or CFrame.new(position)
+            local spin=if h.ReducedMotion or low then 0 else age*(opts.Spin or (if name=="GroundRune" then C.Cinematic.RuneSpin else C.Cinematic.SigilSpin))
+            host.CFrame=base*(if name=="GroundRune" then CFrame.Angles(0,spin,0) else CFrame.Angles(0,0,spin))
         end
         update(dt,age,t)
     end
@@ -4732,7 +4958,9 @@ function Blocks.Compose(self: any,layers: {any},tier: number,priority: number,du
     local function update(dt: number,age: number,_progress: number)
         for _,group in ipairs(groups) do
             local layer=group.Layer
-            local visible=self.Service:Visible(group.Anchor)
+            local delay=math.clamp((layer.Options and layer.Options.Delay) or 0,0,duration)
+            local life=math.clamp((layer.Options and layer.Options.Life) or (duration-delay),C.Blocks.Common.MinimumLength,math.max(C.Blocks.Common.MinimumLength,duration-delay))
+            local visible=age>=delay and age<delay+life and self.Service:Visible(group.Anchor)
             if layer.Options and layer.Options.EndPosition then visible=visible and self.Service:Visible(layer.Options.EndPosition) end
             if visible and not group.Built then
                 local child: any={Scale=h.Scale,Detail=detail,ReducedMotion=h.ReducedMotion,Duration=duration}
@@ -4743,7 +4971,7 @@ function Blocks.Compose(self: any,layers: {any},tier: number,priority: number,du
                 end
                 function child:Finish() h:Finish() end
                 local opts=table.clone(layer.Options or {})
-                opts.Lease=child;opts.Detail=math.min(detail,opts.Detail or math.huge);opts.Duration=duration
+                opts.Lease=child;opts.Detail=math.min(detail,opts.Detail or math.huge);opts.Duration=life
                 child.Detail=opts.Detail
                 opts.MinWidth=if profile.Mobile then C.Composition.MobileMinWidth else C.Composition.MinWidth
                 group.Child=self:Play(layer.Name,layer.Position,layer.Palette,tier,opts)
@@ -4754,7 +4982,7 @@ function Blocks.Compose(self: any,layers: {any},tier: number,priority: number,du
                 group.Visible=visible
             end
             if visible and group.Child and group.Child.Update then
-                group.Child.Update(dt,age,math.clamp(age/duration,0,1))
+                group.Child.Update(dt,age-delay,math.clamp((age-delay)/life,0,1))
             end
         end
     end
@@ -5077,8 +5305,9 @@ return MotionSpring
 --!strict
 -- Original threshold/recording language. No visual creates a dimension, wall or gameplay gate.
 local C=require(game:GetService("ReplicatedStorage").Shared.VfxConfig)
+local Choreography=require(script.Parent.Parent.Choreography)
 local Apprentice={}
-function Apprentice.Build(a: any,e: any,c: any): (any,number?)
+local function build(a: any,e: any,c: any): (any,number?)
     local id=a.Id
     local function pair(nested: boolean,stars: boolean): {any}
         local layers={}
@@ -5275,6 +5504,10 @@ function Apprentice.Build(a: any,e: any,c: any): (any,number?)
     end
     return nil,nil
 end
+function Apprentice.Build(a: any,e: any,c: any): (any,number?)
+    local layers,life=build(a,e,c)
+    return Choreography.Finish(layers,life,a,c,"Apprentice")
+end
 return Apprentice
 ```
 
@@ -5289,8 +5522,9 @@ return Apprentice
 --!strict
 -- Original Error motifs. Dreams, payloads and bounded slows remain gameplay interpretations [UNVERIFIED].
 local C=require(game:GetService("ReplicatedStorage").Shared.VfxConfig)
+local Choreography=require(script.Parent.Parent.Choreography)
 local Marauder={}
-function Marauder.Build(a: any,e: any,c: any): (any,number?)
+local function build(a: any,e: any,c: any): (any,number?)
     local id=a.Id
     local function cut(at: Vector3,scale: number?): any
         return c.Mark("Cut",at,scale or C.Ability.Medium,{Tint=C.Ability.TheftTint})
@@ -5459,6 +5693,10 @@ function Marauder.Build(a: any,e: any,c: any): (any,number?)
     end
     return nil,nil
 end
+function Marauder.Build(a: any,e: any,c: any): (any,number?)
+    local layers,life=build(a,e,c)
+    return Choreography.Finish(layers,life,a,c,"Marauder")
+end
 return Marauder
 ```
 
@@ -5473,8 +5711,9 @@ return Marauder
 --!strict
 -- Canon-inspired concepts; exact geometry and bounded gameplay interpretations [UNVERIFIED].
 local C=require(game:GetService("ReplicatedStorage").Shared.VfxConfig)
+local Choreography=require(script.Parent.Parent.Choreography)
 local Seer={}
-function Seer.Build(a: any,e: any,c: any): (any,number?)
+local function build(a: any,e: any,c: any): (any,number?)
     local id=a.Id
     if id=="Seer_9" then
         if e.Outcome=="Obscured" then
@@ -5648,6 +5887,10 @@ function Seer.Build(a: any,e: any,c: any): (any,number?)
         return layers,C.Ability.Life
     end
     return nil,nil
+end
+function Seer.Build(a: any,e: any,c: any): (any,number?)
+    local layers,life=build(a,e,c)
+    return Choreography.Finish(layers,life,a,c,"Seer")
 end
 return Seer
 ```

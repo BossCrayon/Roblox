@@ -18,33 +18,86 @@ function Outfit.Build(self: any,character: Model,path: string,sequence: number,t
     local stage=if myth=="Incomplete" or myth=="Complete" then myth else ""
     local model=Instance.new("Model");model.Name="LocalMysteriesOutfit";model.Parent=character
     local count=0;local cloth=A.Cloth[path];local trim=A.Trim[path]
-    local function piece(name: string,base: BasePart,size: {number},offset: CFrame,color: Color3,material: Enum.Material?,alpha: number?)
+    local motions: {any}={};local faces: {any}={};local ornaments: {any}={}
+    local function piece(name: string,base: BasePart,size: {number},offset: CFrame,color: Color3,material: Enum.Material?,alpha: number?): any
         if count>=A.MaxParts then return end;count+=1
         local part=Instance.new("Part");part.Name=name;part.Size=Vector3.new(table.unpack(size));part.CFrame=base.CFrame*offset
         part.Anchored=false;part.CanCollide=false;part.CanQuery=false;part.CanTouch=false;part.Massless=true;part.CastShadow=false
         part.Material=material or Enum.Material.Fabric;part.Color=color;part.Transparency=alpha or 0;part.Parent=model
-        local weld=Instance.new("WeldConstraint");weld.Part0=base;weld.Part1=part;weld.Parent=part
+        local pose=offset
+        local lower=string.lower(name)
+        local clock=string.find(lower,"clock wheel") or string.find(lower,"bezel") or string.find(lower,"clock arc")
+        local halo=string.find(lower,"halo") or string.find(lower,"crown ring") or string.find(lower,"key-seal") or string.find(lower,"time ring")
+        local worm=string.find(lower,"worm") or string.find(lower,"tentacle")
+        local hand=string.find(lower,"hand")
+        if stage~="" and clock then
+            part.Shape=Enum.PartType.Cylinder
+            part.Size=Vector3.new(M.ClockDepth,size[1],size[2])
+            pose=offset*CFrame.Angles(0,math.pi/2,0)
+            if string.find(lower,"clock wheel") then
+                -- Two fixed, occluded faces: 12 radial sections, no extra Parts or unpooled Beams.
+                for _,face in ipairs({Enum.NormalId.Left,Enum.NormalId.Right}) do
+                    local gui=Instance.new("SurfaceGui");gui.Name="Twelve temporal sections";gui.Face=face
+                    gui.CanvasSize=Vector2.new(M.ClockCanvas,M.ClockCanvas);gui.AlwaysOnTop=false
+                    gui.LightInfluence=1;gui.MaxDistance=M.ClockMaxDistance;gui.Enabled=false;gui.Parent=part
+                    table.insert(faces,gui)
+                    for i=1,M.ClockSegments do
+                        local angle=(i-1)*math.pi*2/M.ClockSegments
+                        local tick=Instance.new("Frame");tick.Name="Clock sector "..i
+                        tick.AnchorPoint=Vector2.new(0.5,0.5)
+                        tick.Position=UDim2.fromScale(0.5+math.sin(angle)*M.ClockRadius,0.5-math.cos(angle)*M.ClockRadius)
+                        tick.Size=UDim2.fromScale(M.ClockTickWidth,M.ClockTickHeight);tick.Rotation=math.deg(angle)
+                        tick.BorderSizePixel=0;tick.BackgroundColor3=T.Colors.Bronze
+                        tick.BackgroundTransparency=M.ClockTickAlpha;tick.Parent=gui
+                    end
+                end
+            end
+        elseif stage~="" and halo then
+            part.Shape=Enum.PartType.Cylinder;part.Size=Vector3.new(size[2],size[1],size[3])
+            pose=offset*CFrame.Angles(0,0,math.pi/2)
+            part.Transparency=math.max(part.Transparency,M.SpiritAlpha)
+            for _,face in ipairs({Enum.NormalId.Left,Enum.NormalId.Right}) do
+                local gui=Instance.new("SurfaceGui");gui.Name="Spirit halo engraving";gui.Face=face
+                gui.CanvasSize=Vector2.new(M.ClockCanvas,M.ClockCanvas);gui.AlwaysOnTop=false
+                gui.LightInfluence=1;gui.MaxDistance=M.ClockMaxDistance;gui.Enabled=false;gui.Parent=part
+                table.insert(ornaments,gui)
+                local ring=Instance.new("Frame");ring.BackgroundTransparency=1
+                ring.Position=UDim2.fromScale(M.HaloInset,M.HaloInset)
+                ring.Size=UDim2.fromScale(1-M.HaloInset*2,1-M.HaloInset*2);ring.Parent=gui
+                local corner=Instance.new("UICorner");corner.CornerRadius=UDim.new(0.5,0);corner.Parent=ring
+                local stroke=Instance.new("UIStroke");stroke.Color=color;stroke.Thickness=M.HaloStroke;stroke.Transparency=M.GlowAlpha;stroke.Parent=ring
+            end
+        elseif stage~="" and worm then
+            part.Shape=Enum.PartType.Ball
+        end
+        local weld=Instance.new("Weld");weld.Part0=base;weld.Part1=part;weld.C0=pose;weld.Parent=part
+        table.insert(motions,{Part=part,Weld=weld,Base=pose,Alpha=part.Transparency,
+            Phase=count,Kind=if hand then "Hand" elseif halo then "Halo" elseif worm then "Worm" else "Float",
+            Sign=if string.find(lower,"minute") then -1 else 1})
+        if stage~="" and not self.Service.ReducedMotion and not self.Service.LowGraphics then part.Transparency=1 end
+        return part
     end
     local bodyScale=math.clamp(torso.Size.X/2,A.BodyScaleMin,A.BodyScaleMax)
     local coat={A.Coat[1]*bodyScale,math.max(A.Coat[2],torso.Size.Y),math.max(A.Coat[3],torso.Size.Z+A.CoatClearance)}
     if stage=="Complete" then
         if path=="Seer" then
-            -- Complete Angel Mythical Creature Form: Worms of Spirit (dark translucent cloak + blank mask + tentacled spirit-worm collective)
+            -- Original cinematic Angel interpretation: Worms of Spirit (dark translucent cloak + blank mask + tentacled spirit-worm collective)
             piece("Spirit cloak mantle",torso,{coat[1]*1.14,coat[2]*1.12,coat[3]*1.14},CFrame.identity,T.Colors.DeepPurple,Enum.Material.Glass,M.CloakAlpha)
             piece("Boiling fog shroud",torso,{coat[1]*1.22,coat[2]*0.95,coat[3]*1.2},CFrame.new(0,-0.15,0.12),T.Colors.Fog,Enum.Material.Neon,M.SpiritAlpha)
             piece("Cold blank mask",head,M.SeerMask,CFrame.new(0,0,-head.Size.Z/2-0.08),T.Colors.Text,Enum.Material.SmoothPlastic,0.08)
             piece("Antique spirit halo",head,A.Brim,CFrame.new(0,head.Size.Y/2+0.35,0.2)*CFrame.Angles(math.rad(72),0,0),T.Colors.Gold,Enum.Material.Neon,M.GlowAlpha)
-            for idx,angle in ipairs({-52,-18,18,52}) do
+            for idx,angle in ipairs({-45,0,45}) do
                 local rad=math.rad(angle)
-                piece("Worm of Spirit tentacle "..tostring(idx),torso,M.SeerTentacle,
-                    CFrame.new(math.sin(rad)*1.05,-coat[2]/2-0.55,math.cos(rad)*0.65)*CFrame.Angles(math.rad(24),rad,math.rad(angle*0.4)),
-                    if idx%2==0 then T.Colors.Fog else T.Colors.DeepPurple,Enum.Material.Neon,M.GlowAlpha)
-            end
-            for _,side in ipairs({-1,1}) do
-                piece("Spirit worm cluster",torso,M.SeerWorm,CFrame.new(side*0.95,0.25,0.25)*CFrame.Angles(math.rad(18),0,math.rad(side*32)),T.Colors.Gold,Enum.Material.Neon,M.GlowAlpha)
+                local first=piece("Worm of Spirit tentacle "..idx,torso,M.SeerWorm,
+                    CFrame.new(math.sin(rad)*1.05,-coat[2]/2-0.35,math.cos(rad)*0.65)*CFrame.Angles(math.rad(24),rad,math.rad(angle*0.4)),
+                    T.Colors.DeepPurple,Enum.Material.SmoothPlastic,M.WormAlpha)
+                if first then
+                    piece("Spirit tentacle tip "..idx,first,M.SeerWorm,CFrame.new(0,-M.SeerWorm[2]*0.8,0)*CFrame.Angles(math.rad(-24),0,rad),
+                        T.Colors.Fog,Enum.Material.Glass,M.GlowAlpha)
+                end
             end
         elseif path=="Marauder" then
-            -- Complete Angel Mythical Creature Form: Worms of Time (12-section ancient stone clock phantom + ringed Worms of Time)
+            -- Original cinematic Angel interpretation: Worms of Time (12-section ancient stone clock phantom + ringed Worms of Time)
             piece("Chronos dark shroud",torso,{coat[1]*1.1,coat[2]*1.06,coat[3]*1.1},CFrame.identity,T.Colors.Black,Enum.Material.SmoothPlastic,0.12)
             piece("Ancient stone clock wheel",torso,M.MarauderClockRim,CFrame.new(0,0.45,coat[3]/2+0.55),T.Colors.Stone,Enum.Material.Slate,0.08)
             piece("Clockwork bronze bezel",torso,{M.MarauderClockRim[1]*0.86,M.MarauderClockRim[2]*0.86,0.18},CFrame.new(0,0.45,coat[3]/2+0.48),T.Colors.Bronze,Enum.Material.Metal,0.05)
@@ -56,7 +109,7 @@ function Outfit.Build(self: any,character: Model,path: string,sequence: number,t
             end
             piece("Temporal crown ring",head,{1.65,0.14,1.65},CFrame.new(0,head.Size.Y/2+0.28,0)*CFrame.Angles(math.rad(14),0,math.rad(-16)),T.Colors.Bronze,Enum.Material.Neon,M.GlowAlpha)
         else
-            -- Complete Angel Mythical Creature Form: Worms of Star ("Door of All Doors" — nested astral doorways of starlight & teal)
+            -- Original cinematic Angel interpretation: Worms of Star ("Door of All Doors" — nested astral doorways of starlight & teal)
             piece("Astral light core",torso,{coat[1]*1.08,coat[2]*1.06,coat[3]*1.08},CFrame.identity,T.Colors.Starlight,Enum.Material.Neon,M.GlowAlpha)
             for _,side in ipairs({-1,1}) do
                 piece("Outer astral door jamb",torso,M.ApprenticeJamb,CFrame.new(side*1.55,0.35,coat[3]/2+0.42),T.Colors.Teal,Enum.Material.Neon,M.GlowAlpha)
@@ -68,7 +121,7 @@ function Outfit.Build(self: any,character: Model,path: string,sequence: number,t
             piece("Threshold starlight key-seal",head,{1.45,0.2,1.45},CFrame.new(0,head.Size.Y/2+0.36,0),T.Colors.Starlight,Enum.Material.Neon,M.GlowAlpha)
         end
     elseif stage=="Incomplete" then
-        -- Incomplete Saint Mythical Creature Manifestation (Sequence 4–3): Victorian attire fracturing into partial Worms
+        -- Original incomplete Saint visual manifestation (Sequence 4–3): Victorian attire fracturing into partial Worms
         piece("Victorian waistcoat",torso,coat,CFrame.identity,cloth)
         if path=="Seer" then
             piece("Top hat brim",head,A.Brim,CFrame.new(0,head.Size.Y/2+0.08,0),cloth)
@@ -115,9 +168,40 @@ function Outfit.Build(self: any,character: Model,path: string,sequence: number,t
         if sequence<=4 then piece("Sequence crest",torso,A.Pendant,CFrame.new(0,0.2,-coat[3]/2-0.15),trim) end
         if sequence<=2 then piece("Silvered collar seal",torso,A.CollarSeal,CFrame.new(0,coat[2]/2,-coat[3]/2-0.08),trim) end
     end
-    self.Records[character]={Model=model,Path=path,Sequence=sequence,Mythical=stage,Torso=torso,Head=head}
+    self.Records[character]={Model=model,Path=path,Sequence=sequence,Mythical=stage,Torso=torso,Head=head,
+        Motions=motions,Faces=faces,Ornaments=ornaments,Age=0,Time=0}
 end
 function Outfit.Step(self: any,dt: number)
+    local profile=self.Service:Profile()
+    local reduced=self.Service.ReducedMotion or profile.ReducedMotion
+    local low=self.Service.LowGraphics or profile.Low
+    for _,record in pairs(self.Records) do
+        if record.Mythical~="" and record.Torso.Parent and self.Service:Visible(record.Torso.Position) then
+            record.Age+=math.min(dt,A.Scan);record.Time+=math.min(dt,A.Scan)
+            local reveal=if reduced or low then 1 else math.clamp(record.Age/M.RevealTime,0,1)
+            for _,motion in ipairs(record.Motions) do
+                local wave=if reduced or low then 0 else math.sin(record.Time*math.pi*2/M.IdlePeriod+motion.Phase)
+                local spin=if reduced or low then 0 else record.Time
+                local offset=CFrame.identity
+                if motion.Kind=="Hand" then
+                    -- Rotate around the clock hub, not the hand's midpoint.
+                    local center=Vector3.new(0,0.45,motion.Base.Position.Z)
+                    offset=CFrame.new(center)*CFrame.Angles(0,0,spin*M.HandSpeed*motion.Sign)*CFrame.new(-center)
+                    motion.Weld.C0=offset*motion.Base
+                else
+                    offset=CFrame.new(0,wave*M.IdleRise,0)*CFrame.Angles(
+                        if motion.Kind=="Worm" then wave*math.rad(M.IdleDegrees) else 0,
+                        if motion.Kind=="Halo" then spin*M.HaloSpeed else 0,
+                        if motion.Kind=="Worm" then math.sin(spin*M.WormSpeed+motion.Phase)*math.rad(M.IdleDegrees) else 0)
+                    if reduced or low then offset=CFrame.identity end
+                    motion.Weld.C0=motion.Base*offset
+                end
+                motion.Part.Transparency=math.clamp(1-(1-motion.Alpha)*reveal+math.abs(wave)*M.AlphaPulse,0,1)
+            end
+            for _,face in ipairs(record.Faces) do face.Enabled=not low and reveal>=M.HaloReveal end
+            for _,face in ipairs(record.Ornaments) do face.Enabled=not low and reveal>=M.HaloReveal end
+        end
+    end
     self.Elapsed+=dt;if self.Elapsed<A.Scan then return end;self.Elapsed=0
     local camera=workspace.CurrentCamera;if not camera then return end
     local candidates={};local wanted={}
@@ -132,7 +216,7 @@ function Outfit.Step(self: any,dt: number)
     end
     table.sort(candidates,function(a,b) return a.Distance<b.Distance end)
     local now=os.clock();local aura=now>=self.AuraAt
-    if aura then self.AuraAt=now+A.AuraInterval end
+    if aura then self.AuraAt=now+M.AuraInterval end
     for i,item in ipairs(candidates) do
         if i>A.MaxPlayers then break end
         local character=item.Character;local path=character:GetAttribute("MysteriesPathway");local seq=character:GetAttribute("MysteriesSequence")
@@ -146,11 +230,16 @@ function Outfit.Step(self: any,dt: number)
         if not record or record.Path~=path or record.Sequence~=seq or record.Mythical~=myth or record.Torso~=torso or record.Head~=head then
             self:Build(character,path,seq,torso,head,myth)
         end
-        local profile=self.Service:Profile()
         if aura and (seq<=6 or myth~="") and not self.Service.LowGraphics and not self.Service.ReducedMotion and not profile.Low and self.Service:Visible(item.Root.Position) then
             local blockName=if myth=="Complete" then "SigilStencil" elseif myth=="Incomplete" or seq<=3 then "VeilRibbon" else "RisingMotes"
             local stencil=if path=="Seer" then "Worm" elseif path=="Marauder" then "Clock" else "Arch"
-            self.Blocks:Compose({{Name=blockName,Position=torso.Position,Palette=path,Options={Scale=if myth~="" then A.AuraScale*1.18 else A.AuraScale,Stencil=stencil}}},1,0,A.AuraLife)
+            local layers: {any}={{Name=blockName,Position=torso.Position,Palette=path,
+                Options={Scale=if myth~="" then M.AuraScale else A.AuraScale,Glyph=stencil,LowGlyph=stencil,Follow=torso}}}
+            if myth~="" then
+                table.insert(layers,{Name="VeilRibbon",Position=torso.Position,Palette=path,
+                    Options={Scale=M.AuraScale,Height=M.ApprenticeJamb[2],Coil=true,Follow=torso}})
+            end
+            self.Blocks:Compose(layers,1,0,if myth~="" then M.AuraLife else A.AuraLife)
             aura=false -- one subtle nearby aura per interval; it shares the global effect cap.
         end
     end

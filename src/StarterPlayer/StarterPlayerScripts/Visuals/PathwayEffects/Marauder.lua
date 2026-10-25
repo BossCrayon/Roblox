@@ -1,8 +1,9 @@
 --!strict
 -- Original Error motifs. Dreams, payloads and bounded slows remain gameplay interpretations [UNVERIFIED].
 local C=require(game:GetService("ReplicatedStorage").Shared.VfxConfig)
+local Choreography=require(script.Parent.Parent.Choreography)
 local Marauder={}
-function Marauder.Build(a: any,e: any,c: any): (any,number?)
+local function build(a: any,e: any,c: any): (any,number?)
     local id=a.Id
     local function cut(at: Vector3,scale: number?): any
         return c.Mark("Cut",at,scale or C.Ability.Medium,{Tint=C.Ability.TheftTint})
@@ -170,5 +171,9 @@ function Marauder.Build(a: any,e: any,c: any): (any,number?)
         return layers,C.Ability.Life
     end
     return nil,nil
+end
+function Marauder.Build(a: any,e: any,c: any): (any,number?)
+    local layers,life=build(a,e,c)
+    return Choreography.Finish(layers,life,a,c,"Marauder")
 end
 return Marauder

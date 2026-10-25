@@ -96,6 +96,25 @@ return function(data: any,load: any,shared: any,e: any)
                             if part:IsA("BasePart") then mythCount+=1;check(not part.CanCollide and not part.CanQuery and part.Massless,"Mythical Creature parts stay massless and non-colliding") end
                         end
                         check(mythCount<=T.CharacterArt.MaxParts and torso.Color==original,"Mythical Creature assembly respects MaxParts and preserves body color")
+                        local fixedCount=#mythRecord.Model:GetDescendants()
+                        for _=1,8 do outfits:Step(0.08) end
+                        check(#mythRecord.Model:GetDescendants()==fixedCount,"Idle transformation motion allocates no instances")
+                        for _,motion in ipairs(mythRecord.Motions) do
+                            check(motion.Part.Transparency>=0 and motion.Part.Transparency<=1,"Transformation reveal/pulse stays within valid alpha")
+                            check(motion.Weld.Part1==motion.Part and motion.Weld.Part0~=nil,"Motion only drives a cosmetic weld")
+                        end
+                        if path=="Marauder" and stage=="Complete" then
+                            check(#mythRecord.Faces==2,"Phantom clock has two bounded occluded faces")
+                            for _,face in ipairs(mythRecord.Faces) do
+                                check(#face:GetDescendants()==T.CharacterArt.Mythical.ClockSegments,"Clock actually contains twelve visible divisions per face")
+                                check(not face.AlwaysOnTop,"Clock face never renders through walls")
+                            end
+                        end
+                        service:SetSettings(true,true);outfits:Step(0.3)
+                        local quiet=mythRecord.Motions[1].Part.Transparency;outfits:Step(0.3)
+                        check(mythRecord.Motions[1].Part.Transparency==quiet,"Reduced Motion/Low Graphics disables idle pulsing")
+                        service:SetSettings(false,false)
+
                     end
                     character:SetAttribute("MysteriesMythicalForm","");outfits:Step(0.3)
                     check(outfits.Records[character].Mythical=="","Expiring Mythical Creature Form restores base Victorian outfit")
@@ -194,6 +213,51 @@ return function(data: any,load: any,shared: any,e: any)
         check(report.Dropped>0 and report.Attempts>report.Cap,"Stress really requests overfill and exercises admission")
         check(report.Active==0 and report.Reserved==0,"Drain returns local test reservations to zero")
     end
-    probe:Cancel();service:Destroy()
+    probe:Cancel();service:Step(5)
+    -- Exercise the real coordinator (previous tests bypassed the melee/ultimate wiring).
+    load("Client/Visuals/HitPresentation",env)
+    local Presentation=load("Client/UI/Presentation",env)
+    local C=load("VfxConfig",env)
+    local kicks=0;local holds=0;local specs=nil
+    local coordinator=setmetatable({VFX=service,Callbacks={},
+        Blocks={Compose=function(_,layers,tier,priority,life)
+            specs=layers;return blocks:Compose(layers,tier,priority,life)
+        end},
+        Camera={Kick=function() kicks+=1 end,HitStop=function() holds+=1 end},
+        Controller=function() return {Play=function() end} end,
+    },{__index=Presentation})
+    for _,mobile in ipairs({false,true}) do
+        e.Input.TouchEnabled=mobile
+        for _,reduced in ipairs({false,true}) do
+            service:SetSettings(reduced,mobile)
+            for _,path in ipairs({"Seer","Marauder","Apprentice"}) do
+                for _,combo in ipairs({1,2}) do
+                    coordinator:Event({Kind="Melee",Position=v(12,4,0),Origin=v(10,4,0),Direction=v(0,0,-1),Combo=combo,
+                        PathwayId=path,Owner=players.LocalPlayer.UserId,Target=nearby})
+                    check(specs[1].Options.EndPosition~=nil and specs[1].Options.TargetPosition==nil,"Melee wires its actual endpoint using real tuning names")
+                    service:Step(0.1);service:Step(1)
+                    check(service:Stats().Errors==0,"Melee composition builds/releases at every quality")
+                end
+                local destination=v(18,4,-8)
+                coordinator:Event({Kind="Dash",Position=destination,Origin=v(10,4,0),Destination=destination,PathwayId=path,Owner=1})
+                check(specs[1].Options.EndPosition==destination,"Coordinator passes authoritative dash endpoint")
+                service:Step(0.2);service:Step(1)
+                for _,stage in ipairs({"Incomplete","Complete"}) do
+                    local previousKicks=kicks;local previousHolds=holds
+                    coordinator:Event({Kind="UltimateVisual",Position=v(10,4,0),Stage=stage,PathwayId=path,Owner=players.LocalPlayer.UserId})
+                    local expected=if path=="Seer" then "Worm" elseif path=="Marauder" then "Clock" else "Arch"
+                    check(specs[2].Options.Glyph==expected,"Transformation selects its pathway glyph, never the fallback eye")
+                    check(service:Stats().Active==1 and #specs<=C.Composition.MaxLayers,"Entire ultimate reserves one bounded composition")
+                    check(kicks==previousKicks,"Ultimate camera cue waits for release")
+                    service:Step(C.Ultimate.Release)
+                    check(kicks==previousKicks+1 and holds==previousHolds+1,"Ultimate release drives one cosmetic camera/pose hold")
+                    service:Step(0.4);service:Step(0.4);service:Step(2)
+                    check(service:Stats().Errors==0 and service:Stats().Active==0 and service:Stats().Reserved.Part==0,
+                        "All ultimate beats build within reservations and fully drain")
+                end
+            end
+        end
+    end
+    service:Destroy()
     print("PASS: "..checks.." F-I world/outfit/mythical-form/enemy/telegraph/stress assertions (engine stand-ins; no rendering)")
 end

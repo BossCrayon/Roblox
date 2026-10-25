@@ -42,7 +42,8 @@ local function reserve(name: string,c: any,detail: number,low: boolean,opts: any
     elseif name=="SigilStencil" then
         for _,path in ipairs(stencil(c,low,opts or {})) do n+=math.max(0,#path-1) end
     end
-    local motes=if name=="RisingMotes" then math.max(1,math.floor(c.Count*detail)) else 0
+    local motes=if name=="RisingMotes" then math.max(1,math.floor(c.Count*detail))
+        elseif name=="SigilStencil" and opts and opts.Follow and not low then c.IntakeCount else 0
     local trail=if name=="AfterimageTrail" and not low then 1 else 0
     local afterHead=if name=="AfterimageTrail" then 1 else 0
     local host=if name=="ScreenEdgePulse" then 0 else 1
@@ -125,28 +126,51 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
     elseif name=="VeilRibbon" then
         local lines={}
         for _=1,costs.Beam do table.insert(lines,segment(h,host,c.Width*scale,p.Primary)) end
-        update=function(_dt: number,age: number,_t: number)
+        update=function(_dt: number,age: number,t: number)
             local fade=c.Alpha+(1-c.Alpha)*alpha(age,c.Duration,common.FadeStart)
             for i,line in ipairs(lines) do
                 local side=if i%2==0 then 1 else -1
-                setLine(line,point(side*c.Offset*scale,-c.Height*scale/2,0),point(side*c.Offset*scale,c.Height*scale/2,0),fade)
-                line.Beam.CurveSize0=c.Curve*scale;line.Beam.CurveSize1=-c.Curve*scale
+                if opts.Coil and not h.ReducedMotion then
+                    local angle=t*TAU+side*math.pi/2
+                    local radius=c.Offset*scale
+                    setLine(line,point(math.cos(angle)*radius,-c.Height*scale/2,math.sin(angle)*radius),
+                        point(-math.cos(angle)*radius,c.Height*scale/2,-math.sin(angle)*radius),fade)
+                else
+                    setLine(line,point(side*c.Offset*scale,-c.Height*scale/2,0),point(side*c.Offset*scale,c.Height*scale/2,0),fade)
+                end
+                local wave=if h.ReducedMotion or low then 0 else math.sin(t*TAU+i)*C.Cinematic.VeilSway
+                line.Beam.CurveSize0=(c.Curve+wave)*scale;line.Beam.CurveSize1=(-c.Curve+wave)*scale
             end
         end
     elseif name=="SigilStencil" then
         local paths=stencil(c,low,opts)
         local lines={}
+        local intake={}
+        for _=1,motes do
+            local part=take(h,"Part",nil) :: Part
+            part.Shape=Enum.PartType.Ball;part.Size=Vector3.one*c.IntakeSize*scale;part.Color=p.Accent
+            table.insert(intake,part)
+        end
         for _,path in ipairs(paths) do
             for i=1,#path-1 do table.insert(lines,{Line=segment(h,host,width,p.Accent),A=path[i],B=path[i+1]}) end
         end
         update=function(_dt: number,age: number,_t: number)
             if opts.MoveTo then
                 local t=if h.ReducedMotion then 1 else math.clamp(age/c.Duration,0,1)
-                host.CFrame=(if typeof(opts.Frame)=="CFrame" then opts.Frame else CFrame.new(position))+(opts.MoveTo-position)*t
+                host.CFrame=((if typeof(opts.Frame)=="CFrame" then opts.Frame else CFrame.new(position))+(opts.MoveTo-position)*t)
+                    *CFrame.Angles(0,0,if h.ReducedMotion or low then 0 else age*(opts.Spin or C.Cinematic.SigilSpin))
             end
             local fade=common.Alpha+(1-common.Alpha)*alpha(age,c.Duration,common.FadeStart)
+            local progress=math.min(1,age/C.Cinematic.Intake)
+            for i,part in ipairs(intake) do
+                local angle=(i-1)/motes*TAU+progress*math.pi
+                local radius=c.Size*scale*(1-progress)
+                part.CFrame=host.CFrame*CFrame.new(math.cos(angle)*radius,math.sin(angle)*radius,0)
+                part.Transparency=if h.ReducedMotion then 1 else common.Alpha+(1-common.Alpha)*progress
+            end
             for _,entry in ipairs(lines) do
-                local function vertex(v: any): Vector3 return point((v[1]-0.5)*c.Size*scale,(0.5-v[2])*c.Size*scale,0) end
+                local intakeScale=if h.ReducedMotion then 1 else 1+C.Cinematic.IntakeRadius*(1-math.clamp(age/C.Cinematic.Intake,0,1))
+                local function vertex(v: any): Vector3 return point((v[1]-0.5)*c.Size*scale*intakeScale,(0.5-v[2])*c.Size*scale*intakeScale,0) end
                 setLine(entry.Line,vertex(entry.A),vertex(entry.B),fade)
             end
         end
@@ -170,7 +194,13 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
             for i,line in ipairs(spokes) do
                 local a=(i-1)/c.Spokes*TAU
                 local direction=point(math.cos(a),0,math.sin(a))
-                setLine(line,direction*radius*c.Inner+Vector3.yAxis*common.HeightOffset,direction*radius+Vector3.yAxis*common.HeightOffset,fade)
+                if opts.InnerRing then
+                    local b=a+TAU/c.Spokes
+                    setLine(line,direction*radius*c.Inner+Vector3.yAxis*common.HeightOffset,
+                        point(math.cos(b),0,math.sin(b))*radius*c.Inner+Vector3.yAxis*common.HeightOffset,fade)
+                else
+                    setLine(line,direction*radius*c.Inner+Vector3.yAxis*common.HeightOffset,direction*radius+Vector3.yAxis*common.HeightOffset,fade)
+                end
             end
         end
     elseif name=="RisingMotes" then
@@ -189,15 +219,17 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
         update=function(_dt: number,age: number,t: number)
             for i,part in ipairs(pieces) do
                 local a=(i-1)/motes*TAU+(if h.ReducedMotion then 0 else t*c.Orbit)
-                local rise=if h.ReducedMotion then c.Height*(i/motes) else t*c.Height
-                part.CFrame=host.CFrame*CFrame.new(math.cos(a)*c.Radius*scale,rise*scale,math.sin(a)*c.Radius*scale)
+                local intake=if opts.Intake then 1-t else math.min(1,t/C.Cinematic.Intake)
+                local radius=c.Radius*(if h.ReducedMotion then 1 else C.Cinematic.IntakeRadius+(1-C.Cinematic.IntakeRadius)*intake)
+                local rise=if h.ReducedMotion then c.Height*(i/motes) elseif opts.Intake then (1-t)*c.Height else t*c.Height
+                part.CFrame=host.CFrame*CFrame.new(math.cos(a)*radius*scale,rise*scale,math.sin(a)*radius*scale)
                 part.Transparency=common.Alpha+(1-common.Alpha)*alpha(age,c.Duration,common.FadeStart)
             end
         end
     elseif name=="ThreadBeam" then
         local line=segment(h,host,math.max(c.Width*scale,opts.MinWidth or 0),p.Accent)
         local endpoint=if typeof(opts.EndPosition)=="Vector3" then host.CFrame:PointToObjectSpace(opts.EndPosition) else point(c.Length*scale,0,0)
-        local arch=Vector3.yAxis*c.Height*scale
+        local arch=Vector3.yAxis*(opts.Curve or c.Height)*scale
         local a=Vector3.zero
         local tangent0=endpoint/3+arch
         local tangent1=endpoint/3-arch
@@ -212,6 +244,9 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
         line.Beam.CurveSize0=tangent0.Magnitude;line.Beam.CurveSize1=tangent1.Magnitude
         line.Beam.Segments=c.Segments;line.Beam.Width1=math.max(c.Width*scale*c.Taper,opts.MinWidth or 0)
         update=function(_dt: number,age: number,_t: number)
+            local draw=if h.ReducedMotion or not opts.Draw then 1 else math.min(1,age/C.Cinematic.BeamDraw)
+            line.B.Position=endpoint*draw
+            line.Beam.Width0=math.max(c.Width*scale,opts.MinWidth or 0)*(1+C.Cinematic.Afterglow*(1-draw))
             line.Beam.Transparency=NumberSequence.new(common.Alpha+(1-common.Alpha)*alpha(age,c.Duration,common.FadeStart))
         end
     elseif name=="DoorFrame" then
@@ -221,13 +256,15 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
         update=function(_dt: number,age: number,_t: number)
             local fade=common.Alpha+(1-common.Alpha)*alpha(age,c.Duration,common.FadeStart)
             for i=1,layers do
-                local half=(c.Width/2-(i-1)*c.Inset)*scale
+                local opening=if h.ReducedMotion then 1 else C.Cinematic.DoorOpen+(1-C.Cinematic.DoorOpen)*math.min(1,age/C.Cinematic.Intake)
+                local half=(c.Width/2-(i-1)*c.Inset)*scale*opening
                 local base=c.Base*scale
                 local top=(c.Height-(i-1)*c.Inset)*scale
                 local offset=(i-1)*3
-                setLine(lines[offset+1],point(-half,base,0),point(-half,top,0),fade)
-                setLine(lines[offset+2],point(-half,top,0),point(half,top,0),fade)
-                setLine(lines[offset+3],point(half,top,0),point(half,base,0),fade)
+                local depth=(i-1)*C.Cinematic.DoorDepth*scale
+                setLine(lines[offset+1],point(-half,base,depth),point(-half,top,depth),fade)
+                setLine(lines[offset+2],point(-half,top,depth),point(half,top,depth),fade)
+                setLine(lines[offset+3],point(half,top,depth),point(half,base,depth),fade)
             end
         end
     elseif name=="StarBurst" or name=="ImpactFlash" then
@@ -271,6 +308,7 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
         local head=take(h,"Part",nil) :: Part
         head.Size=point(c.Head,c.Height,c.Head)*scale;head.Color=p.Primary
         local trail: Trail?=nil
+        local endpoint=if typeof(opts.EndPosition)=="Vector3" then host.CFrame:PointToObjectSpace(opts.EndPosition) else point(c.Length*scale,0,0)
         if costs.Trail>0 then
             local a=take(h,"Attachment",head) :: Attachment
             local b=take(h,"Attachment",head) :: Attachment
@@ -281,7 +319,8 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
             trail=ribbon
         end
         update=function(_dt: number,age: number,t: number)
-            head.CFrame=host.CFrame*CFrame.new((if h.ReducedMotion then 0 else t*c.Length)*scale,c.Height*scale/2,0)
+            local travel=if h.ReducedMotion then 1 else math.min(1,age/C.Cinematic.TrailTravel)
+            head.CFrame=host.CFrame*CFrame.new(endpoint*travel+Vector3.yAxis*c.Height*scale/2)
             head.Transparency=common.Alpha+(1-common.Alpha)*alpha(age,c.Duration,common.FadeStart)
             if trail then trail.Enabled=not h.ReducedMotion end
         end
@@ -294,6 +333,11 @@ function Blocks.Play(self: any,name: string,position: Vector3,paletteName: strin
         if host and opts.Follow then
             if not opts.Follow.Parent then h:Finish();return end
             host.CFrame=CFrame.new(opts.Follow.Position+(opts.Offset or Vector3.zero))*(if opts.Frame then opts.Frame.Rotation else CFrame.identity)
+        end
+        if host and (name=="SigilStencil" or name=="GroundRune") and not opts.MoveTo then
+            local base=if opts.Follow then host.CFrame else opts.Frame or CFrame.new(position)
+            local spin=if h.ReducedMotion or low then 0 else age*(opts.Spin or (if name=="GroundRune" then C.Cinematic.RuneSpin else C.Cinematic.SigilSpin))
+            host.CFrame=base*(if name=="GroundRune" then CFrame.Angles(0,spin,0) else CFrame.Angles(0,0,spin))
         end
         update(dt,age,t)
     end
@@ -351,7 +395,9 @@ function Blocks.Compose(self: any,layers: {any},tier: number,priority: number,du
     local function update(dt: number,age: number,_progress: number)
         for _,group in ipairs(groups) do
             local layer=group.Layer
-            local visible=self.Service:Visible(group.Anchor)
+            local delay=math.clamp((layer.Options and layer.Options.Delay) or 0,0,duration)
+            local life=math.clamp((layer.Options and layer.Options.Life) or (duration-delay),C.Blocks.Common.MinimumLength,math.max(C.Blocks.Common.MinimumLength,duration-delay))
+            local visible=age>=delay and age<delay+life and self.Service:Visible(group.Anchor)
             if layer.Options and layer.Options.EndPosition then visible=visible and self.Service:Visible(layer.Options.EndPosition) end
             if visible and not group.Built then
                 local child: any={Scale=h.Scale,Detail=detail,ReducedMotion=h.ReducedMotion,Duration=duration}
@@ -362,7 +408,7 @@ function Blocks.Compose(self: any,layers: {any},tier: number,priority: number,du
                 end
                 function child:Finish() h:Finish() end
                 local opts=table.clone(layer.Options or {})
-                opts.Lease=child;opts.Detail=math.min(detail,opts.Detail or math.huge);opts.Duration=duration
+                opts.Lease=child;opts.Detail=math.min(detail,opts.Detail or math.huge);opts.Duration=life
                 child.Detail=opts.Detail
                 opts.MinWidth=if profile.Mobile then C.Composition.MobileMinWidth else C.Composition.MinWidth
                 group.Child=self:Play(layer.Name,layer.Position,layer.Palette,tier,opts)
@@ -373,7 +419,7 @@ function Blocks.Compose(self: any,layers: {any},tier: number,priority: number,du
                 group.Visible=visible
             end
             if visible and group.Child and group.Child.Update then
-                group.Child.Update(dt,age,math.clamp(age/duration,0,1))
+                group.Child.Update(dt,age-delay,math.clamp((age-delay)/life,0,1))
             end
         end
     end

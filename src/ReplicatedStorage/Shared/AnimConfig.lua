@@ -23,16 +23,26 @@ end
 local function releaseCurve(entry: any,time: number,_speed: number): Pose
     if not entry.FollowPose then return still(entry,time,_speed) end
     local progress=math.clamp(time/math.max(0.01,entry.Duration),0,1)
-    if entry.AnticipationPose and progress<0.24 then
-        return lerpPose(entry.AnticipationPose,entry.Pose,progress/0.24)
-    elseif progress<0.62 then
-        local t=if entry.AnticipationPose then (progress-0.24)/0.38 else progress/0.62
-        return lerpPose(entry.Pose,entry.FollowPose,t)
+    local beat=T.Choreography
+    if entry.AnticipationPose and progress<beat.ReleaseStrike then
+        local t=progress/beat.ReleaseStrike
+        return lerpPose(entry.AnticipationPose,entry.Pose,t*t)
+    elseif progress<beat.FollowEnd then
+        local t=if entry.AnticipationPose then (progress-beat.ReleaseStrike)/(beat.FollowEnd-beat.ReleaseStrike) else progress/beat.FollowEnd
+        return lerpPose(entry.Pose,entry.FollowPose,1-(1-t)^3)
     end
-    local recovery=(progress-0.62)/0.38
+    local recovery=(progress-beat.FollowEnd)/(1-beat.FollowEnd)
     return lerpPose(entry.FollowPose,entry.RecoveryPose or {
         Root={0,0,0,0},Waist={0,0,0,0},Neck={0,0,0,0},LeftShoulder={0,0,0,0},RightShoulder={0,0,0,0},LeftHip={0,0,0,0},RightHip={0,0,0,0},
-    },recovery*0.65)
+    },recovery*beat.Recovery)
+end
+local function windupCurve(entry: any,time: number,_speed: number): Pose
+    local gain=T.Choreography.WindupStart+(1-T.Choreography.WindupStart)*math.min(1,time/T.Choreography.WindupSnap)
+    local result: Pose={}
+    for role,value in pairs(entry.Pose) do
+        result[role]=frame(value[1]*gain,value[2]*gain,value[3]*gain,value[4]*gain)
+    end
+    return result
 end
 local function breathe(entry: any,time: number,_speed: number): Pose
     local wave=math.sin(time*math.pi*2/entry.Period)
@@ -468,9 +478,9 @@ local function makeFollow(w: any,r: any): {[string]: {number}}
         local wv=w[role] or {0,0,0,0}
         out[role]={
             rv[1]*0.55,
-            rv[2]+(rv[2]-wv[2])*0.18,
-            rv[3]+(rv[3]-wv[3])*0.18,
-            rv[4]+(rv[4]-wv[4])*0.18,
+            rv[2]+(rv[2]-wv[2])*T.Choreography.FollowOvershoot,
+            rv[3]+(rv[3]-wv[3])*T.Choreography.FollowOvershoot,
+            rv[4]+(rv[4]-wv[4])*T.Choreography.FollowOvershoot,
         }
     end
     return out
@@ -499,6 +509,7 @@ for pathway,rows in pairs(families) do
             }
             local wind=table.clone(source.CastWindup)
             local cast=table.clone(source.CastRelease)
+            wind.Procedural=windupCurve;wind.FadeIn=T.Choreography.WindupFade
             cast.Duration=release[pathway][index][choice]
             config.CastProfiles[profile]={CastWindup=wind,CastRelease=cast}
             config.AbilityProfiles[id]=profile
@@ -512,5 +523,11 @@ for pathway,rows in pairs(families) do
             config.GestureOrigins[id]={Offset=spec.Origin,Stencil=spec.Stencil,Family=family}
         end
     end
+end
+for _,profile in ipairs({"MeleeRight","MeleeLeft"}) do
+    config.CastProfiles[profile].CastRelease.Duration=T.Choreography.MeleeDuration
+end
+for _,profile in ipairs({"UltimateSeer","UltimateMarauder","UltimateApprentice"}) do
+    config.CastProfiles[profile].CastRelease.Duration=T.Choreography.UltimateDuration
 end
 return freeze(config)
