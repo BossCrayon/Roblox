@@ -164,7 +164,7 @@ return freeze({
         Reject={Id=0,Volume=0.18},JournalOpen={Id=0,Volume=0.15},Advance={Id=0,Volume=0.28},
         Hit={Id=0,Volume=0.16},Abilities={["Enemy.Intro"]=0,["Enemy.Phase"]=0,["Enemy.Death"]=0,["Enemy.Melee"]=0,["Enemy.Spell"]=0,["Trigger.SubstituteTriggered"]=0,["Trigger.GraftReflected"]=0,["Trigger.PayloadTriggered"]=0},MaxPlaying=8,AbilityVolume=0.4,MinPitch=0.5,MaxPitch=2},
     Camera={MinZoom=8,MaxZoom=32},
-    Choreography={WindupSnap=0.08,WindupStart=0.75,WindupFade=0.045,ReleaseStrike=0.2,FollowEnd=0.55,
+    Choreography={BodyGain=1.3,ArmGain=1.18,MaxPoseDegrees=125,RecoilGain=0.12,WindupSnap=0.08,WindupStart=0.75,WindupFade=0.045,ReleaseStrike=0.2,FollowEnd=0.55,
         Recovery=0.82,FollowOvershoot=0.24,MeleeDuration=0.34,UltimateDuration=0.9},
     CameraFeel={SmallStuds=0.10,MajorStuds=0.22,SmallDegrees=0.25,MajorDegrees=0.55,
         Attack=0.018,SettlePower=3,
@@ -870,6 +870,30 @@ end
 for _,profile in ipairs({"UltimateSeer","UltimateMarauder","UltimateApprentice"}) do
     config.CastProfiles[profile].CastRelease.Duration=T.Choreography.UltimateDuration
 end
+-- Original combat staging: amplify silhouette, not the ability's canonical powers.
+-- Procedural overlays retain Animator ownership and never move the physical root.
+local function accent(pose: any): any
+    if not pose then return nil end
+    local result={}
+    for role,values in pairs(pose) do
+        local gain=if role=="LeftShoulder" or role=="RightShoulder" then T.Choreography.ArmGain else T.Choreography.BodyGain
+        result[role]={values[1],math.clamp(values[2]*gain,-T.Choreography.MaxPoseDegrees,T.Choreography.MaxPoseDegrees),
+            values[3]*gain,values[4]*gain}
+    end
+    return result
+end
+for name,profile in pairs(config.CastProfiles) do
+    if name~="Potion" then
+        for _,phase in ipairs({"CastWindup","CastRelease"}) do
+            local entry=profile[phase]
+            if entry then
+                entry.Pose=accent(entry.Pose)
+                entry.FollowPose=accent(entry.FollowPose)
+                entry.AnticipationPose=accent(entry.AnticipationPose)
+            end
+        end
+    end
+end
 return freeze(config)
 ```
 
@@ -1356,13 +1380,13 @@ return freeze({
             Vision="Spirit sight",CipherSight="Cipher sight",Substitute="Substitute armed",Composed="Composed",Shielded="Shielded",MythicalForm="Mythical Form",Invulnerable="Evading"}},
     Composition={MaxLayers=6,MaxAnchors=12,MobileDetail=0.35,Priority=3,WindupPriority=2,ResultLife=0.85,CancelFade=0.12,MinWidth=0.04,MobileMinWidth=0.06},
     Melee={TrailLife=0.34,ImpactLife=0.32,ArcSpan=2.4,ArcForward=2.6,ArcHeight=0.45,SlashScale=0.42,ImpactScale=0.48,
-        Windup=0.06,ArcEndForward=3.6,ArcCurve=1.1,TrailScale=0.30},
+        Windup=0.06,ArcEndForward=3.6,ArcCurve=1.7,TrailScale=0.38,MotifScale=0.48,MotifDelay=0.12},
     Dash={Life=0.42,Scale=0.42},
     Ultimate={Life=1.8,IncompleteScale=0.85,CompleteScale=1.3,Release=0.18,Aftermath=0.46,
         GestureHeight=1.8,GroundOffset=-2.7,IntakeScale=0.65,DomainScale=1.45,VeilHeight=5.4},
     Cinematic={Intake=0.16,Release=0.08,Aftermath=0.24,SigilSpin=0.45,RuneSpin=0.18,
         VeilSway=0.22,DoorDepth=0.30,DoorOpen=0.16,BeamDraw=0.09,TrailTravel=0.16,
-        SaintScale=1.12,AngelScale=1.25,VeilHeight=3.8,IntakeRadius=0.2,Afterglow=0.7},
+        SaintScale=1.12,AngelScale=1.25,VeilHeight=3.8,IntakeRadius=0.2,Afterglow=0.95},
     Ability={GroundOffset=-2.8,HandHeight=0.5,ReadHeight=1.8,DefaultScale=0.38,
         WindupScale=0.42,EyeScale=1,ReadGroundDetail=0.35,TransferScale=0.3,DoorScale=1,
         FlameScale=0.45,TravelScale=1,EndpointLife=0.75,PickpocketLife=0.65,TheftLife=0.85,
@@ -5231,6 +5255,12 @@ function Presentation.Event(self: any,event: any)
             {Name="ThreadBeam",Position=arcStart,Palette=palette,Options={EndPosition=arcEnd,Scale=C.Melee.SlashScale,Curve=C.Melee.ArcCurve,Draw=true,Delay=C.Melee.Windup}},
             {Name="AfterimageTrail",Position=arcStart,Palette=palette,Options={EndPosition=arcEnd,Scale=C.Melee.TrailScale,Delay=C.Melee.Windup}},
         }
+        -- Cosmetic pathway vocabulary; an ordinary punch gains no supernatural outcome.
+        if not self.Reduced and not self.Low then
+            local motif=if palette=="Seer" then "VeilRibbon" elseif palette=="Marauder" then "GlitchFlicker" else "StarBurst"
+            table.insert(specs,{Name=motif,Position=arcEnd,Palette=palette,
+                Options={Scale=C.Melee.MotifScale,Delay=C.Melee.MotifDelay,Frame=CFrame.lookAt(arcEnd,arcEnd+dir)}})
+        end
         if event.Target then
             table.insert(specs,{Name="ImpactFlash",Position=event.Position,Palette=palette,Options={Scale=C.Melee.ImpactScale,Delay=C.Melee.Windup}})
             table.insert(specs,{Name="RingBurst",Position=event.Position,Palette=palette,Options={Scale=C.Melee.ImpactScale,Delay=C.Melee.Windup}})

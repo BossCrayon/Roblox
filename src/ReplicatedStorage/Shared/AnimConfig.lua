@@ -530,4 +530,28 @@ end
 for _,profile in ipairs({"UltimateSeer","UltimateMarauder","UltimateApprentice"}) do
     config.CastProfiles[profile].CastRelease.Duration=T.Choreography.UltimateDuration
 end
+-- Original combat staging: amplify silhouette, not the ability's canonical powers.
+-- Procedural overlays retain Animator ownership and never move the physical root.
+local function accent(pose: any): any
+    if not pose then return nil end
+    local result={}
+    for role,values in pairs(pose) do
+        local gain=if role=="LeftShoulder" or role=="RightShoulder" then T.Choreography.ArmGain else T.Choreography.BodyGain
+        result[role]={values[1],math.clamp(values[2]*gain,-T.Choreography.MaxPoseDegrees,T.Choreography.MaxPoseDegrees),
+            values[3]*gain,values[4]*gain}
+    end
+    return result
+end
+for name,profile in pairs(config.CastProfiles) do
+    if name~="Potion" then
+        for _,phase in ipairs({"CastWindup","CastRelease"}) do
+            local entry=profile[phase]
+            if entry then
+                entry.Pose=accent(entry.Pose)
+                entry.FollowPose=accent(entry.FollowPose)
+                entry.AnticipationPose=accent(entry.AnticipationPose)
+            end
+        end
+    end
+end
 return freeze(config)

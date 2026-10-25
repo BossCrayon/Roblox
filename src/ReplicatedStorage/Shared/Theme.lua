@@ -92,7 +92,7 @@ return freeze({
         Reject={Id=0,Volume=0.18},JournalOpen={Id=0,Volume=0.15},Advance={Id=0,Volume=0.28},
         Hit={Id=0,Volume=0.16},Abilities={["Enemy.Intro"]=0,["Enemy.Phase"]=0,["Enemy.Death"]=0,["Enemy.Melee"]=0,["Enemy.Spell"]=0,["Trigger.SubstituteTriggered"]=0,["Trigger.GraftReflected"]=0,["Trigger.PayloadTriggered"]=0},MaxPlaying=8,AbilityVolume=0.4,MinPitch=0.5,MaxPitch=2},
     Camera={MinZoom=8,MaxZoom=32},
-    Choreography={WindupSnap=0.08,WindupStart=0.75,WindupFade=0.045,ReleaseStrike=0.2,FollowEnd=0.55,
+    Choreography={BodyGain=1.3,ArmGain=1.18,MaxPoseDegrees=125,RecoilGain=0.12,WindupSnap=0.08,WindupStart=0.75,WindupFade=0.045,ReleaseStrike=0.2,FollowEnd=0.55,
         Recovery=0.82,FollowOvershoot=0.24,MeleeDuration=0.34,UltimateDuration=0.9},
     CameraFeel={SmallStuds=0.10,MajorStuds=0.22,SmallDegrees=0.25,MajorDegrees=0.55,
         Attack=0.018,SettlePower=3,
