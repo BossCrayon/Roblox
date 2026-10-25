@@ -282,14 +282,34 @@ return function(data: any,load: any,shared: any)
     -- C–E: all routes have real registered recipes and matching procedural profiles.
     local registry={Seer=load("Client/Visuals/PathwayEffects/Seer",env),Marauder=load("Client/Visuals/PathwayEffects/Marauder",env),Apprentice=load("Client/Visuals/PathwayEffects/Apprentice",env)}
     local Choreo=load("Client/Visuals/Choreography",env)
+    local requiredRoles={"Root","Waist","Neck","LeftShoulder","RightShoulder","LeftHip","RightHip"}
     for id,a in pairs(data.Abilities) do
         local event=packet(id,"Result",1);event.Target=target;event.Radius=4
         local ctx={Layer=function(name,pos,options) return {Name=name,Position=pos,Palette=a.PathwayId,Options=options or {}} end,
             Frame=function(pos) return cf(pos) end,Simplified=false}
-        local layers=registry[a.PathwayId].Build(a,event,Choreo.Extend(a,event,ctx))
-        check(layers and #layers>0,"Dedicated pathway recipe exists without generic fallback: "..id)
-        check(Anim.AbilityProfiles[id] and Anim.CastProfiles[Anim.AbilityProfiles[id]],"Every ability selects a procedural pose profile")
-        check(Anim.AbilityTimings[id].Windup==a.CastTimeSeconds,"Pose windup preserves authoritative cast duration")
+        local extended=Choreo.Extend(a,event,ctx)
+        local layers=registry[a.PathwayId].Build(a,event,extended)
+        check(layers and #layers>0 and #layers<=C.Composition.MaxLayers,"Dedicated pathway recipe exists within layer cap: "..id)
+        local profileName=Anim.AbilityProfiles[id]
+        local profile=profileName and Anim.CastProfiles[profileName]
+        check(profile~=nil,"Every ability selects a procedural pose profile")
+        local timing=Anim.AbilityTimings[id]
+        check(timing.Windup==a.CastTimeSeconds,"Pose windup preserves authoritative cast duration")
+        check(type(timing.Origin)=="table" and type(timing.Stencil)=="string","Every ability timing defines gesture origin and stencil")
+        check(extended.Gesture.Y==extended.Self.Y+timing.Origin[2],"Choreography gesture origin aligns with cast pose height")
+        local windPose=profile.CastWindup.Pose;local relPose=profile.CastRelease.Pose
+        local differs=false
+        for _,role in ipairs(requiredRoles) do
+            check(windPose[role]~=nil and relPose[role]~=nil,"7-joint coordination present for "..id.." role "..role)
+            for idx=1,4 do
+                if windPose[role][idx]~=relPose[role][idx] then differs=true end
+            end
+        end
+        check(differs,"Windup and release poses are kinematically distinct for "..id)
+        if not string.find(id,"_Secondary",1,true) then
+            local secTiming=Anim.AbilityTimings[id.."_Secondary"]
+            check(secTiming and secTiming.Family~=timing.Family,"Primary and secondary abilities on sequence have distinct gesture families: "..id)
+        end
     end
     local serverState=state
     serverState.Profile={PathwayId="Seer"};serverState.Ready=true;serverState.Dead=false;serverState.Statuses={}

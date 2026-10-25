@@ -16,34 +16,113 @@ function Apprentice.Build(a: any,e: any,c: any): (any,number?)
     end
     if id=="Apprentice_9" then
         local target=e.Target
-        if typeof(target)~="Instance" or not target:IsA("BasePart") or not target.Parent then return {c.Mark("Key",e.Position)},C.Ability.Life end
+        if typeof(target)~="Instance" or not target:IsA("BasePart") or not target.Parent then
+            return {c.Mark("Key",e.Position,C.Ability.Medium),c.Mark("Door",c.Gesture,C.Ability.Small)},C.Ability.Life
+        end
         local at=target.Position-Vector3.yAxis*(target.Size.Y/2)
-        return {c.Layer("DoorFrame",at,{Frame=CFrame.new(at)*target.CFrame.Rotation,Scale=1/C.Tier[e.Tier].Scale,
-            Width=target.Size.X+C.Ability.DoorMargin,Height=target.Size.Y+C.Ability.DoorMargin}),
-            c.Mark("Key",target.Position,C.Ability.Small)},C.Composition.ResultLife
+        local layers={
+            c.Layer("DoorFrame",at,{Frame=CFrame.new(at)*target.CFrame.Rotation,Scale=1/C.Tier[e.Tier].Scale,
+                Width=target.Size.X+C.Ability.DoorMargin,Height=target.Size.Y+C.Ability.DoorMargin}),
+            c.Mark("Key",target.Position,C.Ability.Small),
+        }
+        if not c.Simplified then
+            table.insert(layers,c.Beam(c.Gesture,target.Position))
+            table.insert(layers,c.Mark("Star",target.Position,C.Ability.Small))
+        end
+        return layers,C.Composition.ResultLife
     elseif id=="Apprentice_9_Secondary" then
-        return {c.Mark("Key",c.Chest,C.Ability.Medium),c.Mark("Star",c.Head,C.Ability.Small)},C.Ability.Life
+        local layers={c.Mark("Key",c.Gesture,C.Ability.Medium),c.Mark("Arch",c.Head,C.Ability.Small)}
+        if not c.Simplified then
+            table.insert(layers,c.Ring(c.Ground()))
+            table.insert(layers,c.Motes(c.Self,C.Ability.Small))
+        end
+        return layers,C.Ability.Life
     elseif id=="Apprentice_8" then
-        return {c.Mark("Star",c.Target,C.Ability.Small),c.Beam(c.Chest,c.Target)},C.Ability.Life
+        local layers={
+            c.Star(c.TargetChest,C.Ability.Medium),
+            c.Beam(c.Gesture,c.TargetChest),
+            c.Mark("Star",c.TargetHead,C.Ability.Small),
+        }
+        if not c.Simplified then table.insert(layers,c.Flash(c.TargetChest,C.Ability.Small)) end
+        return layers,C.Ability.Life
     elseif id=="Apprentice_8_Secondary" then
         local offset=Vector3.xAxis*C.Ability.Medium
-        return {c.Beam(e.Position-offset,e.Position+offset),c.Beam(e.Position-offset+Vector3.yAxis*C.Ability.Small,e.Position+offset+Vector3.yAxis*C.Ability.Small),
-            c.Ring(c.Ground(),c.Radius)},C.Ability.Life
+        local layers={
+            c.Beam(e.Position-offset,e.Position+offset),
+            c.Beam(e.Position-offset+Vector3.yAxis*C.Ability.Small,e.Position+offset+Vector3.yAxis*C.Ability.Small),
+            c.Ring(c.Ground(),c.Radius),
+            c.Mark("Circle",e.Position+Vector3.yAxis*C.Ability.ChestHeight,C.Ability.Medium),
+        }
+        if not c.Simplified then
+            for _,target in ipairs(e.Affected or {}) do
+                if #layers>=C.Composition.MaxLayers then break end
+                table.insert(layers,c.Mark("Circle",target.Position+Vector3.yAxis*C.Ability.ChestHeight,C.Ability.Small))
+            end
+        end
+        return layers,C.Ability.Life
     elseif id=="Apprentice_7" then
-        if e.Outcome=="Obscured" then return {c.Mark("Split",c.Chest,C.Ability.Small)},C.Ability.Life end
-        return {c.Mark("Star",c.Head,C.Ability.Large),c.Ring(c.Ground()),c.Beam(c.Chest,c.Head)},C.Ability.Life
+        if e.Outcome=="Obscured" then
+            return {c.Mark("Split",c.Gesture,C.Ability.Small),c.Veil(c.Chest,C.Ability.Small)},C.Ability.Life
+        end
+        local layers={c.Mark("Star",c.Head,C.Ability.Large),c.Ring(c.Ground()),c.Beam(c.Gesture,c.Head)}
+        if not c.Simplified then
+            table.insert(layers,c.Star(c.Head,C.Ability.Small))
+            table.insert(layers,c.Motes(c.Self,C.Ability.Small))
+        end
+        return layers,C.Ability.Life
     elseif id=="Apprentice_7_Secondary" then
-        return {c.Door(c.Self+Vector3.yAxis*C.Ability.GroundOffset),c.Mark("Star",c.Head,C.Ability.Small)},C.Ability.Life
+        local layers={
+            c.Door(c.Self+Vector3.yAxis*C.Ability.GroundOffset),
+            c.Mark("Arch",c.Gesture,C.Ability.Medium),
+            c.Mark("Star",c.Head,C.Ability.Small),
+        }
+        if not c.Simplified then table.insert(layers,c.Ring(c.Ground())) end
+        return layers,C.Ability.Life
     elseif id=="Apprentice_6" then
-        return {c.Mark("Book",c.Target),c.Beam(c.Target,c.Chest),c.Mark("Door",c.Chest,C.Ability.Small)},C.Ability.Life
+        local layers={
+            c.Mark("Book",c.Gesture,C.Ability.Medium),
+            c.Beam(c.TargetChest,c.Gesture),
+            c.Mark("Star",c.TargetChest,C.Ability.Small,{MoveTo=c.Gesture}),
+        }
+        if not c.Simplified then table.insert(layers,c.Mark("Key",c.Chest,C.Ability.Small)) end
+        return layers,C.Ability.Life
     elseif id=="Apprentice_6_Secondary" then
-        return {c.Mark("Book",c.Chest,C.Ability.Small),c.Beam(c.Chest,c.Target),c.Mark("Star",c.Target,C.Ability.Medium)},C.Ability.Life
-    elseif id=="Apprentice_5" then return pair(false,false),C.Ability.EndpointLife
+        local layers={
+            c.Mark("Book",c.Gesture,C.Ability.Medium),
+            c.Beam(c.Gesture,c.TargetChest),
+            c.Star(c.TargetChest,C.Ability.Medium),
+        }
+        if not c.Simplified then
+            table.insert(layers,c.Mark("Star",c.Gesture,C.Ability.Small,{MoveTo=c.TargetChest}))
+            if (e.RecordedCharges or 0)>0 then
+                table.insert(layers,c.Mark("Key",c.Head,C.Ability.Small))
+            end
+        end
+        return layers,C.Ability.Life
+    elseif id=="Apprentice_5" then
+        local layers=pair(false,false)
+        if not c.Simplified then
+            table.insert(layers,c.Beam(c.OriginGesture,c.Gesture))
+            table.insert(layers,c.Mark("Key",c.Gesture,C.Ability.Small))
+        end
+        return layers,C.Ability.EndpointLife
     elseif id=="Apprentice_5_Secondary" then
         if e.Preview then return pair(false,false),C.Ability.Life end
-        return {c.Mark("Key",c.Origin,C.Ability.Medium),c.Mark("Key",e.Position,C.Ability.Medium)},C.Ability.Life
+        local layers={
+            c.Mark("Key",c.Origin,C.Ability.Medium),
+            c.Mark("Key",e.Position,C.Ability.Medium),
+            c.Mark("Arch",c.Gesture,C.Ability.Small),
+        }
+        if not c.Simplified then table.insert(layers,c.Beam(c.Origin,e.Position)) end
+        return layers,C.Ability.Life
     elseif id=="Apprentice_4" then
-        return {c.Door(c.Self+Vector3.yAxis*C.Ability.GroundOffset),c.Veil(c.Chest),c.Mark("Key",c.Chest,C.Ability.Small)},C.Ability.Life
+        local layers={
+            c.Door(c.Self+Vector3.yAxis*C.Ability.GroundOffset),
+            c.Veil(c.Chest),
+            c.Mark("Key",c.Gesture,C.Ability.Small),
+        }
+        if not c.Simplified then table.insert(layers,c.Mark("Arch",c.Head,C.Ability.Small)) end
+        return layers,C.Ability.Life
     elseif id=="Apprentice_4_Secondary" then
         local radius=c.Radius
         local layers={c.Ring(c.Ground(),radius)}
@@ -51,19 +130,72 @@ function Apprentice.Build(a: any,e: any,c: any): (any,number?)
             table.insert(layers,c.Door(c.Ground()+direction*radius,C.Ability.CornerScale))
             if c.Simplified and #layers>=3 then break end
         end
+        if not c.Simplified and #layers<C.Composition.MaxLayers then
+            table.insert(layers,c.Mark("Seal",e.Position+Vector3.yAxis*C.Ability.ChestHeight,C.Ability.Medium))
+        end
         return layers,C.Ability.Life
-    elseif id=="Apprentice_3" then return pair(true,false),C.Ability.Life
+    elseif id=="Apprentice_3" then
+        local layers=pair(true,false)
+        if not c.Simplified then
+            table.insert(layers,c.Mark("Arch",c.Self+Vector3.yAxis*C.Ability.ChestHeight,C.Ability.Large))
+            table.insert(layers,c.Veil(c.Self,C.Ability.Small))
+        end
+        return layers,C.Ability.Life
     elseif id=="Apprentice_3_Secondary" then
-        return {c.Door(c.Self+Vector3.yAxis*C.Ability.GroundOffset,C.Ability.Small),c.Veil(c.Chest),c.Mark("Star",c.Chest,C.Ability.Small)},C.Ability.Life
+        local layers={
+            c.Door(c.Self+Vector3.yAxis*C.Ability.GroundOffset,C.Ability.Small),
+            c.Mark("Arch",c.Gesture,C.Ability.Medium),
+            c.Veil(c.Chest),
+            c.Mark("Star",c.Head,C.Ability.Small),
+        }
+        if not c.Simplified then table.insert(layers,c.Ghost(c.Self)) end
+        return layers,C.Ability.Life
     elseif id=="Apprentice_2" then
-        return {c.Mark("Book",c.Chest),c.Mark("Book",c.Chest+Vector3.xAxis*C.Ability.Medium,C.Ability.Small),
-            c.Beam(c.Chest,c.Target),c.Mark("Star",c.Target,C.Ability.Medium)},C.Ability.Life
-    elseif id=="Apprentice_2_Secondary" then return pair(false,true),C.Ability.Life
+        local layers={
+            c.Mark("Book",c.Gesture-Vector3.xAxis*C.Ability.Small,C.Ability.Medium),
+            c.Mark("Book",c.Gesture+Vector3.xAxis*C.Ability.Small,C.Ability.Small),
+            c.Beam(c.Gesture,c.TargetChest),
+            c.Star(c.TargetChest,C.Ability.Medium),
+        }
+        if not c.Simplified then
+            table.insert(layers,c.Mark("Arch",c.Gesture,C.Ability.Small))
+            table.insert(layers,c.Mark("Star",c.TargetHead,C.Ability.Small))
+        end
+        return layers,C.Ability.Life
+    elseif id=="Apprentice_2_Secondary" then
+        local layers=pair(false,true)
+        if not c.Simplified then
+            table.insert(layers,c.Trail(c.Origin,C.Ability.Medium,c.Self))
+            table.insert(layers,c.Star(c.Self+Vector3.yAxis*C.Ability.ChestHeight,C.Ability.Small))
+        end
+        return layers,C.Ability.Life
     elseif id=="Apprentice_1" then
         if e.Preview then return pair(false,true),C.Ability.Life end
-        return {c.Mark("Star",c.Origin,C.Ability.Large),c.Mark("Star",e.Position,C.Ability.Large),c.Mark("Door",c.Chest,C.Ability.Small)},C.Ability.Life
+        local layers={
+            c.Mark("Star",c.Origin,C.Ability.Large),
+            c.Mark("Star",e.Position,C.Ability.Large),
+            c.Mark("Key",c.Gesture,C.Ability.Medium),
+        }
+        if not c.Simplified then
+            table.insert(layers,c.Mark("Arch",c.Origin+Vector3.yAxis*C.Ability.ChestHeight,C.Ability.Medium))
+            table.insert(layers,c.Mark("Arch",e.Position+Vector3.yAxis*C.Ability.ChestHeight,C.Ability.Medium))
+            table.insert(layers,c.Motes(c.Self,C.Ability.Medium))
+        end
+        return layers,C.Ability.Life
     elseif id=="Apprentice_1_Secondary" then
-        return {c.Ring(c.Ground(),c.Radius),c.Door(e.Position,C.Ability.Small),c.Mark("Key",e.Position,C.Ability.Small)},C.Ability.Life
+        local layers={
+            c.Ring(c.Ground(),c.Radius),
+            c.Door(e.Position,C.Ability.Small),
+            c.Mark("Seal",e.Position+Vector3.yAxis*C.Ability.ChestHeight,C.Ability.Large),
+            c.Mark("Key",e.Position+Vector3.yAxis*C.Ability.HeadHeight,C.Ability.Small),
+        }
+        if not c.Simplified then
+            for _,target in ipairs(e.Affected or {}) do
+                if #layers>=C.Composition.MaxLayers then break end
+                table.insert(layers,c.Mark("Seal",target.Position+Vector3.yAxis*C.Ability.ChestHeight,C.Ability.Small))
+            end
+        end
+        return layers,C.Ability.Life
     end
     return nil,nil
 end

@@ -87,6 +87,9 @@ function Kit.Glyph(parent: Instance,kind: string,pixels: number,color: Color3?):
     end
     return f
 end
+function Kit.AbilityGlyph(a: any): string
+    return (a and T.AbilityGlyphs and T.AbilityGlyphs[a.Id]) or (a and a.Operation and T.OperationGlyph[a.Operation.Kind]) or "Seal"
+end
 -- All ornaments are original line geometry with no input surface or external image.
 function Kit.Skin(parent: Instance,pathway: any,small: boolean?): any
     local old=parent:FindFirstChild("PathwaySkin");if old then old:Destroy() end
@@ -107,11 +110,36 @@ function Kit.Skin(parent: Instance,pathway: any,small: boolean?): any
         if pathway=="Seer" then
             Kit.New("Frame",root,{BorderSizePixel=0,BackgroundColor3=spec.Accent,BackgroundTransparency=T.Skins.OrnamentAlpha,
                 AnchorPoint=Vector2.new(0.5,0),Position=UDim2.new(0.5,0,0,T.Skins.Inset),Size=UDim2.new(0.5,0,0,T.Style.Stroke),Rotation=spec.Rotation})
+            Kit.New("Frame",root,{BorderSizePixel=0,BackgroundColor3=spec.Accent,BackgroundTransparency=T.Skins.OrnamentAlpha,
+                AnchorPoint=Vector2.new(0.5,1),Position=UDim2.new(0.5,0,1,-T.Skins.Inset),Size=UDim2.new(0.36,0,0,T.Style.Stroke),Rotation=-spec.Rotation})
+        elseif pathway=="Marauder" then
+            Kit.New("Frame",root,{BorderSizePixel=0,BackgroundColor3=spec.Accent,BackgroundTransparency=T.Skins.OrnamentAlpha,
+                AnchorPoint=Vector2.new(1,0.5),Position=UDim2.new(1,-T.Skins.Inset,0.5,0),Size=UDim2.new(0,T.Style.Stroke,0.34,0),Rotation=spec.Rotation})
         elseif pathway=="Apprentice" then
             for _,side in ipairs({0,1}) do
                 Kit.New("Frame",root,{BorderSizePixel=0,BackgroundColor3=spec.Accent,BackgroundTransparency=T.Skins.OrnamentAlpha,
                     Position=UDim2.new(side,if side==0 then T.Skins.Inset else -T.Skins.Inset,0,T.Skins.Inset),Size=UDim2.new(0,T.Style.Stroke,1,-T.Skins.Inset*2)})
             end
+            Kit.New("Frame",root,{BorderSizePixel=0,BackgroundColor3=spec.Accent,BackgroundTransparency=T.Skins.OrnamentAlpha,
+                AnchorPoint=Vector2.new(0.5,0),Position=UDim2.new(0.5,0,0,T.Skins.Inset+2),Size=UDim2.new(0.56,0,0,T.Style.Stroke)})
+        end
+    else
+        -- Large panel folio ornament: top/bottom hairlines and pathway motif accents
+        Kit.New("Frame",root,{Name="TopRule",BorderSizePixel=0,BackgroundColor3=spec.Accent,
+            BackgroundTransparency=T.Style.GoldHairlineAlpha,Position=UDim2.fromOffset(T.Skins.Inset+T.Skins.Spine+4,T.Skins.Inset),
+            Size=UDim2.new(1,-(T.Skins.Inset*2+T.Skins.Spine+8),0,T.Style.Stroke),Rotation=if pathway=="Marauder" then 0.5 else 0})
+        if pathway=="Seer" then
+            Kit.New("Frame",root,{Name="BottomRule",BorderSizePixel=0,BackgroundColor3=spec.Accent,
+                BackgroundTransparency=T.Style.GoldHairlineAlpha,Position=UDim2.new(0,T.Skins.Inset+T.Skins.Spine+4,1,-T.Skins.Inset-1),
+                Size=UDim2.new(0.65,0,0,T.Style.Stroke)})
+        elseif pathway=="Marauder" then
+            Kit.New("Frame",root,{Name="SplitRule",BorderSizePixel=0,BackgroundColor3=spec.Accent,
+                BackgroundTransparency=T.Skins.OrnamentAlpha,AnchorPoint=Vector2.new(1,1),
+                Position=UDim2.new(1,-T.Skins.Inset,1,-T.Skins.Inset),Size=UDim2.new(0.28,0,0,T.Style.Stroke),Rotation=spec.Rotation})
+        elseif pathway=="Apprentice" then
+            Kit.New("Frame",root,{Name="RightJamb",BorderSizePixel=0,BackgroundColor3=spec.Accent,
+                BackgroundTransparency=T.Skins.OrnamentAlpha,AnchorPoint=Vector2.new(1,0),
+                Position=UDim2.new(1,-T.Skins.Inset,0,T.Skins.Inset),Size=UDim2.new(0,T.Style.Stroke,1,-T.Skins.Inset*2)})
         end
     end
     return root

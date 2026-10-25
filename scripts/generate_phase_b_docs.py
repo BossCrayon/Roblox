@@ -18,14 +18,14 @@ files=[
     'src/StarterPlayer/StarterPlayerScripts/UI/Menus.lua',
     'src/StarterPlayer/StarterPlayerScripts/UI/Presentation.lua',
 ]
-files.extend(str(p.relative_to(root)) for p in sorted((root/'src/StarterPlayer/StarterPlayerScripts/Visuals').rglob('*.lua')))
+files.extend(p.relative_to(root).as_posix() for p in sorted((root/'src/StarterPlayer/StarterPlayerScripts/Visuals').rglob('*.lua')))
 manifest=[]
 for filename in dict.fromkeys(files):
     file=Path(filename)
     if file.name.endswith('.server.lua'): kind,name='Script',file.name.removesuffix('.server.lua')
     elif file.name.endswith('.client.lua'): kind,name='LocalScript',file.name.removesuffix('.client.lua')
     else: kind,name='ModuleScript',file.stem
-    manifest.append({'file':filename,'script_class':kind,'explorer_path':str(file.relative_to('src').parent/name)})
+    manifest.append({'file':filename,'script_class':kind,'explorer_path':(file.relative_to('src').parent/name).as_posix()})
 parts=['# Phase B — full copy-ready code\n',
        f'[EXISTING] These {len(manifest)} complete scripts include new modules, changed integrations and reused framework dependencies. '
        'Apply to the existing Mysteries foundation with Play stopped; replace matching scripts and create Folder parents. '

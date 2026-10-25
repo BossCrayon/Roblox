@@ -11,7 +11,7 @@ for file in files:
     if file.name.endswith('.server.lua'): kind,name='Script',file.name.removesuffix('.server.lua')
     elif file.name.endswith('.client.lua'): kind,name='LocalScript',file.name.removesuffix('.client.lua')
     else: kind,name='ModuleScript',file.stem
-    manifest.append({'file':str(file.relative_to(root)),'script_class':kind,'explorer_path':str(file.relative_to(root/'src').parent/name)})
+    manifest.append({'file':file.relative_to(root).as_posix(),'script_class':kind,'explorer_path':(file.relative_to(root/'src').parent/name).as_posix()})
 parts=['# Phases F–I — full copy-ready source\n',
        f'[EXISTING] All {len(manifest)} production scripts are supplied in full, Theme first. '
        'Create matching Folder parents, replace same-name scripts with Play stopped and do not run duplicate Bootstrap/Mysteries entrypoints. '

@@ -71,16 +71,20 @@ end
 function Menus.Render(self: any)
     if not self.Layout then return end
     self:Resize(self.Layout)
-    Kit.Skin(self.Card,self.State and self.State.PathwayId)
+    local state=self.State
+    local pathAccent=Kit.PathColor(state and state.PathwayId)
+    Kit.Skin(self.Card,state and state.PathwayId)
     local oldScroll=self.Scroll.CanvasPosition
     Kit.Clear(self.PreviewActions);Kit.Clear(self.Scroll);Kit.List(self.Scroll,T.Layout.Modal.Gap);self.Rows={}
     self.Title.Text=if self.View=="Preview" then (if self.Purchase then "POTION ALTAR" else "POTION RITUAL") else "BEYONDER "..string.upper(self.Tab)
-    self.Footer.Text=if self.View=="Preview" then "The altar seals only what you confirm." else "B · close journal"
+    self.Footer.Text=if self.View=="Preview" then "The altar seals only what you confirm." else "B · close journal   |   Select slot 1–6 to bind unlocked powers"
     for name,b in pairs(self.Tabs) do
-        b.BackgroundColor3=if name==self.Tab then T.Colors.Ink:Lerp(T.Colors.Gold,T.Style.HoverBlend) else T.Colors.Slate
-        b.TextColor3=if name==self.Tab then T.Colors.Gold else T.Colors.Text
+        local active=name==self.Tab
+        b.BackgroundColor3=if active then T.Colors.Ink:Lerp(pathAccent,T.Style.HoverBlend) else T.Colors.Slate
+        b.TextColor3=if active then pathAccent else T.Colors.Text
+        local stroke=b:FindFirstChildOfClass("UIStroke")
+        if stroke then stroke.Color=if active then pathAccent else T.Colors.Gold;stroke.Transparency=if active then T.Skins.ReadyAlpha else T.Style.BorderAlpha end
     end
-    local state=self.State
     if not state or not state.Ready then self:TextRow("Your journal is opening…");return end
     if self.View=="Preview" then
         local view=Model.Potion(self.Data,state,self.PreviewId,self.Purchase)
@@ -90,7 +94,7 @@ function Menus.Render(self: any)
             Kit.Glyph(row,"Bottle",T.Layout.Modal.Bottle,Kit.PathColor(potion.PathwayId))
             local title=Kit.Text(row,potion.Name,self.Layout.Profile.HeadingSize,T.Fonts.Heading)
             title.Position=UDim2.fromOffset(T.Layout.Modal.Bottle+T.Layout.Modal.Gap,0);title.Size=UDim2.new(1,-T.Layout.Modal.Bottle-T.Layout.Modal.Gap,1,0)
-            self:TextRow(potion.PathwayId.." · "..(if potion.TargetSequence==9 then "Uninitiated → 9" else tostring(potion.RequiredSequence).." → "..tostring(potion.TargetSequence)))
+            self:TextRow(potion.PathwayId.." · "..(if potion.TargetSequence==9 then "Uninitiated → Sequence 9" else "Sequence "..tostring(potion.RequiredSequence).." → Sequence "..tostring(potion.TargetSequence)))
             self:TextRow("Required digestion: "..potion.RequiredDigestion.."%  ·  Yours: "..string.format("%.1f%%",state.Digestion))
             self:TextRow("Owned: "..view.Owned..(if self.Purchase then "  ·  Price: "..view.Cost.." gold" else "  ·  Drinking consumes one potion"))
         end
@@ -110,10 +114,10 @@ function Menus.Render(self: any)
         self:UpdatePreview()
     elseif self.Tab=="Journal" then
         if type(state.RecordedPowerId)=="string" and (state.RecordedCharges or 0)>0 then
-            self:TextRow("Recorded: "..(T.AbilityUI.PowerNames[state.RecordedPowerId] or state.RecordedPowerId).." · "..state.RecordedCharges.." uses remaining.")
+            self:TextRow("Recorded inscription: "..(T.AbilityUI.PowerNames[state.RecordedPowerId] or state.RecordedPowerId).." · "..state.RecordedCharges.." uses remaining.")
         end
         if type(state.StolenPower)=="string" then
-            self:TextRow(T.AbilityUI.StoredPrefix..(T.AbilityUI.PowerNames[state.StolenPower] or state.StolenPower).." · use Ability Theft again to release it.")
+            self:TextRow(T.AbilityUI.StoredPrefix..(T.AbilityUI.PowerNames[state.StolenPower] or state.StolenPower).." · cast Ability Theft again to release it.")
         end
         self:TextRow((T.Skins[state.PathwayId] or T.Skins.Seer).Name.." · The acting method",true)
         if state.PathwayId then
@@ -121,25 +125,54 @@ function Menus.Render(self: any)
             self:TextRow(seq.ActingObjectives[1].Label)
             self:TextRow(string.format("Digestion %.1f%% · Acting progress %d",state.Digestion,state.ActingProgress))
         else self:TextRow("Choose one starter potion in Inventory. Its pathway becomes your permanent path.") end
-        self:TextRow("Choose a slot, then select an ability below.")
+        self:TextRow("Select a hotbar slot (1–6), then click an unlocked ability below to bind it.")
         local slots=Kit.New("ScrollingFrame",self.Scroll,{Name="SlotPicker",Size=UDim2.new(1,0,0,T.Layout.Modal.SlotHeight),CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.X,
             ScrollingDirection=Enum.ScrollingDirection.X,BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=T.Style.Stroke,ScrollBarImageColor3=T.Colors.Gold})
         Kit.List(slots,T.Layout.Modal.NavGap,true)
         for i=1,T.Layout.Hotbar.Slots do
-            local b=Kit.Button(slots,tostring(i),function() self.SelectedSlot=i;self:Render() end)
-            b.Size=UDim2.fromOffset(T.Layout.Modal.SlotHeight,T.Layout.Modal.SlotHeight);b.LayoutOrder=i
-            if self.SelectedSlot==i then b.BackgroundColor3=T.Colors.Ink:Lerp(T.Colors.Gold,T.Style.HoverBlend) end
+            local keyLabel=T.Input.KeyNames[i] or tostring(i)
+            local label=tostring(i).."·"..keyLabel
+            local b=Kit.Button(slots,label,function() self.SelectedSlot=i;self:Render() end)
+            b.Size=UDim2.fromOffset(math.max(T.Layout.Modal.SlotHeight,54),T.Layout.Modal.SlotHeight);b.LayoutOrder=i
+            local active=self.SelectedSlot==i
+            if active then
+                b.BackgroundColor3=T.Colors.Ink:Lerp(pathAccent,T.Style.HoverBlend)
+                b.TextColor3=pathAccent
+                local stroke=b:FindFirstChildOfClass("UIStroke")
+                if stroke then stroke.Color=pathAccent;stroke.Transparency=T.Skins.ReadyAlpha end
+            elseif state.Loadout and state.Loadout[i] then
+                b.TextColor3=T.Colors.Text
+            else
+                b.TextColor3=T.Colors.Muted
+            end
         end
         for _,id in ipairs(Model.Unlocked(self.Data,state)) do
             local ability=self.Data.Abilities[id]
+            local equippedSlots={}
+            for slotIdx=1,T.Layout.Hotbar.Slots do
+                if state.Loadout and state.Loadout[slotIdx]==id then
+                    table.insert(equippedSlots,T.Input.KeyNames[slotIdx] or tostring(slotIdx))
+                end
+            end
+            local isCurrentSlot=state.Loadout and state.Loadout[self.SelectedSlot]==id
             local b=self:ActionRow("",function() self.Callbacks.Intent("Equip",{Id=id,Slot=self.SelectedSlot}) end)
             b.Size=UDim2.new(1,-T.Layout.Modal.Gap,0,T.Layout.Modal.AbilityRow)
-            local glyph=Kit.Glyph(b,T.OperationGlyph[ability.Operation.Kind],T.Layout.Modal.Icon,Kit.PathColor(ability.PathwayId));glyph.Position=UDim2.fromOffset(T.Layout.Modal.Gap,T.Layout.Modal.Gap)
-            local text=Kit.Text(b,ability.Name,self.Layout.Profile.BodySize,T.Fonts.Heading)
+            if isCurrentSlot then
+                b.BackgroundColor3=T.Colors.Ink:Lerp(pathAccent,T.Style.HoverBlend)
+                local stroke=b:FindFirstChildOfClass("UIStroke")
+                if stroke then stroke.Color=pathAccent;stroke.Transparency=T.Skins.ReadyAlpha end
+            end
+            local glyph=Kit.Glyph(b,Kit.AbilityGlyph(ability),T.Layout.Modal.Icon,Kit.PathColor(ability.PathwayId))
+            glyph.Position=UDim2.fromOffset(T.Layout.Modal.Gap,(T.Layout.Modal.AbilityRow-T.Layout.Modal.Icon)/2)
             local x=T.Layout.Modal.Icon+T.Layout.Modal.Gap*2
-            text.Position=UDim2.fromOffset(x,0);text.Size=UDim2.new(1,-x-T.Layout.Modal.Gap,0,T.Layout.Modal.AbilityRow-T.Layout.Modal.Footer)
-            local info=Kit.Text(b,"Seq "..ability.UnlockSequence.." · "..ability.SpiritualityCost.." spirit · "..ability.CooldownSeconds.."s",T.Type.Micro,T.Fonts.Number)
-            info.Position=UDim2.new(0,x,1,-T.Layout.Modal.Footer);info.Size=UDim2.new(1,-x-T.Layout.Modal.Gap,0,T.Layout.Modal.Footer);info.TextColor3=T.Colors.Muted
+            local titleStr=ability.Name..(if #equippedSlots>0 then "  ·  Equipped ["..table.concat(equippedSlots,",").."]" else "")
+            local text=Kit.Text(b,titleStr,self.Layout.Profile.BodySize,T.Fonts.Heading)
+            text.Position=UDim2.fromOffset(x,4);text.Size=UDim2.new(1,-x-T.Layout.Modal.Gap,0,24)
+            if #equippedSlots>0 then text.TextColor3=pathAccent end
+            local desc=Kit.Text(b,ability.Description or "",T.Type.Micro,T.Fonts.Body)
+            desc.Position=UDim2.fromOffset(x,28);desc.Size=UDim2.new(1,-x-T.Layout.Modal.Gap,0,28);desc.TextColor3=T.Colors.Text
+            local info=Kit.Text(b,"Seq "..ability.UnlockSequence.." · "..ability.SpiritualityCost.." spirit · "..ability.CooldownSeconds.."s CD · Target: "..ability.Target,T.Type.Micro,T.Fonts.Number)
+            info.Position=UDim2.new(0,x,1,-T.Layout.Modal.Footer+4);info.Size=UDim2.new(1,-x-T.Layout.Modal.Gap,0,T.Layout.Modal.Footer-4);info.TextColor3=T.Colors.Muted
         end
         self:ActionRow("Reduced motion: "..(if self.ReducedMotion then "on" else "off"),function()
             self.ReducedMotion=not self.ReducedMotion;self.Callbacks.ReducedMotion(self.ReducedMotion);self:Render()
@@ -154,10 +187,17 @@ function Menus.Render(self: any)
             local path=self.Data.Pathways[state.PathwayId];local seq=path.Sequences[state.Sequence]
             self:TextRow(path.Name.." / "..path.Alias,true);self:TextRow("Sequence "..state.Sequence.." — "..seq.Name,true)
             self:TextRow(seq.ActingObjectives[1].Label)
+            if seq.PassiveTraits and #seq.PassiveTraits>0 then
+                self:TextRow("Sequence passives",true)
+                for _,trait in ipairs(seq.PassiveTraits) do
+                    self:TextRow(if type(trait)=="string" then trait else tostring(trait.Name).." — "..tostring(trait.Description))
+                end
+            end
+            self:TextRow("Attributes",true)
             for _,key in ipairs({"Health","Spirituality","Strength","Agility","Perception","Intuition","Resistance"}) do
                 self:TextRow(key.."   "..tostring(seq.BaseStats[key]))
             end
-            self:TextRow("Earlier abilities remain available in your journal.")
+            self:TextRow("Earlier sequence abilities remain retained in your journal.")
         else
             self:TextRow("Three paths into the unknown",true)
             for _,id in ipairs({"Seer","Marauder","Apprentice"}) do

@@ -31,7 +31,7 @@ for file in files:
     elif p.name.endswith('.server.lua'):
         kind='Script';name=p.name.removesuffix('.server.lua')
     else:kind='ModuleScript';name=p.stem
-    path=str(p.relative_to('src').parent/name)
+    path=(p.relative_to('src').parent/name).as_posix()
     manifest.append(dict(file=file,script_class=kind,explorer_path=path))
 parts=['# Phase 1 — complete copy/paste code\n',
        f'All {len(files)} production Luau files are supplied in full, including later admin-control updates. Create Folder parents, keep every existing unchanged module, and **replace** same-name scripts rather than running duplicate Bootstrap/Mysteries entrypoints. Install while Play is stopped. Theme is deliberately first. The complete built place is `studio/Mysteries.rbxlx`.\n',

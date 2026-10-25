@@ -111,7 +111,7 @@
 
 ## Cloud verification
 
-[EXISTING] 9,617 assertions passed, including 1,336 ability/status/privacy/lifecycle assertions. All 62 production/test Luau files compile, strict Roblox API/type analysis passes, and the Rojo build contains source-identical copies of all 49 ModuleScripts plus the server/client entrypoints. Late-join status sync receives fresh revisions so intervening live receipts cannot suppress still-active statuses.
+[EXISTING] 11,791 assertions passed across the full test suite, including 1,903 ability/choreography/status/privacy/lifecycle assertions in `tests/phase_b.luau`. All 68 production/test Luau files compile, strict Roblox API/type analysis passes, and the Rojo build contains source-identical copies of all 54 ModuleScripts plus the server/client entrypoints. All 54 abilities now use 36 kinematically distinct 7-joint (`Root`, `Waist`, `Neck`, `LeftShoulder`, `RightShoulder`, `LeftHip`, `RightHip`) windup-to-release choreography profiles with gesture-aligned VFX origins (`GestureOrigins`), 18 vector stencil glyphs (`Blocks.SigilStencil.Paths` + `*Low` counterparts), and server-confirmed target/endpoint/trigger recipes. Late-join status sync receives fresh revisions so intervening live receipts cannot suppress still-active statuses.
 
 [PROPOSED] Rendering, physics, real multiplayer networking, mobile frame time and real DataStore behavior still require Roblox Studio. The checks below verify appearance and engine behavior; no rendered result is claimed here.
 

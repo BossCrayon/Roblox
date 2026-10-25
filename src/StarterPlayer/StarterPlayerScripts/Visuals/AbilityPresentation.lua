@@ -31,13 +31,17 @@ function Ability.Layers(self: any,a: any,e: any): (any,number)
     local context={Layer=layer,Frame=function(position: Vector3) return self:Frame(position) end,Simplified=profile.Low or profile.Mobile}
     context=Choreography.Extend(a,e,context)
     if e.Phase=="Begin" then
-        local at=e.Position+Vector3.yAxis*C.Ability.HandHeight
-        local family=Anim.AbilityTimings[a.Id] and Anim.AbilityTimings[a.Id].Family
-        local glyph=C.Ability.WindupGlyphs[family] or (if a.PathwayId=="Seer" then C.Ability.EyeGlyph elseif a.PathwayId=="Marauder" then C.Ability.TheftGlyph else C.Ability.DoorGlyph)
-        local lowGlyph=if a.PathwayId=="Seer" then C.Ability.LowEyeGlyph elseif a.PathwayId=="Marauder" then glyph else C.Ability.LowDoorGlyph
+        local timing=Anim.AbilityTimings[a.Id]
+        local gestureHeight=Choreography.GestureHeight(a)
+        local offset=Vector3.yAxis*gestureHeight
+        local at=e.Position+offset
+        local family=timing and timing.Family
+        local glyph=(timing and timing.Stencil) or C.Ability.WindupGlyphs[family] or (if a.PathwayId=="Seer" then C.Ability.EyeGlyph elseif a.PathwayId=="Marauder" then C.Ability.TheftGlyph else C.Ability.DoorGlyph)
+        local lowKey=glyph.."Low"
+        local lowGlyph=if C.Blocks.SigilStencil.Paths[lowKey] then lowKey elseif a.PathwayId=="Seer" then C.Ability.LowEyeGlyph elseif a.PathwayId=="Marauder" then glyph else C.Ability.LowDoorGlyph
         local root=e.Character and (e.Character.PrimaryPart or e.Character:FindFirstChild("HumanoidRootPart"))
         return {layer("SigilStencil",at,{Frame=self:Frame(at),Glyph=glyph,LowGlyph=lowGlyph,Scale=C.Ability.WindupScale,
-            Follow=root,Offset=Vector3.yAxis*C.Ability.HandHeight})},
+            Follow=root,Offset=offset})},
             math.max(C.Composition.CancelFade,e.EndsAt-self.Callbacks.Clock())
     end
     local layers,duration=Families[a.PathwayId].Build(a,e,context)

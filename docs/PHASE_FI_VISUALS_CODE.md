@@ -221,6 +221,34 @@ return freeze({
         Book={{{0.5,0.25},{0.15,0.15},{0.15,0.8},{0.5,0.9},{0.85,0.8},{0.85,0.15},{0.5,0.25},{0.5,0.9}}},
         Bottle={{{0.39,0.10},{0.61,0.10},{0.61,0.32},{0.79,0.5},{0.79,0.86},{0.21,0.86},{0.21,0.5},{0.39,0.32},{0.39,0.10}},{{0.23,0.6},{0.77,0.6}}},
         Seal={{{0.5,0.12},{0.88,0.5},{0.5,0.88},{0.12,0.5},{0.5,0.12}}},
+        Card={{{0.26,0.12},{0.74,0.12},{0.74,0.88},{0.26,0.88},{0.26,0.12}},{{0.5,0.32},{0.64,0.5},{0.5,0.68},{0.36,0.5},{0.5,0.32}}},
+        Flame={{{0.5,0.10},{0.74,0.44},{0.68,0.78},{0.5,0.90},{0.32,0.78},{0.26,0.44},{0.5,0.10}},{{0.5,0.38},{0.58,0.64},{0.5,0.80},{0.42,0.64},{0.5,0.38}}},
+        Mask={{{0.20,0.24},{0.5,0.14},{0.80,0.24},{0.74,0.68},{0.5,0.88},{0.26,0.68},{0.20,0.24}},{{0.30,0.44},{0.44,0.44}},{{0.56,0.44},{0.70,0.44}}},
+        Scale={{{0.5,0.14},{0.5,0.86}},{{0.18,0.34},{0.82,0.34}},{{0.18,0.34},{0.12,0.62},{0.28,0.62},{0.18,0.34}},{{0.82,0.34},{0.72,0.62},{0.88,0.62},{0.82,0.34}}},
+        Crown={{{0.16,0.76},{0.16,0.34},{0.38,0.54},{0.5,0.20},{0.62,0.54},{0.84,0.34},{0.84,0.76},{0.16,0.76}}},
+        Hourglass={{{0.24,0.14},{0.76,0.14},{0.24,0.86},{0.76,0.86},{0.24,0.14}},{{0.36,0.5},{0.64,0.5}}},
+        Arch={{{0.18,0.90},{0.18,0.36},{0.5,0.12},{0.82,0.36},{0.82,0.90}},{{0.34,0.90},{0.34,0.46},{0.5,0.28},{0.66,0.46},{0.66,0.90}}},
+        Circle={{{0.5,0.12},{0.78,0.24},{0.88,0.5},{0.78,0.76},{0.5,0.88},{0.22,0.76},{0.12,0.5},{0.22,0.24},{0.5,0.12}}},
+        Key={{{0.4,0.12},{0.6,0.12},{0.7,0.25},{0.6,0.4},{0.4,0.4},{0.3,0.25},{0.4,0.12}},{{0.5,0.4},{0.5,0.9},{0.7,0.9}},{{0.5,0.72},{0.65,0.72}}},
+        Clock={{{0.5,0.08},{0.5,0.2}},{{0.9,0.5},{0.78,0.5}},{{0.5,0.92},{0.5,0.8}},{{0.1,0.5},{0.22,0.5}},{{0.5,0.5},{0.5,0.3}},{{0.5,0.5},{0.68,0.6}}},
+        Cut={{{0.25,0.85},{0.7,0.15}},{{0.4,0.85},{0.85,0.15}}},
+    },
+    AbilityGlyphs={
+        Seer_9="Card",Seer_9_Secondary="Eye",Seer_8="Circle",Seer_8_Secondary="Scale",
+        Seer_7="Flame",Seer_7_Secondary="Card",Seer_6="Mask",Seer_6_Secondary="Circle",
+        Seer_5="Thread",Seer_5_Secondary="Thread",Seer_4="Thread",Seer_4_Secondary="Mask",
+        Seer_3="Hourglass",Seer_3_Secondary="Hourglass",Seer_2="Star",Seer_2_Secondary="Star",
+        Seer_1="Thread",Seer_1_Secondary="Crown",
+        Marauder_9="Split",Marauder_9_Secondary="Split",Marauder_8="Split",Marauder_8_Secondary="Cut",
+        Marauder_7="Book",Marauder_7_Secondary="Split",Marauder_6="Split",Marauder_6_Secondary="Cut",
+        Marauder_5="Split",Marauder_5_Secondary="Cut",Marauder_4="Thread",Marauder_4_Secondary="Split",
+        Marauder_3="Mask",Marauder_3_Secondary="Crown",Marauder_2="Cut",Marauder_2_Secondary="Star",
+        Marauder_1="Clock",Marauder_1_Secondary="Clock",
+        Apprentice_9="Key",Apprentice_9_Secondary="Key",Apprentice_8="Star",Apprentice_8_Secondary="Circle",
+        Apprentice_7="Star",Apprentice_7_Secondary="Arch",Apprentice_6="Book",Apprentice_6_Secondary="Book",
+        Apprentice_5="Door",Apprentice_5_Secondary="Key",Apprentice_4="Door",Apprentice_4_Secondary="Seal",
+        Apprentice_3="Arch",Apprentice_3_Secondary="Door",Apprentice_2="Book",Apprentice_2_Secondary="Arch",
+        Apprentice_1="Key",Apprentice_1_Secondary="Seal",
     },
     OperationGlyph={Sense="Eye",SenseDoors="Door",Cipher="Split",Theft="Split",StealPower="Split",Siphon="Split",
         Parasite="Split",Infiltrate="Split",Control="Thread",Command="Thread",Graft="Thread",Exchange="Thread",
@@ -305,18 +333,32 @@ local function still(entry: any,_time: number,_speed: number): Pose
 end
 local function breathe(entry: any,time: number,_speed: number): Pose
     local wave=math.sin(time*math.pi*2/entry.Period)
-    return {Root=frame(wave*entry.Rise,0,0,0),Neck=frame(0,wave*entry.Nod,0,0)}
+    return {Root=frame(wave*entry.Rise,0,0,0),Waist=frame(0,wave*0.35,0,0),Neck=frame(0,wave*entry.Nod,0,0)}
 end
 local function locomotion(entry: any,time: number,speed: number): Pose
     local wave=math.sin(time*math.pi*2/entry.Period)
-    return {Root=frame(0,entry.Lean*speed,0,wave*entry.Sway*speed),Neck=frame(0,-entry.Lean*entry.CounterLean*speed,0,0)}
+    return {Root=frame(0,entry.Lean*speed,0,wave*entry.Sway*speed),
+        Waist=frame(0,entry.Lean*0.35*speed,-wave*entry.Sway*0.6*speed,0),
+        Neck=frame(0,-entry.Lean*entry.CounterLean*speed,0,0)}
 end
 local function roll(entry: any,time: number,_speed: number): Pose
     local progress=math.clamp(time/entry.Duration,0,1)
     -- A compact torso tuck, rather than a root-part rotation or a movement grant.
     local arc=math.sin(progress*math.pi)
     return {Root=frame(-entry.Tuck*arc,entry.Pitch*arc,0,entry.Roll*arc),
+        Waist=frame(0,entry.Pitch*0.3*arc,0,entry.Roll*0.25*arc),
         LeftShoulder=frame(0,entry.ArmPitch*arc,0,0),RightShoulder=frame(0,entry.ArmPitch*arc,0,0)}
+end
+local function pose7(root,waist,neck,leftArm,rightArm,leftHip,rightHip)
+    return {
+        Root=root,
+        Waist=waist or {0,0,0,0},
+        Neck=neck or {0,0,0,0},
+        LeftShoulder=leftArm,
+        RightShoulder=rightArm,
+        LeftHip=leftHip or {0,0,0,0},
+        RightHip=rightHip or {0,0,0,0},
+    }
 end
 local config={
     Spring={Frequency=8,MaxStep=0.1},
@@ -324,19 +366,33 @@ local config={
     Locomotion={MinSpeed=0.1,RunSpeed=18,SpeedReference=16,MaxSpeedRatio=1.5,LandingVelocity=-3},
     Safety={MaxPause=0.08,MaxFrameDelta=0.1,AssetLoadGrace=1.5,MaxAssetSpeed=2,MinAssetSpeed=0.1},
     CastProfiles={
-        Potion={CastRelease={AnimationId="",Duration=T.Ritual.DrinkTime,Pose={Root={0,-3,0,0},Neck={0,-10,0,0},RightShoulder={0,-112,0,12},LeftShoulder={0,-16,0,-8}}}},
-        Pickpocket={CastWindup={AnimationId="",Pose={Root={0,4,9,-3},RightShoulder={0,-48,-8,12}}},
-            CastRelease={AnimationId="",Duration=0.16,Pose={Root={0,-2,-6,0},RightShoulder={0,-24,-16,6}}}},
-        Travel={CastWindup={AnimationId="",Pose={Root={0,0,0,0},LeftShoulder={0,-52,-8,-16},RightShoulder={0,-52,8,16}}},
-            CastRelease={AnimationId="",Duration=0.20,Pose={Root={0,2,0,0},LeftShoulder={0,-65,-8,-26},RightShoulder={0,-65,8,26}}}},
-        Reading={CastWindup={AnimationId="",Pose={Root={0,0,0,0},Neck={0,-3,0,0},LeftShoulder={0,-20,0,-12},RightShoulder={0,-72,0,14}}},
-            CastRelease={AnimationId="",Duration=0.18,Pose={Neck={0,-2,0,0},RightShoulder={0,-55,0,20}}}},
-        Flame={CastWindup={AnimationId="",Pose={Root={0,-4,-12,0},LeftShoulder={0,-22,0,-8},RightShoulder={0,-40,10,20}}},
-            CastRelease={AnimationId="",Duration=0.18,Pose={Root={0,5,9,0},RightShoulder={0,-68,0,30}}}},
-        Theft={CastWindup={AnimationId="",Pose={Root={0,4,9,-3},Neck={0,0,-5,0},RightShoulder={0,-48,-8,12}}},
-            CastRelease={AnimationId="",Duration=0.22,Pose={Root={0,-2,-6,0},RightShoulder={0,-24,-16,6},LeftShoulder={0,-8,0,-4}}}},
-        Threshold={CastWindup={AnimationId="",Pose={Root={0,0,0,0},LeftShoulder={0,-52,-8,-16},RightShoulder={0,-52,8,16}}},
-            CastRelease={AnimationId="",Duration=0.25,Pose={Root={0,2,0,0},LeftShoulder={0,-65,-8,-26},RightShoulder={0,-65,8,26}}}},
+        Potion={CastRelease={AnimationId="",Duration=T.Ritual.DrinkTime,Pose=pose7(
+            {0,-3,0,0},{0,-2,0,0},{0,-10,0,0},{0,-16,0,-8},{0,-112,0,12},{0,-2,0,0},{0,2,0,0}
+        )}},
+        Pickpocket={
+            CastWindup={AnimationId="",Pose=pose7({0,4,9,-3},{0,3,6,-2},{0,-2,-6,0},{0,-14,4,-8},{0,-48,-8,12},{0,-8,0,0},{0,8,0,0})},
+            CastRelease={AnimationId="",Duration=0.16,Pose=pose7({0,-2,-6,0},{0,-2,-4,0},{0,2,4,0},{0,-10,0,-6},{0,-24,-16,6},{0,4,0,0},{0,-4,0,0})},
+        },
+        Travel={
+            CastWindup={AnimationId="",Pose=pose7({0,0,0,0},{0,2,0,0},{0,-2,0,0},{0,-52,-8,-16},{0,-52,8,16},{0,-6,0,0},{0,6,0,0})},
+            CastRelease={AnimationId="",Duration=0.20,Pose=pose7({0,2,0,0},{0,-3,0,0},{0,3,0,0},{0,-65,-8,-26},{0,-65,8,26},{0,8,0,0},{0,-8,0,0})},
+        },
+        Reading={
+            CastWindup={AnimationId="",Pose=pose7({0,0,0,0},{0,-2,-3,0},{0,-3,0,0},{0,-20,0,-12},{0,-72,0,14},{0,-3,0,0},{0,3,0,0})},
+            CastRelease={AnimationId="",Duration=0.18,Pose=pose7({0,1,3,0},{0,2,3,0},{0,-2,0,0},{0,-26,-6,-14},{0,-55,0,20},{0,3,0,0},{0,-3,0,0})},
+        },
+        Flame={
+            CastWindup={AnimationId="",Pose=pose7({0,-4,-12,0},{0,4,-8,0},{0,-3,8,0},{0,-22,0,-8},{0,-40,10,20},{0,-8,0,0},{0,8,0,0})},
+            CastRelease={AnimationId="",Duration=0.18,Pose=pose7({0,5,9,0},{0,-4,8,0},{0,5,-6,0},{0,-34,-8,-16},{0,-68,0,30},{0,6,0,0},{0,-6,0,0})},
+        },
+        Theft={
+            CastWindup={AnimationId="",Pose=pose7({0,4,9,-3},{0,4,8,-2},{0,0,-5,0},{0,-18,6,-10},{0,-48,-8,12},{0,-10,0,0},{0,10,0,0})},
+            CastRelease={AnimationId="",Duration=0.22,Pose=pose7({0,-2,-6,0},{0,-3,-6,0},{0,3,5,0},{0,-8,0,-4},{0,-24,-16,6},{0,6,0,0},{0,-6,0,0})},
+        },
+        Threshold={
+            CastWindup={AnimationId="",Pose=pose7({0,0,0,0},{0,2,0,0},{0,-2,0,0},{0,-52,-8,-16},{0,-52,8,16},{0,-4,0,0},{0,4,0,0})},
+            CastRelease={AnimationId="",Duration=0.25,Pose=pose7({0,2,0,0},{0,-2,0,0},{0,2,0,0},{0,-65,-8,-26},{0,-65,8,26},{0,4,0,0},{0,-4,0,0})},
+        },
     },
     MotorRoles={RootJoint="Root",Root="Root",Waist="Waist",Neck="Neck",["Left Shoulder"]="LeftShoulder",
         ["Right Shoulder"]="RightShoulder",LeftShoulder="LeftShoulder",RightShoulder="RightShoulder",
@@ -352,66 +408,309 @@ local config={
         Run={AnimationId="",Procedural=locomotion,Priority=2,AssetPriority=Enum.AnimationPriority.Movement,Loop=true,
             Duration=0.48,FadeIn=0.16,FadeOut=0.16,Period=0.48,Lean=7,Sway=1.2,CounterLean=0.5},
         Jump={AnimationId="",Procedural=still,Priority=3,AssetPriority=Enum.AnimationPriority.Action,Loop=false,
-            Duration=0.3,FadeIn=0.06,FadeOut=0.12,Pose={Root={0.04,-6,0,0},Neck={0,4,0,0},LeftShoulder={0,-12,0,-5},RightShoulder={0,-12,0,5}}},
+            Duration=0.3,FadeIn=0.06,FadeOut=0.12,Pose=pose7({0.04,-6,0,0},{0,-3,0,0},{0,4,0,0},{0,-12,0,-5},{0,-12,0,5},{0,-10,0,0},{0,6,0,0})},
         Land={AnimationId="",Procedural=still,Priority=3,AssetPriority=Enum.AnimationPriority.Action,Loop=false,
-            Duration=0.22,FadeIn=0.045,FadeOut=0.14,Pose={Root={-0.14,9,0,0},Neck={0,-5,0,0},LeftShoulder={0,10,0,-7},RightShoulder={0,10,0,7}}},
+            Duration=0.22,FadeIn=0.045,FadeOut=0.14,Pose=pose7({-0.14,9,0,0},{0,5,0,0},{0,-5,0,0},{0,10,0,-7},{0,10,0,7},{0,12,0,0},{0,-12,0,0})},
         CastWindup={AnimationId="",Procedural=still,Priority=4,AssetPriority=Enum.AnimationPriority.Action2,Loop=true,
-            Duration=0.38,FadeIn=0.12,FadeOut=0.08,Pose={Root={0,-4,-7,0},Waist={0,0,-4,0},Neck={0,2,7,0},LeftShoulder={0,-28,-12,-18},RightShoulder={0,-45,8,18}}},
+            Duration=0.38,FadeIn=0.12,FadeOut=0.08,Pose=pose7({0,-4,-7,0},{0,0,-4,0},{0,2,7,0},{0,-28,-12,-18},{0,-45,8,18},{0,-4,0,0},{0,4,0,0})},
         CastRelease={AnimationId="",Procedural=still,Priority=5,AssetPriority=Enum.AnimationPriority.Action3,Loop=false,
-            Duration=0.3,FadeIn=0.05,FadeOut=0.17,Pose={Root={0,6,6,0},Waist={0,0,4,0},Neck={0,-3,-6,0},LeftShoulder={0,-48,-12,-14},RightShoulder={0,-72,12,14}}},
+            Duration=0.3,FadeIn=0.05,FadeOut=0.17,Pose=pose7({0,6,6,0},{0,0,4,0},{0,-3,-6,0},{0,-48,-12,-14},{0,-72,12,14},{0,5,0,0},{0,-5,0,0})},
         HitReact={AnimationId="",Procedural=still,Priority=6,AssetPriority=Enum.AnimationPriority.Action3,Loop=false,
-            Duration=0.24,FadeIn=0.04,FadeOut=0.15,Pose={Root={0,-9,0,-4},Neck={0,5,0,3},LeftShoulder={0,-9,0,-5},RightShoulder={0,-9,0,5}}},
+            Duration=0.24,FadeIn=0.04,FadeOut=0.15,Pose=pose7({0,-9,0,-4},{0,-5,0,-2},{0,5,0,3},{0,-9,0,-5},{0,-9,0,5},{0,4,0,0},{0,-4,0,0})},
         Dodge={AnimationId="",Procedural=roll,Priority=6,AssetPriority=Enum.AnimationPriority.Action3,Loop=false,
             Duration=0.36,FadeIn=0.05,FadeOut=0.09,Tuck=0.15,Pitch=18,Roll=16,ArmPitch=-22},
         Roll={AnimationId="",Procedural=roll,Priority=6,AssetPriority=Enum.AnimationPriority.Action3,Loop=false,
             Duration=0.48,FadeIn=0.05,FadeOut=0.12,Tuck=0.24,Pitch=62,Roll=0,ArmPitch=-50},
         Death={AnimationId="",Procedural=still,Priority=8,AssetPriority=Enum.AnimationPriority.Action4,Loop=true,
-            Duration=0.8,FadeIn=0.4,FadeOut=0.25,Pose={Root={-0.24,28,0,16},Neck={0,18,0,0},LeftShoulder={0,12,0,-12},RightShoulder={0,12,0,12}}},
+            Duration=0.8,FadeIn=0.4,FadeOut=0.25,Pose=pose7({-0.24,28,0,16},{0,12,0,8},{0,18,0,0},{0,12,0,-12},{0,12,0,12},{0,14,0,0},{0,-10,0,0})},
         Victory={AnimationId="",Procedural=still,Priority=7,AssetPriority=Enum.AnimationPriority.Action4,Loop=false,
-            Duration=1.4,FadeIn=0.25,FadeOut=0.3,Pose={Root={0.03,-3,0,0},Neck={0,-4,0,0},LeftShoulder={0,-100,0,-24},RightShoulder={0,-100,0,24}}},
+            Duration=1.4,FadeIn=0.25,FadeOut=0.3,Pose=pose7({0.03,-3,0,0},{0,-3,0,0},{0,-4,0,0},{0,-100,0,-24},{0,-100,0,24},{0,-3,0,0},{0,3,0,0})},
     },
 }
--- The twelve animation states remain intact. Ability profiles select original
--- joint poses and optional asset slots without changing authoritative cast time.
-local poses={
-    Divination={{0,0,0,0},{0,-25,0,-14},{0,-25,0,14}},
-    Acrobat={{-0.08,10,-10,-5},{0,-18,0,-12},{0,-30,0,20}},
-    Composure={{0,-2,0,0},{0,-10,0,-6},{0,-10,0,6}},
-    Paper={{0,2,0,0},{0,-42,-10,-12},{0,-42,10,12}},
-    Veil={{0,0,-5,0},{0,-14,0,-8},{0,-75,10,12}},
-    Voice={{0,0,5,0},{0,-10,0,-6},{0,-54,0,8}},
-    Puppet={{0,-3,-4,0},{0,-58,-8,-24},{0,-58,8,24}},
-    Exchange={{0,-2,10,0},{0,-44,-20,-25},{0,-62,20,25}},
-    Illusion={{0,-3,-8,0},{0,-65,0,-30},{0,-38,10,18}},
-    History={{0,-5,0,0},{0,-52,-16,-26},{0,-52,16,26}},
-    Recovery={{0,-4,0,0},{0,-40,-14,-10},{0,-40,14,10}},
-    Miracle={{0,-5,0,0},{0,-55,-15,-28},{0,-55,15,28}},
-    Graft={{0,0,8,0},{0,-66,-15,-22},{0,-34,15,22}},
-    Domain={{0,-4,0,0},{0,-72,-12,-32},{0,-72,12,32}},
-    Stealth={{-0.04,6,8,-3},{0,-10,0,-5},{0,-18,0,8}},
-    Deceit={{0,0,-9,0},{0,-20,-12,-8},{0,-48,18,22}},
-    Decipher={{0,4,0,0},{0,-48,-8,-12},{0,-48,8,12}},
-    Thought={{0,-2,7,0},{0,-18,0,-8},{0,-67,-12,10}},
-    Parasite={{0,5,5,0},{0,-22,0,-8},{0,-58,12,10}},
-    Destiny={{0,-2,-12,0},{0,-25,-10,-8},{0,-68,20,20}},
-    Time={{0,-2,0,0},{0,-35,-15,-10},{0,-70,15,16}},
-    Trick={{0,3,-8,0},{0,-18,-10,-8},{0,-48,12,20}},
-    Astrology={{0,-6,0,0},{0,-50,-14,-18},{0,-50,14,18}},
-    Record={{0,0,7,0},{0,-58,-8,-14},{0,-44,12,14}},
-    Release={{0,3,0,0},{0,-40,-8,-18},{0,-74,8,20}},
-    Conceal={{0,-3,0,0},{0,-48,-16,-10},{0,-48,16,10}},
-    Seal={{0,2,0,0},{0,-62,-16,-32},{0,-62,16,32}},
-    Replica={{0,-3,0,0},{0,-64,-8,-20},{0,-64,8,20}},
-    Gate={{0,-4,0,0},{0,-72,-15,-30},{0,-72,15,30}},
-    Closure={{0,4,0,0},{0,-60,16,-12},{0,-60,-16,12}},
+-- Distinct Windup (anticipation) and Release (projection/follow-through) poses across all 7 motor roles,
+-- plus gesture origin offsets (right, up, forward) and windup stencil glyphs.
+local choreography: {[string]: {W: any,R: any,Origin: {number},Stencil: string}}={
+    -- Seer / Fool
+    Divination={
+        W=pose7({0,2,-4,0},{0,2,-4,0},{0,-8,3,0},{0,-46,14,-10},{0,-64,-14,18},{0,-4,0,0},{0,4,0,0}),
+        R=pose7({0,-2,6,0},{0,-2,6,0},{0,3,-6,0},{0,-36,-8,-14},{0,-82,18,28},{0,4,0,0},{0,-4,0,0}),
+        Origin={0.35,0.55,-1.15},Stencil="Card",
+    },
+    Reading={
+        W=pose7({0,0,0,0},{0,-2,-3,0},{0,-3,0,0},{0,-20,0,-12},{0,-72,0,14},{0,-3,0,0},{0,3,0,0}),
+        R=pose7({0,1,3,0},{0,2,3,0},{0,-2,0,0},{0,-26,-6,-14},{0,-55,0,20},{0,3,0,0},{0,-3,0,0}),
+        Origin={0.15,1.35,-0.75},Stencil="Eye",
+    },
+    Acrobat={
+        W=pose7({-0.12,14,-14,-6},{0,8,-8,0},{0,-6,10,0},{0,24,-10,-18},{0,-36,12,22},{0,-18,0,-4},{0,14,0,4}),
+        R=pose7({0.06,-8,12,4},{0,-6,10,0},{0,4,-8,0},{0,-68,-14,-28},{0,-44,14,20},{0,14,0,4},{0,-14,0,-4}),
+        Origin={0,-0.85,-0.65},Stencil="Circle",
+    },
+    Composure={
+        W=pose7({-0.03,4,0,0},{0,3,0,0},{0,-6,0,0},{0,-34,14,-8},{0,-34,-14,8},{0,-4,0,0},{0,4,0,0}),
+        R=pose7({0.02,-3,0,0},{0,-2,0,0},{0,2,0,0},{0,-24,18,-6},{0,-24,-18,6},{0,2,0,0},{0,-2,0,0}),
+        Origin={0,0.35,-0.65},Stencil="Scale",
+    },
+    Flame={
+        W=pose7({0,-4,-12,0},{0,4,-8,0},{0,-3,8,0},{0,-22,0,-8},{0,-40,10,20},{0,-8,0,0},{0,8,0,0}),
+        R=pose7({0,5,9,0},{0,-4,8,0},{0,5,-6,0},{0,-34,-8,-16},{0,-68,0,30},{0,6,0,0},{0,-6,0,0}),
+        Origin={0.45,0.25,-0.95},Stencil="Flame",
+    },
+    Paper={
+        W=pose7({0,3,0,0},{0,4,0,0},{0,-7,0,0},{0,-52,22,-10},{0,-52,-22,10},{0,-4,0,0},{0,4,0,0}),
+        R=pose7({0,-2,6,0},{0,-3,6,0},{0,2,-4,0},{0,-36,-12,-18},{0,-74,16,24},{0,4,0,0},{0,-4,0,0}),
+        Origin={0,0.45,-1.05},Stencil="Card",
+    },
+    Veil={
+        W=pose7({0,2,-8,0},{0,2,-6,0},{0,-5,6,0},{0,-20,6,-10},{0,-84,-24,14},{0,-4,0,0},{0,4,0,0}),
+        R=pose7({0,-2,6,0},{0,-2,6,0},{0,3,-4,0},{0,-28,-8,-14},{0,-58,22,26},{0,4,0,0},{0,-4,0,0}),
+        Origin={0.1,1.25,-0.7},Stencil="Mask",
+    },
+    Voice={
+        W=pose7({0,2,4,0},{0,2,3,0},{0,-4,-4,0},{0,-16,0,-8},{0,-68,-20,10},{0,-3,0,0},{0,3,0,0}),
+        R=pose7({0,-3,-4,0},{0,-3,0,0},{0,6,0,0},{0,-24,-6,-12},{0,-52,14,20},{0,3,0,0},{0,-3,0,0}),
+        Origin={0.1,0.95,-0.65},Stencil="Circle",
+    },
+    Puppet={
+        W=pose7({0,-3,-6,0},{0,-2,-4,0},{0,3,4,0},{0,-66,-10,-24},{0,-66,10,24},{0,-5,0,0},{0,5,0,0}),
+        R=pose7({0,4,4,0},{0,3,4,0},{0,-4,-3,0},{0,-44,12,-14},{0,-48,-12,14},{0,5,0,0},{0,-5,0,0}),
+        Origin={0,0.85,-1.25},Stencil="Thread",
+    },
+    Command={
+        W=pose7({0,-2,-10,0},{0,0,-8,0},{0,2,8,0},{0,-84,-8,-20},{0,-32,18,16},{0,-6,0,0},{0,6,0,0}),
+        R=pose7({0,5,12,0},{0,4,10,0},{0,-2,-8,0},{0,-76,-12,-24},{0,-88,-6,12},{0,8,0,0},{0,-8,0,0}),
+        Origin={0.45,0.75,-1.35},Stencil="Thread",
+    },
+    Exchange={
+        W=pose7({-0.04,4,-10,0},{0,4,-8,0},{0,-4,8,0},{0,-58,28,-12},{0,-58,-28,12},{0,-8,0,0},{0,8,0,0}),
+        R=pose7({0.04,-4,12,0},{0,-4,10,0},{0,3,-8,0},{0,-72,-26,-32},{0,-72,26,32},{0,8,0,0},{0,-8,0,0}),
+        Origin={0,0.65,-1.1},Stencil="Thread",
+    },
+    Illusion={
+        W=pose7({-0.05,8,-12,-4},{0,6,-8,-4},{0,-6,10,4},{0,-74,-12,-32},{0,-36,18,14},{0,-10,0,0},{0,10,0,0}),
+        R=pose7({0.03,-6,8,4},{0,-5,6,4},{0,5,-6,-3},{0,-82,-20,-38},{0,-82,20,38},{0,6,0,0},{0,-6,0,0}),
+        Origin={0,0.9,-1.15},Stencil="Mask",
+    },
+    History={
+        W=pose7({-0.04,7,0,0},{0,6,0,0},{0,-6,0,0},{0,-68,16,-12},{0,-68,-16,12},{0,-8,0,0},{0,8,0,0}),
+        R=pose7({0.04,-6,0,0},{0,-5,0,0},{0,4,0,0},{0,-54,-18,-28},{0,-54,18,28},{0,6,0,0},{0,-6,0,0}),
+        Origin={0,0.55,-1.35},Stencil="Hourglass",
+    },
+    Recovery={
+        W=pose7({-0.03,5,-6,0},{0,4,-4,0},{0,-8,4,0},{0,-48,20,-10},{0,-48,-20,10},{0,-5,0,0},{0,5,0,0}),
+        R=pose7({0.03,-5,0,0},{0,-4,0,0},{0,6,0,0},{0,-38,-16,-22},{0,-38,16,22},{0,4,0,0},{0,-4,0,0}),
+        Origin={0,0.45,-0.75},Stencil="Hourglass",
+    },
+    Miracle={
+        W=pose7({0,-4,-6,0},{0,-4,-4,0},{0,10,4,0},{0,-32,-8,-14},{0,-96,8,22},{0,-5,0,0},{0,5,0,0}),
+        R=pose7({0,3,4,0},{0,2,4,0},{0,-2,-2,0},{0,-48,-12,-20},{0,-62,12,26},{0,5,0,0},{0,-5,0,0}),
+        Origin={0.25,1.55,-0.85},Stencil="Star",
+    },
+    MiracleMend={
+        W=pose7({0,-3,0,0},{0,-2,0,0},{0,-5,0,0},{0,-64,18,-14},{0,-64,-18,14},{0,-4,0,0},{0,4,0,0}),
+        R=pose7({0.03,-5,0,0},{0,-4,0,0},{0,7,0,0},{0,-56,-16,-28},{0,-56,16,28},{0,4,0,0},{0,-4,0,0}),
+        Origin={0,0.85,-0.95},Stencil="Star",
+    },
+    Graft={
+        W=pose7({0,-2,-10,0},{0,0,-8,0},{0,2,6,0},{0,-72,-24,-22},{0,-72,24,22},{0,-6,0,0},{0,6,0,0}),
+        R=pose7({0,4,8,0},{0,3,6,0},{0,-3,0,0},{0,-66,18,-8},{0,-66,-18,8},{0,6,0,0},{0,-6,0,0}),
+        Origin={0,0.75,-1.25},Stencil="Thread",
+    },
+    Domain={
+        W=pose7({0.02,-6,0,0},{0,-5,0,0},{0,8,0,0},{0,-92,-14,-28},{0,-92,14,28},{0,-6,0,0},{0,6,0,0}),
+        R=pose7({-0.02,4,0,0},{0,3,0,0},{0,-3,0,0},{0,-58,-18,-36},{0,-58,18,36},{0,5,0,0},{0,-5,0,0}),
+        Origin={0,1.45,-0.95},Stencil="Crown",
+    },
+    -- Marauder / Error
+    Pickpocket={
+        W=pose7({0,4,9,-3},{0,3,6,-2},{0,-2,-6,0},{0,-14,4,-8},{0,-48,-8,12},{0,-8,0,0},{0,8,0,0}),
+        R=pose7({0,-2,-6,0},{0,-2,-4,0},{0,2,4,0},{0,-10,0,-6},{0,-24,-16,6},{0,4,0,0},{0,-4,0,0}),
+        Origin={0.45,0.25,-1.25},Stencil="Split",
+    },
+    Stealth={
+        W=pose7({-0.08,10,10,-4},{0,6,8,-3},{0,-6,-8,0},{0,-44,18,-10},{0,-52,-20,12},{0,-12,0,0},{0,10,0,0}),
+        R=pose7({-0.05,6,-6,2},{0,4,-4,0},{0,-3,6,0},{0,-22,6,-8},{0,-28,-8,10},{0,-6,0,0},{0,6,0,0}),
+        Origin={0,0.15,-0.65},Stencil="Split",
+    },
+    Deceit={
+        W=pose7({0,5,-10,-3},{0,4,-8,-2},{0,-4,8,3},{0,-18,-8,-10},{0,-76,-14,18},{0,-6,0,0},{0,6,0,0}),
+        R=pose7({0,-3,10,2},{0,-2,8,2},{0,2,-8,-2},{0,-26,-12,-14},{0,-54,22,26},{0,6,0,0},{0,-6,0,0}),
+        Origin={0.35,1.15,-0.85},Stencil="Split",
+    },
+    Misdirection={
+        W=pose7({-0.03,4,14,4},{0,4,12,4},{0,-2,-12,0},{0,-64,-18,-26},{0,-22,10,8},{0,-8,0,0},{0,8,0,0}),
+        R=pose7({0.02,-3,-14,-4},{0,-3,-12,-4},{0,3,10,0},{0,-24,8,-10},{0,-72,20,28},{0,8,0,0},{0,-8,0,0}),
+        Origin={-0.45,0.65,-1.1},Stencil="Cut",
+    },
+    Decipher={
+        W=pose7({0,3,-4,0},{0,2,-4,0},{0,-5,4,2},{0,-52,12,-12},{0,-82,-18,14},{0,-4,0,0},{0,4,0,0}),
+        R=pose7({0,-2,4,0},{0,-2,4,0},{0,2,-4,0},{0,-44,8,-10},{0,-58,10,20},{0,4,0,0},{0,-4,0,0}),
+        Origin={0.2,1.3,-0.8},Stencil="Book",
+    },
+    Interpret={
+        W=pose7({0,2,0,0},{0,2,0,0},{0,-3,0,0},{0,-64,16,-14},{0,-64,-16,14},{0,-4,0,0},{0,4,0,0}),
+        R=pose7({0,-2,0,0},{0,-2,0,0},{0,3,0,0},{0,-56,-18,-24},{0,-56,18,24},{0,4,0,0},{0,-4,0,0}),
+        Origin={0,1.1,-1.05},Stencil="Split",
+    },
+    Theft={
+        W=pose7({0,4,9,-3},{0,4,8,-2},{0,0,-5,0},{0,-18,6,-10},{0,-48,-8,12},{0,-10,0,0},{0,10,0,0}),
+        R=pose7({0,-2,-6,0},{0,-3,-6,0},{0,3,5,0},{0,-8,0,-4},{0,-24,-16,6},{0,6,0,0},{0,-6,0,0}),
+        Origin={0.5,0.55,-1.35},Stencil="Split",
+    },
+    EnergyTheft={
+        W=pose7({-0.03,6,6,0},{0,5,6,0},{0,-3,-4,0},{0,-54,10,-14},{0,-64,-10,16},{0,-8,0,0},{0,8,0,0}),
+        R=pose7({0.03,-4,-4,0},{0,-4,-4,0},{0,4,4,0},{0,-32,22,-8},{0,-36,-22,8},{0,6,0,0},{0,-6,0,0}),
+        Origin={0.25,0.45,-1.2},Stencil="Cut",
+    },
+    Thought={
+        W=pose7({0,-2,8,0},{0,-2,6,0},{0,2,-6,0},{0,-68,-8,-16},{0,-84,-16,12},{0,-5,0,0},{0,5,0,0}),
+        R=pose7({0,3,-6,0},{0,2,-6,0},{0,-3,6,0},{0,-36,16,-10},{0,-76,12,20},{0,5,0,0},{0,-5,0,0}),
+        Origin={0.2,1.35,-0.95},Stencil="Split",
+    },
+    Dream={
+        W=pose7({-0.02,4,-8,-4},{0,3,-6,-3},{0,-6,6,6},{0,-28,-8,-12},{0,-72,14,22},{0,-6,0,0},{0,6,0,0}),
+        R=pose7({0.02,6,10,3},{0,5,8,2},{0,4,-8,-3},{0,-38,-14,-18},{0,-42,-18,8},{0,6,0,0},{0,-6,0,0}),
+        Origin={0.35,0.95,-1.2},Stencil="Cut",
+    },
+    Parasite={
+        W=pose7({-0.04,7,10,-2},{0,6,8,-2},{0,-4,-8,0},{0,-26,8,-12},{0,-74,-12,14},{0,-10,0,0},{0,10,0,0}),
+        R=pose7({0.02,-3,-8,2},{0,-2,-6,2},{0,3,6,0},{0,-42,-12,-18},{0,-52,18,24},{0,8,0,0},{0,-8,0,0}),
+        Origin={0.45,0.55,-1.4},Stencil="Thread",
+    },
+    Siphon={
+        W=pose7({-0.05,8,0,0},{0,6,0,0},{0,-5,0,0},{0,-48,-20,-26},{0,-48,20,26},{0,-8,0,0},{0,8,0,0}),
+        R=pose7({0.04,-5,0,0},{0,-4,0,0},{0,6,0,0},{0,-62,24,-8},{0,-62,-24,8},{0,6,0,0},{0,-6,0,0}),
+        Origin={0,0.5,-1.0},Stencil="Split",
+    },
+    Mentor={
+        W=pose7({0,-3,-10,-3},{0,-2,-8,-2},{0,4,8,4},{0,16,12,-8},{0,-84,-14,18},{0,-5,0,0},{0,5,0,0}),
+        R=pose7({0,3,10,3},{0,2,8,2},{0,-2,-8,-3},{0,-34,-12,-16},{0,-68,24,28},{0,5,0,0},{0,-5,0,0}),
+        Origin={0.35,1.2,-0.95},Stencil="Mask",
+    },
+    Belief={
+        W=pose7({0,-4,6,0},{0,-3,4,0},{0,5,-4,0},{0,-72,-12,-22},{0,-72,12,22},{0,-5,0,0},{0,5,0,0}),
+        R=pose7({0,4,-6,0},{0,3,-4,0},{0,-3,4,0},{0,-58,18,-12},{0,-58,-18,12},{0,5,0,0},{0,-5,0,0}),
+        Origin={0,1.05,-1.15},Stencil="Crown",
+    },
+    Destiny={
+        W=pose7({-0.04,4,-14,-4},{0,3,-10,-3},{0,-2,10,0},{0,-30,-10,-14},{0,-88,16,20},{0,-8,0,0},{0,8,0,0}),
+        R=pose7({0.03,-3,12,3},{0,-2,10,2},{0,3,-8,0},{0,-44,-14,-20},{0,-46,-12,14},{0,8,0,0},{0,-8,0,0}),
+        Origin={0.4,0.85,-1.25},Stencil="Cut",
+    },
+    Payload={
+        W=pose7({0,3,10,0},{0,2,8,0},{0,-4,-8,0},{0,-48,16,-10},{0,-58,-22,12},{0,-5,0,0},{0,5,0,0}),
+        R=pose7({0,-2,-8,0},{0,-2,-6,0},{0,2,6,0},{0,-28,-8,-12},{0,-74,14,22},{0,5,0,0},{0,-5,0,0}),
+        Origin={0.35,0.65,-1.15},Stencil="Star",
+    },
+    Time={
+        W=pose7({0,-3,-6,0},{0,-2,-4,0},{0,4,4,0},{0,-96,-6,-14},{0,-54,18,28},{0,-6,0,0},{0,6,0,0}),
+        R=pose7({0,4,8,0},{0,3,6,0},{0,-3,-6,0},{0,-62,14,-22},{0,-84,-14,16},{0,6,0,0},{0,-6,0,0}),
+        Origin={0.25,1.15,-1.15},Stencil="Clock",
+    },
+    TimeDelay={
+        W=pose7({0.02,-4,0,0},{0,-3,0,0},{0,5,0,0},{0,-76,-16,-24},{0,-76,16,24},{0,-5,0,0},{0,5,0,0}),
+        R=pose7({-0.03,5,0,0},{0,4,0,0},{0,-4,0,0},{0,-44,-20,-32},{0,-44,20,32},{0,5,0,0},{0,-5,0,0}),
+        Origin={0,0.85,-1.1},Stencil="Clock",
+    },
+    -- Apprentice / Door
+    Threshold={
+        W=pose7({0,0,0,0},{0,2,0,0},{0,-2,0,0},{0,-52,-8,-16},{0,-52,8,16},{0,-4,0,0},{0,4,0,0}),
+        R=pose7({0,2,0,0},{0,-2,0,0},{0,2,0,0},{0,-65,-8,-26},{0,-65,8,26},{0,4,0,0},{0,-4,0,0}),
+        Origin={0,0.65,-1.25},Stencil="Key",
+    },
+    Passage={
+        W=pose7({0,2,-6,0},{0,2,-4,0},{0,-6,4,0},{0,-46,12,-10},{0,-64,-12,14},{0,-4,0,0},{0,4,0,0}),
+        R=pose7({0,-2,6,0},{0,-2,4,0},{0,3,-4,0},{0,-58,-8,-18},{0,-42,10,16},{0,4,0,0},{0,-4,0,0}),
+        Origin={-0.25,0.65,-1.05},Stencil="Key",
+    },
+    Trick={
+        W=pose7({0,3,-8,0},{0,2,-6,0},{0,-2,6,0},{0,-18,-10,-8},{0,-52,-14,16},{0,-5,0,0},{0,5,0,0}),
+        R=pose7({0,-2,10,0},{0,-2,8,0},{0,3,-8,0},{0,-26,-12,-12},{0,-78,14,24},{0,5,0,0},{0,-5,0,0}),
+        Origin={0.45,0.75,-1.3},Stencil="Star",
+    },
+    Wind={
+        W=pose7({-0.02,4,12,3},{0,3,10,2},{0,-3,-8,0},{0,-54,-18,-22},{0,-58,22,12},{0,-6,0,0},{0,6,0,0}),
+        R=pose7({0.02,-3,-12,-3},{0,-2,-10,-2},{0,3,8,0},{0,-48,18,-12},{0,-68,-18,28},{0,6,0,0},{0,-6,0,0}),
+        Origin={0,0.55,-1.15},Stencil="Circle",
+    },
+    Astrology={
+        W=pose7({0,-5,0,0},{0,-4,0,0},{0,8,0,0},{0,-72,14,-18},{0,-72,-14,18},{0,-5,0,0},{0,5,0,0}),
+        R=pose7({0,2,6,0},{0,2,6,0},{0,4,-6,0},{0,-48,-12,-16},{0,-86,8,22},{0,5,0,0},{0,-5,0,0}),
+        Origin={0.15,1.35,-1.0},Stencil="Star",
+    },
+    Ward={
+        W=pose7({-0.02,4,0,0},{0,3,0,0},{0,-4,0,0},{0,-62,24,-10},{0,-62,-24,10},{0,-5,0,0},{0,5,0,0}),
+        R=pose7({0.02,-3,0,0},{0,-2,0,0},{0,3,0,0},{0,-52,-14,-22},{0,-52,14,22},{0,5,0,0},{0,-5,0,0}),
+        Origin={0,0.85,-0.85},Stencil="Arch",
+    },
+    Record={
+        W=pose7({0,2,-6,0},{0,2,-4,0},{0,-5,4,0},{0,-58,16,-12},{0,-76,-10,18},{0,-4,0,0},{0,4,0,0}),
+        R=pose7({0,-2,4,0},{0,-2,4,0},{0,-7,-2,0},{0,-56,14,-12},{0,-52,16,12},{0,4,0,0},{0,-4,0,0}),
+        Origin={-0.15,0.65,-1.05},Stencil="Book",
+    },
+    Release={
+        W=pose7({0,3,-4,0},{0,2,-4,0},{0,-6,2,0},{0,-56,14,-12},{0,-54,16,12},{0,-5,0,0},{0,5,0,0}),
+        R=pose7({0,-3,10,0},{0,-2,8,0},{0,4,-6,0},{0,-44,-10,-18},{0,-84,8,22},{0,6,0,0},{0,-6,0,0}),
+        Origin={0.35,0.75,-1.25},Stencil="Book",
+    },
+    Travel={
+        W=pose7({0,0,0,0},{0,2,0,0},{0,-2,0,0},{0,-52,-8,-16},{0,-52,8,16},{0,-6,0,0},{0,6,0,0}),
+        R=pose7({0,2,0,0},{0,-3,0,0},{0,3,0,0},{0,-65,-8,-26},{0,-65,8,26},{0,8,0,0},{0,-8,0,0}),
+        Origin={0,0.55,-1.15},Stencil="Door",
+    },
+    Door={
+        W=pose7({0,-2,-8,0},{0,-2,-6,0},{0,2,6,0},{0,-68,-14,-22},{0,-74,-8,16},{0,-5,0,0},{0,5,0,0}),
+        R=pose7({0,3,6,0},{0,2,6,0},{0,-2,-4,0},{0,-62,-18,-28},{0,-78,18,32},{0,5,0,0},{0,-5,0,0}),
+        Origin={0.35,0.85,-1.3},Stencil="Key",
+    },
+    Conceal={
+        W=pose7({0,-3,0,0},{0,-2,0,0},{0,2,0,0},{0,-64,-22,-26},{0,-64,22,26},{0,-5,0,0},{0,5,0,0}),
+        R=pose7({-0.03,4,0,0},{0,3,0,0},{0,-5,0,0},{0,-52,20,-10},{0,-52,-20,10},{0,5,0,0},{0,-5,0,0}),
+        Origin={0,0.65,-0.95},Stencil="Door",
+    },
+    Seal={
+        W=pose7({0,-4,0,0},{0,-3,0,0},{0,4,0,0},{0,-76,-14,-24},{0,-76,14,24},{0,-6,0,0},{0,6,0,0}),
+        R=pose7({0,5,0,0},{0,4,0,0},{0,-4,0,0},{0,-58,12,-14},{0,-58,-12,14},{0,6,0,0},{0,-6,0,0}),
+        Origin={0,0.85,-1.25},Stencil="Seal",
+    },
+    Wandering={
+        W=pose7({0.03,-4,-10,-3},{0,-3,-8,-2},{0,4,8,0},{0,-74,-12,-24},{0,-42,16,18},{0,12,0,0},{0,-12,0,0}),
+        R=pose7({0.05,4,10,3},{0,3,8,2},{0,-2,-8,0},{0,-54,-20,-30},{0,-82,12,28},{0,-10,0,0},{0,10,0,0}),
+        Origin={0,0.75,-1.2},Stencil="Arch",
+    },
+    Pocket={
+        W=pose7({0,-2,6,0},{0,-2,4,0},{0,3,-4,0},{0,-48,10,-14},{0,-86,-12,14},{0,-4,0,0},{0,4,0,0}),
+        R=pose7({-0.02,3,-6,0},{0,2,-4,0},{0,-4,4,0},{0,-56,-12,-18},{0,-54,18,10},{0,4,0,0},{0,-4,0,0}),
+        Origin={0.15,0.75,-0.95},Stencil="Door",
+    },
+    Replica={
+        W=pose7({0,-4,0,0},{0,-3,0,0},{0,5,0,0},{0,-74,12,-18},{0,-74,-12,18},{0,-5,0,0},{0,5,0,0}),
+        R=pose7({0,4,0,0},{0,3,0,0},{0,-3,0,0},{0,-68,-14,-26},{0,-68,14,26},{0,5,0,0},{0,-5,0,0}),
+        Origin={0,0.95,-1.25},Stencil="Book",
+    },
+    Planar={
+        W=pose7({0.04,-6,0,0},{0,-5,0,0},{0,8,0,0},{0,-88,-16,-28},{0,-88,16,28},{0,-6,0,0},{0,6,0,0}),
+        R=pose7({0.02,3,0,0},{0,2,0,0},{0,-2,0,0},{0,-68,-24,-36},{0,-68,24,36},{0,6,0,0},{0,-6,0,0}),
+        Origin={0,1.25,-1.15},Stencil="Arch",
+    },
+    Gate={
+        W=pose7({0.04,-7,0,0},{0,-6,0,0},{0,10,0,0},{0,-98,-14,-26},{0,-98,14,26},{0,-6,0,0},{0,6,0,0}),
+        R=pose7({0,4,0,0},{0,3,0,0},{0,-2,0,0},{0,-72,-18,-32},{0,-72,18,32},{0,6,0,0},{0,-6,0,0}),
+        Origin={0,1.45,-1.15},Stencil="Key",
+    },
+    Closure={
+        W=pose7({0,-4,0,0},{0,-3,0,0},{0,4,0,0},{0,-72,-24,-34},{0,-72,24,34},{0,-6,0,0},{0,6,0,0}),
+        R=pose7({-0.03,6,0,0},{0,5,0,0},{0,-5,0,0},{0,-62,22,-10},{0,-62,-22,10},{0,6,0,0},{0,-6,0,0}),
+        Origin={0,0.85,-1.2},Stencil="Seal",
+    },
 }
 local families: {[string]: {{string}}}={
-    Seer={{"Divination","Reading"},{"Acrobat","Composure"},{"Flame","Paper"},{"Veil","Voice"},{"Puppet","Puppet"},
-        {"Exchange","Illusion"},{"History","Recovery"},{"Miracle","Recovery"},{"Graft","Domain"}},
-    Marauder={{"Pickpocket","Stealth"},{"Deceit","Deceit"},{"Decipher","Reading"},{"Theft","Theft"},{"Thought","Thought"},
-        {"Parasite","Parasite"},{"Deceit","Puppet"},{"Destiny","Destiny"},{"Time","Time"}},
-    Apprentice={{"Threshold","Reading"},{"Trick","Trick"},{"Astrology","Seal"},{"Record","Release"},{"Travel","Gate"},
-        {"Conceal","Seal"},{"Travel","Conceal"},{"Replica","Gate"},{"Gate","Closure"}},
+    Seer={{"Divination","Reading"},{"Acrobat","Composure"},{"Flame","Paper"},{"Veil","Voice"},{"Puppet","Command"},
+        {"Exchange","Illusion"},{"History","Recovery"},{"Miracle","MiracleMend"},{"Graft","Domain"}},
+    Marauder={{"Pickpocket","Stealth"},{"Deceit","Misdirection"},{"Decipher","Interpret"},{"Theft","EnergyTheft"},{"Thought","Dream"},
+        {"Parasite","Siphon"},{"Mentor","Belief"},{"Destiny","Payload"},{"Time","TimeDelay"}},
+    Apprentice={{"Threshold","Passage"},{"Trick","Wind"},{"Astrology","Ward"},{"Record","Release"},{"Travel","Door"},
+        {"Conceal","Seal"},{"Wandering","Pocket"},{"Replica","Planar"},{"Gate","Closure"}},
 }
 local release: {[string]: {{number}}}={
     Seer={{0.22,0.18},{0.20,0.25},{0.18,0.24},{0.30,0.20},{0.25,0.18},{0.18,0.32},{0.35,0.30},{0.35,0.35},{0.25,0.40}},
@@ -419,25 +718,39 @@ local release: {[string]: {{number}}}={
     Apprentice={{0.25,0.20},{0.16,0.25},{0.28,0.22},{0.30,0.20},{0.20,0.30},{0.35,0.30},{0.25,0.30},{0.30,0.30},{0.40,0.30}},
 }
 local legacy={Seer_9_Secondary="Reading",Seer_7="Flame",Marauder_9="Pickpocket",Marauder_6="Theft",Apprentice_9="Threshold",Apprentice_5="Travel"}
-config.AbilityProfiles={};config.AbilityTimings={}
+config.AbilityProfiles={};config.AbilityTimings={};config.GestureOrigins={}
+for family,spec in pairs(choreography) do
+    if not config.CastProfiles[family] then
+        config.CastProfiles[family]={
+            CastWindup={AnimationId="",Pose=spec.W},
+            CastRelease={AnimationId="",Duration=0.22,Pose=spec.R},
+        }
+    end
+end
 for pathway,rows in pairs(families) do
     for index,row in ipairs(rows) do
         local sequence=10-index
         for choice,family in ipairs(row) do
             local id=pathway.."_"..sequence..(if choice==2 then "_Secondary" else "")
             local profile=legacy[id] or id
-            local source=config.CastProfiles[family]
-            if not source then
-                local pose=poses[family]
-                source={CastWindup={AnimationId="",Pose={Root=pose[1],LeftShoulder=pose[2],RightShoulder=pose[3]}},
-                    CastRelease={AnimationId="",Pose={Root=pose[1],LeftShoulder=pose[2],RightShoulder=pose[3]}}}
-            end
+            local spec=choreography[family]
+            local source=config.CastProfiles[family] or {
+                CastWindup={AnimationId="",Pose=spec.W},
+                CastRelease={AnimationId="",Pose=spec.R},
+            }
             local wind=table.clone(source.CastWindup)
             local cast=table.clone(source.CastRelease)
             cast.Duration=release[pathway][index][choice]
             config.CastProfiles[profile]={CastWindup=wind,CastRelease=cast}
             config.AbilityProfiles[id]=profile
-            config.AbilityTimings[id]={Windup=if sequence<=4 then 1.5 else 0.5,Release=cast.Duration,Family=family}
+            config.AbilityTimings[id]={
+                Windup=if sequence<=4 then 1.5 else 0.5,
+                Release=cast.Duration,
+                Family=family,
+                Origin=spec.Origin,
+                Stencil=spec.Stencil,
+            }
+            config.GestureOrigins[id]={Offset=spec.Origin,Stencil=spec.Stencil,Family=family}
         end
     end
 end
@@ -569,15 +882,15 @@ end
 --!strict
 local make = require(script.Parent.Parent.PathwayFactory)
 return make("Apprentice", "Door", {
-    {"Apprentice", "Door Opening", "Open a server-designated locked passage", "LockedPassageOpened", "Gameplay proposal for door opening; exact canon scope and restrictions require review.", "Sensitivity to passages", "Position", {"Passage Sense", "Self", "Proposed sense of tagged passages; exact canon scope unverified."}, {Primary={Kind="OpenDoor", Target="Position", Range=30, Signal="LockedPassageOpened"}, Secondary={Kind="SenseDoors", Target="Self", Status="Vision", Duration=20}}},
-    {"Trickmaster", "Spark Trick", "Distract an eligible hostile NPC using a trick", "HostileDistracted", "Gameplay proposal for spark trick; exact canon scope and restrictions require review.", "Minor magical tricks", "Position", {"Wind Trick", "Position", "Create a small wind effect for misdirection."}, {Primary={Kind="Debuff", Target="NPC", Status="Confused", Duration=4, Power=1, Signal="HostileDistracted"}, Secondary={Kind="Area", Target="Position", Status="TimeSlow", Duration=4, Power=0.5}}},
-    {"Astrologer", "Astrological Divination", "Resolve a star reading against a server-known outcome", "StarReadingResolved", "Gameplay proposal for astrological divination; exact canon scope and restrictions require review.", "Astrological intuition", "Self", {"Danger Reading", "Self", "Interpret a server-authored omen from an astrological reading."}, {Primary={Kind="Sense", Target="Self", Status="Vision", Duration=20, Signal="StarReadingResolved"}, Secondary={Kind="Buff", Target="Self", Status="Shielded", Duration=12}}},
-    {"Scribe", "Record", "Record an eligible observed power", "EligiblePowerRecorded", "Gameplay proposal for record; exact canon scope and restrictions require review.", "Recording of supernatural powers", "NPC", {"Release Recording", "NPC", "Release a previously recorded eligible power; borrowed power must pass server allowlists."}, {Primary={Kind="Record", Target="NPC", Signal="EligiblePowerRecorded"}, Secondary={Kind="Release", Target="NPC", Power=1.7}}},
-    {"Traveler", "Travel", "Reach a server-designated destination through travel", "TravelDestinationReached", "Gameplay proposal for travel; exact canon scope and restrictions require review.", "Spirit-world navigation", "Position", {"Spatial Door", "Position", "Connect two validated nearby points through a travel door."}, {Primary={Kind="Travel", Target="Position", Signal="TravelDestinationReached"}, Secondary={Kind="Portal", Target="Position", Duration=25}}},
-    {"Secrets Sorcerer", "Concealment", "Protect a scripted secret with spatial concealment", "SecretProtected", "Gameplay proposal for concealment; exact canon scope and restrictions require review.", "Concealment of space", "Position", {"Spatial Seal", "Position", "Proposed temporary seal around a bounded space."}, {Primary={Kind="Conceal", Target="Self", Status="Concealed", Duration=18, Signal="SecretProtected"}, Secondary={Kind="Area", Target="Position", Status="Stasis", Duration=5, Power=1}}},
-    {"Wanderer", "Wandering", "Reach a marked remote location through spatial wandering", "WanderingDestinationReached", "Gameplay proposal for wandering; exact canon scope and restrictions require review.", "Extended spatial travel", "Position", {"Spatial Concealment", "Self", "Conceal a traveler in a bounded encounter area."}, {Primary={Kind="Travel", Target="Position", Status="Concealed", Duration=15, Signal="WanderingDestinationReached"}, Secondary={Kind="Buff", Target="Self", Status="Concealed", Duration=15}}},
-    {"Planeswalker", "Replication", "Reproduce an eligible recorded phenomenon", "PhenomenonReplicated", "Gameplay proposal for replication; exact canon scope and restrictions require review.", "Knowledge of other planes", "Position", {"Planar Travel", "Position", "Travel between authored destinations rather than arbitrary universes."}, {Primary={Kind="Release", Target="NPC", Power=3, Signal="PhenomenonReplicated"}, Secondary={Kind="Travel", Target="Position", Status="Shielded", Duration=10}}},
-    {"Key of Stars", "Star Gate", "Connect two authorized locations with a stable gate", "AuthorizedGateConnected", "Gameplay proposal for star gate; exact canon scope and restrictions require review.", "Authority over space", "Position", {"Spatial Closure", "Position", "Close an eligible spatial connection under server ownership rules."}, {Primary={Kind="Portal", Target="Position", Duration=40, Signal="AuthorizedGateConnected"}, Secondary={Kind="CloseSpace", Target="Position", Status="Stasis", Duration=6, Power=2}}},
+    {"Apprentice", "Door Opening", "Open a server-designated locked passage", "LockedPassageOpened", "Turn an astral key to unseal and pass through a server-designated practice door or threshold [UNVERIFIED].", "Instinctive sensitivity to doors, walls, and passages", "Position", {"Passage Sense", "Self", "Align an astral compass to reveal nearby doors and hidden passages [UNVERIFIED]."}, {Primary={Kind="OpenDoor", Target="Position", Range=30, Signal="LockedPassageOpened"}, Secondary={Kind="SenseDoors", Target="Self", Status="Vision", Duration=20}}},
+    {"Trickmaster", "Spark Trick", "Distract an eligible hostile NPC using a trick", "HostileDistracted", "Snap a blinding flash of starlight sparks at a target, dealing damage and confusing them [UNVERIFIED].", "Repertoire of flash, wind, fog, and shock tricks", "Position", {"Wind Trick", "Position", "Conjure swirling silver-teal gusts across an area to damage and slow caught enemies [UNVERIFIED]."}, {Primary={Kind="Debuff", Target="NPC", Status="Confused", Duration=4, Power=1, Signal="HostileDistracted"}, Secondary={Kind="Area", Target="Position", Status="TimeSlow", Duration=4, Power=0.5}}},
+    {"Astrologer", "Astrological Divination", "Resolve a star reading against a server-known outcome", "StarReadingResolved", "Project a celestial star chart to divine outcomes and reveal nearby spiritual signatures [UNVERIFIED].", "Star-chart divination and anti-divination intuition", "Self", {"Danger Reading", "Self", "Read imminent omens in the stars to raise an astral ward that reduces incoming damage [UNVERIFIED]."}, {Primary={Kind="Sense", Target="Self", Status="Vision", Duration=20, Signal="StarReadingResolved"}, Secondary={Kind="Buff", Target="Self", Status="Shielded", Duration=12}}},
+    {"Scribe", "Record", "Record an eligible observed power", "EligiblePowerRecorded", "Inscribe an eligible NPC's supernatural power into your illusory tome with bounded charges [UNVERIFIED].", "I Came, I Saw, I Recorded — astral tome inscriptions", "NPC", {"Release Recording", "NPC", "Project a previously recorded power from your tome against a hostile target [UNVERIFIED]."}, {Primary={Kind="Record", Target="NPC", Signal="EligiblePowerRecorded"}, Secondary={Kind="Release", Target="NPC", Power=1.7}}},
+    {"Traveler", "Travel", "Reach a server-designated destination through travel", "TravelDestinationReached", "Part a teal spirit-world threshold to step instantaneously to a validated destination [UNVERIFIED].", "Spirit-world traversal and invisible spatial strides", "Position", {"Spatial Door", "Position", "Anchor a persistent pair of linked spatial doors connecting your origin and target point [UNVERIFIED]."}, {Primary={Kind="Travel", Target="Position", Signal="TravelDestinationReached"}, Secondary={Kind="Portal", Target="Position", Duration=25}}},
+    {"Secrets Sorcerer", "Concealment", "Protect a scripted secret with spatial concealment", "SecretProtected", "Fold surrounding space into a private pocket threshold that conceals you from sight [UNVERIFIED].", "Mastery of pocket spaces and secret partitions", "Position", {"Spatial Seal", "Position", "Erect a four-cornered spatial prison that damages and locks enemies within the area in stasis [UNVERIFIED]."}, {Primary={Kind="Conceal", Target="Self", Status="Concealed", Duration=18, Signal="SecretProtected"}, Secondary={Kind="Area", Target="Position", Status="Stasis", Duration=5, Power=1}}},
+    {"Wanderer", "Wandering", "Reach a marked remote location through spatial wandering", "WanderingDestinationReached", "Step through nested astral arches to traverse long distances and emerge concealed [UNVERIFIED].", "Traversal of the astral cosmos and spirit world", "Position", {"Spatial Concealment", "Self", "Slip into an inner spatial fold to gain prolonged concealment [UNVERIFIED]."}, {Primary={Kind="Travel", Target="Position", Status="Concealed", Duration=15, Signal="WanderingDestinationReached"}, Secondary={Kind="Buff", Target="Self", Status="Concealed", Duration=15}}},
+    {"Planeswalker", "Replication", "Reproduce an eligible recorded phenomenon", "PhenomenonReplicated", "Open dual astral archives to replicate and unleash a high-potency recorded phenomenon [UNVERIFIED].", "Symbolization into astral projections and replication", "Position", {"Planar Travel", "Position", "Part star-crowned thresholds to teleport to a destination and gain an astral shield [UNVERIFIED]."}, {Primary={Kind="Release", Target="NPC", Power=3, Signal="PhenomenonReplicated"}, Secondary={Kind="Travel", Target="Position", Status="Shielded", Duration=10}}},
+    {"Key of Stars", "Star Gate", "Connect two authorized locations with a stable gate", "AuthorizedGateConnected", "Invoke the Key of Stars to anchor a long-lasting pair of celestial gates between two points [UNVERIFIED].", "Supreme authority over doors, position, and space", "Position", {"Spatial Closure", "Position", "Collapse and lock a target region of space, dealing heavy damage and sealing foes in stasis [UNVERIFIED]."}, {Primary={Kind="Portal", Target="Position", Duration=40, Signal="AuthorizedGateConnected"}, Secondary={Kind="CloseSpace", Target="Position", Status="Stasis", Duration=6, Power=2}}},
 }, "https://lordofthemysteries.fandom.com/wiki/Door_Pathway/Abilities")
 ```
 
@@ -592,15 +905,15 @@ return make("Apprentice", "Door", {
 --!strict
 local make = require(script.Parent.Parent.PathwayFactory)
 return make("Marauder", "Error", {
-    {"Marauder", "Pickpocket", "Steal a marked item from an eligible hostile NPC", "HostileItemStolen", "Gameplay proposal for pickpocket; exact canon scope and restrictions require review.", "Dexterous hands", "NPC", {"Stealth", "Self", "Gameplay stealth aid; not supernatural invisibility."}, {Primary={Kind="Theft", Range=8, Signal="HostileItemStolen"}, Secondary={Kind="Buff", Status="Disguised", Duration=12}}},
-    {"Swindler", "Deception", "Complete a scripted deception against a hostile NPC", "HostileNPCDeceived", "Gameplay proposal for deception; exact canon scope and restrictions require review.", "Persuasive misdirection", "NPC", {"Misdirection", "NPC", "Distract an eligible hostile target through deception."}, {Primary={Kind="Debuff", Status="Confused", Duration=10, Signal="HostileNPCDeceived"}, Secondary={Kind="Debuff", Status="Confused", Duration=6}}},
-    {"Cryptologist", "Decipher", "Solve a server-generated cipher", "CipherSolved", "Gameplay proposal for decipher; exact canon scope and restrictions require review.", "Pattern interpretation", "Self", {"Information Interpretation", "Self", "Interpret a designated clue rather than freely reading player secrets."}, {Primary={Kind="Cipher", Target="Self", Status="CipherSight", Duration=30}, Secondary={Kind="Sense", Target="Self", Status="Vision", Duration=20}}},
-    {"Prometheus", "Ability Theft", "Steal a temporary power from an eligible hostile NPC", "HostileAbilityStolen", "Gameplay proposal for ability theft; exact canon scope and restrictions require review.", "Theft of supernatural powers", "NPC", {"Energy Theft", "NPC", "Proposed energy transfer; precise canon scope needs review."}, {Primary={Kind="StealPower", Status="Silenced", Duration=10, Signal="HostileAbilityStolen"}, Secondary={Kind="Siphon", Power=1.3}}},
-    {"Dream Stealer", "Thought Theft", "Remove an eligible thought during a scripted encounter", "HostileThoughtStolen", "Gameplay proposal for thought theft; exact canon scope and restrictions require review.", "Perception of thoughts", "NPC", {"Dream Intrusion", "NPC", "Proposed scripted dream encounter; availability at this sequence unverified."}, {Primary={Kind="Debuff", Status="Sleep", Duration=8, Signal="HostileThoughtStolen"}, Secondary={Kind="Debuff", Status="Burning", Duration=5, Power=0.8}}},
-    {"Parasite", "Parasitism", "Complete a controlled hostile-NPC parasitism encounter", "HostileParasitismCompleted", "Gameplay proposal for parasitism; exact canon scope and restrictions require review.", "Parasitic concealment", "NPC", {"Vitality Siphon", "NPC", "Proposed host-linked vitality transfer with hard duration and target limits."}, {Primary={Kind="Parasite", Status="Parasite", Duration=12, Signal="HostileParasitismCompleted"}, Secondary={Kind="Siphon", RequiresHost=true, Power=2}}},
-    {"Mentor of Deceit", "Spiritual Deception", "Misdirect an eligible hostile spiritual sense", "SpiritualSenseDeceived", "Gameplay proposal for spiritual deception; exact canon scope and restrictions require review.", "Deception of spiritual intuition", "NPC", {"Belief Misdirection", "NPC", "Proposed scripted deception of an NPC belief."}, {Primary={Kind="Debuff", Status="Deceived", Duration=14, Signal="SpiritualSenseDeceived"}, Secondary={Kind="Control", Duration=10}}},
-    {"Trojan Horse of Destiny", "Destiny Infiltration", "Complete a scripted infiltration of a marked destiny", "DestinyInfiltrationCompleted", "Gameplay proposal for destiny infiltration; exact canon scope and restrictions require review.", "Destiny concealment", "NPC", {"Hidden Destiny Payload", "NPC", "Proposed delayed destiny effect; exact canon mechanism unverified."}, {Primary={Kind="Infiltrate", Target="NPC", Status="Payload", Duration=12, Signal="DestinyInfiltrationCompleted"}, Secondary={Kind="Debuff", Status="Payload", Duration=10}}},
-    {"Worm of Time", "Time Theft", "Resolve a scripted time-theft encounter", "TimeTheftEncounterResolved", "Gameplay proposal for time theft; exact canon scope and restrictions require review.", "Temporal perception", "NPC", {"Temporal Delay", "NPC", "Proposed short bounded time distortion, never control of the server clock."}, {Primary={Kind="Debuff", Status="TimeSlow", Duration=10, Power=2, Signal="TimeTheftEncounterResolved"}, Secondary={Kind="Area", Target="Position", Status="Stasis", Duration=4, Power=2}}},
+    {"Marauder", "Pickpocket", "Steal a marked item from an eligible hostile NPC", "HostileItemStolen", "Snatch a marked valuable and deal a deft strike to a nearby hostile target within reach [UNVERIFIED].", "Nimble fingers andkeen observation of valuables", "NPC", {"Stealth", "Self", "Slip into offset shadows to obscure your presence for a brief duration [UNVERIFIED]."}, {Primary={Kind="Theft", Range=8, Signal="HostileItemStolen"}, Secondary={Kind="Buff", Status="Disguised", Duration=12}}},
+    {"Swindler", "Deception", "Complete a scripted deception against a hostile NPC", "HostileNPCDeceived", "Fracture a target's judgment with persuasive falsehoods, damaging and confusing them [UNVERIFIED].", "Silver-tongued persuasion and social misdirection", "NPC", {"Misdirection", "NPC", "Project a lateral decoy cut that distracts and confuses an eligible hostile target [UNVERIFIED]."}, {Primary={Kind="Debuff", Status="Confused", Duration=10, Signal="HostileNPCDeceived"}, Secondary={Kind="Debuff", Status="Confused", Duration=6}}},
+    {"Cryptologist", "Decipher", "Solve a server-generated cipher", "CipherSolved", "Focus a monocle-like analytical lens to gain Cipher Sight and decode nearby cryptograms [UNVERIFIED].", "Cryptographic deduction and structural pattern analysis", "Self", {"Information Interpretation", "Self", "Reconstruct hidden traces and structural flaws to reveal nearby targets [UNVERIFIED]."}, {Primary={Kind="Cipher", Target="Self", Status="CipherSight", Duration=30}, Secondary={Kind="Sense", Target="Self", Status="Vision", Duration=20}}},
+    {"Prometheus", "Ability Theft", "Steal a temporary power from an eligible hostile NPC", "HostileAbilityStolen", "Extract and silence a target's power; cast again while holding a stolen power to unleash it [UNVERIFIED].", "Theft of Beyonder powers, skills, and intentions", "NPC", {"Energy Theft", "NPC", "Siphon vitality and spirituality from a target directly into yourself [UNVERIFIED]."}, {Primary={Kind="StealPower", Status="Silenced", Duration=10, Signal="HostileAbilityStolen"}, Secondary={Kind="Siphon", Power=1.3}}},
+    {"Dream Stealer", "Thought Theft", "Remove an eligible thought during a scripted encounter", "HostileThoughtStolen", "Pluck a conscious thought from the target's mind, dealing damage and lulling them to sleep [UNVERIFIED].", "Infiltration of dreams and extraction of thoughts", "NPC", {"Dream Intrusion", "NPC", "Tear into a target's dreamscape to inflict searing nightmare damage over time [UNVERIFIED gameplay adaptation]."}, {Primary={Kind="Debuff", Status="Sleep", Duration=8, Signal="HostileThoughtStolen"}, Secondary={Kind="Debuff", Status="Burning", Duration=5, Power=0.8}}},
+    {"Parasite", "Parasitism", "Complete a controlled hostile-NPC parasitism encounter", "HostileParasitismCompleted", "Thread a parasitic link into an eligible host, damaging them and marking them for siphoning [UNVERIFIED].", "Worm of Time parasitism and host concealment", "NPC", {"Vitality Siphon", "NPC", "Drain amplified vitality and spirituality from a parasitized or targeted host [UNVERIFIED]."}, {Primary={Kind="Parasite", Status="Parasite", Duration=12, Signal="HostileParasitismCompleted"}, Secondary={Kind="Siphon", RequiresHost=true, Power=2}}},
+    {"Mentor of Deceit", "Spiritual Deception", "Misdirect an eligible hostile spiritual sense", "SpiritualSenseDeceived", "Distort the rules of perception around a target, dealing heavy damage and deceiving their senses [UNVERIFIED].", "Exploitation of loopholes and deception of rules", "NPC", {"Belief Misdirection", "NPC", "Invert an eligible NPC's recognition so they fight under your command for a short duration [UNVERIFIED]."}, {Primary={Kind="Debuff", Status="Deceived", Duration=14, Signal="SpiritualSenseDeceived"}, Secondary={Kind="Control", Duration=10}}},
+    {"Trojan Horse of Destiny", "Destiny Infiltration", "Complete a scripted infiltration of a marked destiny", "DestinyInfiltrationCompleted", "Slice through a seam of fate to step beside your target and plant a delayed destiny payload [UNVERIFIED].", "Manipulation of fate fragments and destiny loopholes", "NPC", {"Hidden Destiny Payload", "NPC", "Seed a concealed knot of fate on a target that detonates for heavy damage when they act or expire [UNVERIFIED]."}, {Primary={Kind="Infiltrate", Target="NPC", Status="Payload", Duration=12, Signal="DestinyInfiltrationCompleted"}, Secondary={Kind="Debuff", Status="Payload", Duration=10}}},
+    {"Worm of Time", "Time Theft", "Resolve a scripted time-theft encounter", "TimeTheftEncounterResolved", "Wrench seconds from a target's personal clock, dealing severe damage and slowing their actions [UNVERIFIED].", "Authority over time, errors, and clockwork avatars", "NPC", {"Temporal Delay", "NPC", "Stall the flow of time across a bounded area, locking caught foes in stasis [UNVERIFIED]."}, {Primary={Kind="Debuff", Status="TimeSlow", Duration=10, Power=2, Signal="TimeTheftEncounterResolved"}, Secondary={Kind="Area", Target="Position", Status="Stasis", Duration=4, Power=2}}},
 }, "https://lordofthemysteries.fandom.com/wiki/Error_Pathway/Abilities")
 ```
 
@@ -615,15 +928,15 @@ return make("Marauder", "Error", {
 --!strict
 local make = require(script.Parent.Parent.PathwayFactory)
 return make("Seer", "Fool", {
-    {"Seer", "Divination", "Resolve a divination against a server-known outcome", "DivinationResolved", "Gameplay proposal for divination; exact canon scope and restrictions require review.", "Spiritual sensitivity", "Self", {"Spirit Vision", "Self", "Perceive nearby spiritual traces; server filters revealed information."}, {Primary={Kind="Sense", Signal="DivinationResolved"}, Secondary={Kind="Sense", Status="Vision", Duration=20}}},
-    {"Clown", "Acrobatic Evasion", "Evade a hostile strike during a server-validated dodge", "HostileStrikeEvaded", "Gameplay proposal for acrobatic evasion; exact canon scope and restrictions require review.", "Balance and bodily control", "Self", {"Composure", "Self", "Maintain bodily and emotional control under pressure."}, {Primary={Kind="Dodge", Status="Invulnerable", Duration=2}, Secondary={Kind="Buff", Status="Composed", Duration=20}}},
-    {"Magician", "Flame Jump", "Escape pursuit using a valid flame anchor", "PursuitEscaped", "Gameplay proposal for flame jump; exact canon scope and restrictions require review.", "Sleight of hand", "Position", {"Paper Figurine Substitute", "Self", "Prepare a substitute against one eligible attack; no unconditional immortality."}, {Primary={Kind="FlameJump", Target="Position", Range=36, Signal="PursuitEscaped"}, Secondary={Kind="Buff", Status="Substitute", Duration=45}}},
-    {"Faceless", "Disguise", "Complete an infiltration while maintaining a disguise", "DisguisedInfiltrationCompleted", "Gameplay proposal for disguise; exact canon scope and restrictions require review.", "Control of appearance", "Self", {"Voice Mimicry", "Self", "Adopt a permitted disguise voice profile using original audio."}, {Primary={Kind="Disguise", Profile="Wanderer", Status="Disguised", Duration=40}, Secondary={Kind="Disguise", Profile="Archivist", Status="Disguised", Duration=25}}},
-    {"Marionettist", "Spirit Body Threads", "Complete control of an eligible hostile NPC", "MarionetteControlCompleted", "Gameplay proposal for spirit body threads; exact canon scope and restrictions require review.", "Spirit Body Thread perception", "NPC", {"Marionette Command", "NPC", "Issue bounded orders to a server-owned marionette."}, {Primary={Kind="Control", RequiredHits=3, Duration=20, Signal="MarionetteControlCompleted"}, Secondary={Kind="Command", Power=2}}},
-    {"Bizarro Sorcerer", "Marionette Exchange", "Survive an encounter using a marionette exchange", "MarionetteEscapeCompleted", "Gameplay proposal for marionette exchange; exact canon scope and restrictions require review.", "Expanded marionette command", "NPC", {"Bizarre Illusion", "Position", "Create a limited deceptive scene; exact canon form needs review."}, {Primary={Kind="Exchange", Target="NPC", Signal="MarionetteEscapeCompleted"}, Secondary={Kind="Area", Status="Confused", Duration=8, Power=1.5}}},
-    {"Scholar of Yore", "Historical Projection", "Resolve a historical clue using an authenticated record", "HistoricalClueResolved", "Gameplay proposal for historical projection; exact canon scope and restrictions require review.", "Historical knowledge", "Position", {"Historical Recall", "Self", "Recall an authenticated historical record under explicit limits."}, {Primary={Kind="Echo", Target="Position", Duration=20, Signal="HistoricalClueResolved"}, Secondary={Kind="Recall", Target="Self", Power=0.25}}},
-    {"Miracle Invoker", "Wish Fulfillment", "Fulfill a server-assigned wish within its constraints", "WishFulfilled", "Gameplay proposal for wish fulfillment; exact canon scope and restrictions require review.", "Miracle accumulation", "Position", {"Miracle of Recovery", "NPC", "Proposed limited recovery wish with accumulated-wish costs."}, {Primary={Kind="Wish", Target="Self", Signal="WishFulfilled"}, Secondary={Kind="Wish", Target="Self", Power=0.6}}},
-    {"Attendant of Mysteries", "Grafting", "Resolve a scripted encounter using a valid graft", "GraftEncounterResolved", "Gameplay proposal for grafting; exact canon scope and restrictions require review.", "Authority over mysteries", "Position", {"Realm of Mysteries", "Position", "Proposed bounded mysterious domain; exact mechanics unverified."}, {Primary={Kind="Graft", Target="Position", Duration=12, Signal="GraftEncounterResolved"}, Secondary={Kind="Area", Target="Position", Status="Stasis", Duration=4, Power=3}}},
+    {"Seer", "Divination", "Resolve a divination against a server-known outcome", "DivinationResolved", "Draw a tarot and pendulum reading to sense nearby anomalies and hidden clues [UNVERIFIED gameplay scope].", "Spiritual sensitivity and ritual intuition", "Self", {"Spirit Vision", "Self", "Open spiritual sight at the brow to perceive nearby aura traces; server filters revealed targets [UNVERIFIED]."}, {Primary={Kind="Sense", Signal="DivinationResolved"}, Secondary={Kind="Sense", Status="Vision", Duration=20}}},
+    {"Clown", "Acrobatic Evasion", "Evade a hostile strike during a server-validated dodge", "HostileStrikeEvaded", "Spring into a nimble acrobatic vault that grants brief invulnerability against incoming strikes [UNVERIFIED].", "Superhuman balance, agility, and prophetic intuition", "Self", {"Composure", "Self", "Steady body and expression behind a calm mask, reducing incoming damage under pressure [UNVERIFIED]."}, {Primary={Kind="Dodge", Status="Invulnerable", Duration=2}, Secondary={Kind="Buff", Status="Composed", Duration=20}}},
+    {"Magician", "Flame Jump", "Escape pursuit using a valid flame anchor", "PursuitEscaped", "Snap your fingers to vanish in crimson-gold embers and reappear at a validated position within range [UNVERIFIED].", "Stagecraft sleight of hand and spell preparation", "Position", {"Paper Figurine Substitute", "Self", "Fold a paper cutout that swaps places with you to absorb one eligible hit [UNVERIFIED]."}, {Primary={Kind="FlameJump", Target="Position", Range=36, Signal="PursuitEscaped"}, Secondary={Kind="Buff", Status="Substitute", Duration=45}}},
+    {"Faceless", "Disguise", "Complete an infiltration while maintaining a disguise", "DisguisedInfiltrationCompleted", "Reshape facial features and silhouette under a grey veil to adopt an infiltration persona [UNVERIFIED].", "Mastery of bone, muscle, and facial disguise", "Self", {"Voice Mimicry", "Self", "Modulate vocal cords to project an archivist disguise profile and mask your presence [UNVERIFIED]."}, {Primary={Kind="Disguise", Profile="Wanderer", Status="Disguised", Duration=40}, Secondary={Kind="Disguise", Profile="Archivist", Status="Disguised", Duration=25}}},
+    {"Marionettist", "Spirit Body Threads", "Complete control of an eligible hostile NPC", "MarionetteControlCompleted", "Seize a target's Spirit Body Threads; three confirmed stages convert an eligible NPC into a marionette [UNVERIFIED].", "Perception and manipulation of Spirit Body Threads", "NPC", {"Marionette Command", "NPC", "Direct your controlled marionette to strike a nearby hostile target with amplified force [UNVERIFIED]."}, {Primary={Kind="Control", RequiredHits=3, Duration=20, Signal="MarionetteControlCompleted"}, Secondary={Kind="Command", Power=2}}},
+    {"Bizarro Sorcerer", "Marionette Exchange", "Survive an encounter using a marionette exchange", "MarionetteEscapeCompleted", "Instantly swap positions with your active marionette or target along taut spirit threads [UNVERIFIED].", "Decentralized worm-of-spirit vitality and thread mastery", "NPC", {"Bizarre Illusion", "Position", "Drape an area in uncanny phantom contours that damage and confuse nearby foes [UNVERIFIED]."}, {Primary={Kind="Exchange", Target="NPC", Signal="MarionetteEscapeCompleted"}, Secondary={Kind="Area", Status="Confused", Duration=8, Power=1.5}}},
+    {"Scholar of Yore", "Historical Projection", "Resolve a historical clue using an authenticated record", "HistoricalClueResolved", "Reach into the Fog of History to summon a temporary phantom echo from past records [UNVERIFIED].", "Immersion in the Fog of History and ancient lore", "Position", {"Historical Recall", "Self", "Draw upon your past historical state to restore a bounded portion of health and spirituality [UNVERIFIED]."}, {Primary={Kind="Echo", Target="Position", Duration=20, Signal="HistoricalClueResolved"}, Secondary={Kind="Recall", Target="Self", Power=0.25}}},
+    {"Miracle Invoker", "Wish Fulfillment", "Fulfill a server-assigned wish within its constraints", "WishFulfilled", "Expend accumulated Wish Credits to invoke a restorative miracle upon yourself [UNVERIFIED].", "Accumulation of wishes and walking-miracle authority", "Position", {"Miracle of Recovery", "NPC", "Weave golden threads of miracle light to mend your wounds and replenish spirituality [UNVERIFIED]."}, {Primary={Kind="Wish", Target="Self", Signal="WishFulfilled"}, Secondary={Kind="Wish", Target="Self", Power=0.6}}},
+    {"Attendant of Mysteries", "Grafting", "Resolve a scripted encounter using a valid graft", "GraftEncounterResolved", "Splice spiritual knots between yourself and nearby foes so incoming harm is reflected along the graft [UNVERIFIED].", "Sovereignty over the curtain of mysteries and grafting", "Position", {"Realm of Mysteries", "Position", "Lower a veiled curtain of grey fog that locks nearby enemies in stasis and deals heavy damage [UNVERIFIED]."}, {Primary={Kind="Graft", Target="Position", Duration=12, Signal="GraftEncounterResolved"}, Secondary={Kind="Area", Target="Position", Status="Stasis", Duration=4, Power=3}}},
 }, "https://lordofthemysteries.fandom.com/wiki/Fool_Pathway/Abilities")
 ```
 
@@ -894,10 +1207,17 @@ return freeze({
         LowAreaSegments=4,NormalAreaSegments=12,ThreadScale=0.45,RecallOffset=0.6,DepthOffset=0.3,
         TriggerLife=0.8,
         PreviewRadius=4,
-        WindupGlyphs={Divination="Book",Acrobat="Seal",Composure="Seal",Paper="Seal",Veil="Eye",Voice="Seal",Puppet="Thread",Exchange="Thread",
-            Illusion="Eye",History="Book",Recovery="Eye",Miracle="Star",Graft="Thread",Domain="Seal",Stealth="Split",Deceit="Split",Decipher="Book",
-            Thought="Eye",Parasite="Split",Destiny="Cut",Time="Clock",Trick="Star",Astrology="Star",Record="Book",Release="Book",Conceal="Door",Seal="Door",
-            Replica="Book",Gate="Star",Closure="Key"},
+        WindupGlyphs={
+            Divination="Card",Reading="Eye",Acrobat="Circle",Composure="Scale",Flame="Flame",Paper="Card",
+            Veil="Mask",Voice="Circle",Puppet="Thread",Command="Thread",Exchange="Thread",Illusion="Mask",
+            History="Hourglass",Recovery="Hourglass",Miracle="Star",MiracleMend="Star",Graft="Thread",Domain="Crown",
+            Pickpocket="Split",Stealth="Split",Deceit="Split",Misdirection="Cut",Decipher="Book",Interpret="Split",
+            Theft="Split",EnergyTheft="Cut",Thought="Split",Dream="Cut",Parasite="Thread",Siphon="Split",
+            Mentor="Mask",Belief="Crown",Destiny="Cut",Payload="Star",Time="Clock",TimeDelay="Clock",
+            Threshold="Key",Passage="Key",Trick="Star",Wind="Circle",Astrology="Star",Ward="Arch",
+            Record="Book",Release="Book",Travel="Door",Door="Key",Conceal="Door",Seal="Seal",
+            Wandering="Arch",Pocket="Door",Replica="Book",Planar="Arch",Gate="Key",Closure="Seal",
+        },
         Defaults={Seer="RingBurst",Marauder="GlitchFlicker",Apprentice="DoorFrame"},
         Pilots={"Seer_9_Secondary","Seer_7","Marauder_9","Marauder_6","Apprentice_9","Apprentice_5"}},
     DefaultCosts={Part=1,Attachment=8,Beam=4},
@@ -942,13 +1262,23 @@ return freeze({
         ScreenEdgePulse={Duration=0.5,Priority=4},
         ShockwaveRing={Duration=0.8,Priority=2,Radius=4,Start=0.4},
         AfterimageTrail={Duration=1,Priority=2,Length=5,Height=2,Width=0.12,Head=0.18},
-        SigilStencil={Duration=0.85,Priority=3,Size=1.5,Paths={Eye=T.Glyphs.Eye,Split=T.Glyphs.Split,Door=T.Glyphs.Door,
+        SigilStencil={Duration=0.85,Priority=3,Size=1.5,Paths={
+            Eye=T.Glyphs.Eye,Split=T.Glyphs.Split,Door=T.Glyphs.Door,
             Book=T.Glyphs.Book,Star=T.Glyphs.Star,Thread=T.Glyphs.Thread,Seal=T.Glyphs.Seal,
-            Key={{{0.4,0.12},{0.6,0.12},{0.7,0.25},{0.6,0.4},{0.4,0.4},{0.3,0.25},{0.4,0.12}},{{0.5,0.4},{0.5,0.9},{0.7,0.9}},{{0.5,0.72},{0.65,0.72}}},
-            Clock={{{0.5,0.08},{0.5,0.2}},{{0.9,0.5},{0.78,0.5}},{{0.5,0.92},{0.5,0.8}},{{0.1,0.5},{0.22,0.5}},{{0.5,0.5},{0.5,0.3}},{{0.5,0.5},{0.68,0.6}}},
-            Cut={{{0.25,0.85},{0.7,0.15}},{{0.4,0.85},{0.85,0.15}}},
+            Card=T.Glyphs.Card,Flame=T.Glyphs.Flame,Mask=T.Glyphs.Mask,Scale=T.Glyphs.Scale,
+            Crown=T.Glyphs.Crown,Hourglass=T.Glyphs.Hourglass,Arch=T.Glyphs.Arch,Circle=T.Glyphs.Circle,
+            Key=T.Glyphs.Key,Clock=T.Glyphs.Clock,Cut=T.Glyphs.Cut,
             EyeLow={{{0,0.5},{0.5,0.2},{1,0.5},{0.5,0.8},{0,0.5}}},
-            DoorLow={{{0.24,0.9},{0.24,0.15},{0.76,0.15},{0.76,0.9}}}}},
+            DoorLow={{{0.24,0.9},{0.24,0.15},{0.76,0.15},{0.76,0.9}}},
+            CardLow={{{0.26,0.12},{0.74,0.12},{0.74,0.88},{0.26,0.88},{0.26,0.12}}},
+            FlameLow={{{0.5,0.10},{0.72,0.55},{0.5,0.90},{0.28,0.55},{0.5,0.10}}},
+            MaskLow={{{0.20,0.24},{0.80,0.24},{0.5,0.88},{0.20,0.24}}},
+            ScaleLow={{{0.5,0.14},{0.5,0.86}},{{0.18,0.34},{0.82,0.34}}},
+            CrownLow={{{0.16,0.76},{0.32,0.30},{0.5,0.60},{0.68,0.30},{0.84,0.76}}},
+            HourglassLow={{{0.24,0.14},{0.76,0.14},{0.24,0.86},{0.76,0.86},{0.24,0.14}}},
+            ArchLow={{{0.18,0.90},{0.18,0.36},{0.5,0.12},{0.82,0.36},{0.82,0.90}}},
+            CircleLow={{{0.5,0.12},{0.88,0.5},{0.5,0.88},{0.12,0.5},{0.5,0.12}}},
+        }},
         CardFan={Duration=1.1,Priority=3,Count=3,LowCount=1,Size=Vector3.new(0.55,0.85,0.025),Spread=18,Offset=0.22,Color=T.Colors.Text,Alpha=0.15},
         PaperFold={Duration=1.1,Priority=3,Color=T.Colors.Text,Alpha=0.15,BreakDistance=1.2,
             Pieces={{0,0.6,0,0.26,0.26,0.04},{0,0.12,0,0.35,0.55,0.04},{-0.3,0.25,0,0.35,0.14,0.04},{0.3,0.25,0,0.35,0.14,0.04},
@@ -3412,7 +3742,9 @@ function Feedback.new(parent: GuiObject,data: any,cinematic: (boolean)->()): any
     self.AdvanceSmall=Kit.Text(self.Advance,"",T.Type.Small,T.Fonts.Number);self.AdvanceSmall.Size=UDim2.new(1,0,0,T.Feedback.SubtitleHeight);self.AdvanceSmall.TextXAlignment=Enum.TextXAlignment.Center
     self.AdvanceTitle=Kit.Text(self.Advance,"",T.Type.Title,T.Fonts.Title);self.AdvanceTitle.Size=UDim2.new(1,-T.Layout.Modal.BodyPad*2,0,T.Feedback.AdvanceTitleHeight);self.AdvanceTitle.Position=UDim2.fromOffset(T.Layout.Modal.BodyPad,T.Feedback.SubtitleHeight);self.AdvanceTitle.TextXAlignment=Enum.TextXAlignment.Center
     self.Acting=Kit.Text(self.Root,"",T.Type.Small,T.Fonts.Number);self.Acting.BackgroundColor3=T.Colors.Ink;self.Acting.BackgroundTransparency=0;self.Acting.Visible=false
+    self.Acting.TextXAlignment=Enum.TextXAlignment.Center;Kit.Corner(self.Acting);Kit.Stroke(self.Acting,T.Colors.Gold,T.Style.BorderAlpha)
     self.SanityWarning=Kit.Text(self.Root,"",T.Type.Small,T.Fonts.Number);self.SanityWarning.BackgroundColor3=T.Colors.Ink;self.SanityWarning.BackgroundTransparency=0;self.SanityWarning.Visible=false
+    self.SanityWarning.TextXAlignment=Enum.TextXAlignment.Center;self.SanityWarning.TextColor3=T.Colors.Danger;Kit.Corner(self.SanityWarning);Kit.Stroke(self.SanityWarning,T.Colors.Danger,T.Style.BorderAlpha)
     self.Vignette=Kit.New("Frame",self.Root,{Name="SanityVignette",Size=UDim2.fromScale(1,1),BackgroundTransparency=1})
     self.Edges={}
     self.Flashes={}
@@ -3484,6 +3816,9 @@ end
 function Feedback.Sequence(self: any,state: any)
     self.AdvanceSerial+=1;local serial=self.AdvanceSerial
     local seq=self.Data.Pathways[state.PathwayId].Sequences[state.Sequence]
+    Kit.Skin(self.Advance,state.PathwayId)
+    local stroke=self.Advance:FindFirstChildOfClass("UIStroke")
+    if stroke then stroke.Color=Kit.PathColor(state.PathwayId) end
     self.AdvanceSmall.Text="SEQUENCE "..state.Sequence.." · "..string.upper(state.PathwayId)
     self.AdvanceSmall.TextColor3=Kit.PathColor(state.PathwayId);self.AdvanceTitle.Text=seq.Name
     self.Advance.Visible=true;self.Advance.GroupTransparency=1;self.Cinematic(true);Kit.Sound(self.Root,"Advance")
@@ -3504,6 +3839,8 @@ function Feedback.Update(self: any,state: any)
         if state.Health<previous.Health then self:Flash() end
         if state.PathwayId==previous.PathwayId and state.Sequence==previous.Sequence and state.Digestion>previous.Digestion then
             self.Acting.Text=T.Ritual.DigestionText..string.format("%.1f%%",state.Digestion-previous.Digestion)
+            local stroke=self.Acting:FindFirstChildOfClass("UIStroke")
+            if stroke then stroke.Color=Kit.PathColor(state.PathwayId) end
             self.ActingUntil=os.clock()+T.Ritual.DigestionTime
         end
         if state.PathwayId and (state.PathwayId~=previous.PathwayId or state.Sequence~=previous.Sequence) then self:Sequence(state) end
@@ -3631,11 +3968,15 @@ function Hud.new(parent: Instance,data: any,callbacks: any): any
         local segments={}
         local stored=Kit.Text(face,T.AbilityUI.StoredSymbol,T.Type.Small,T.Fonts.Number)
         stored.Name="StoredPower";stored.TextColor3=T.Colors.Bronze;stored.Visible=false;stored.TextXAlignment=Enum.TextXAlignment.Center
+        stored.BackgroundColor3=T.Colors.Ink;stored.BackgroundTransparency=0.15
         stored.Size=UDim2.fromOffset(T.AbilityUI.StoredSize,T.AbilityUI.StoredSize)
         stored.Position=UDim2.new(1,-T.AbilityUI.StoredSize-T.AbilityUI.StoredPad,0,T.AbilityUI.StoredPad)
+        Kit.Corner(stored,T.Style.FillCorner);Kit.Stroke(stored,T.Colors.Bronze,T.Style.BorderAlpha)
         local recorded=Kit.Text(face,"",T.Type.Small,T.Fonts.Number)
         recorded.Name="RecordedCharges";recorded.TextColor3=T.Colors.Teal;recorded.Visible=false
+        recorded.BackgroundColor3=T.Colors.Ink;recorded.BackgroundTransparency=0.15
         recorded.Size=stored.Size;recorded.Position=stored.Position;recorded.TextXAlignment=Enum.TextXAlignment.Center
+        Kit.Corner(recorded,T.Style.FillCorner);Kit.Stroke(recorded,T.Colors.Teal,T.Style.BorderAlpha)
         for segment=1,T.Layout.Hotbar.Segments do
             local angle=(segment-1)/T.Layout.Hotbar.Segments*math.pi*2-math.pi/2
             table.insert(segments,Kit.New("Frame",face,{Name="CooldownSegment",BorderSizePixel=0,BackgroundColor3=T.Colors.Gold,
@@ -3648,8 +3989,14 @@ function Hud.new(parent: Instance,data: any,callbacks: any): any
             local id=self.State and self.State.Loadout and self.State.Loadout[i]
             local a=id and data.Abilities[id]
             if a then
-                self.TooltipText.Text=a.Name.." · "..tostring(a.SpiritualityCost).." spirituality"
-                if a.Id=="Marauder_6" and self.State.StolenPower then self.TooltipText.Text..=" · "..T.AbilityUI.StoredPrefix..(T.AbilityUI.PowerNames[self.State.StolenPower] or self.State.StolenPower) end
+                local summary=a.Name.." · "..tostring(a.SpiritualityCost).." spirituality · "..string.format("%.0fs CD",a.CooldownSeconds)
+                if a.Id=="Marauder_6" and self.State.StolenPower then
+                    summary..=" · "..T.AbilityUI.StoredPrefix..(T.AbilityUI.PowerNames[self.State.StolenPower] or tostring(self.State.StolenPower))
+                elseif a.PathwayId=="Apprentice" and (a.Operation.Kind=="Record" or a.Operation.Kind=="Release") and (self.State.RecordedCharges or 0)>0 then
+                    local recName=self.State.RecordedPowerId and (T.AbilityUI.PowerNames[self.State.RecordedPowerId] or tostring(self.State.RecordedPowerId)) or "Power"
+                    summary..=" · Recorded: "..recName.." ("..tostring(self.State.RecordedCharges).."x)"
+                end
+                self.TooltipText.Text=summary
                 self.Tooltip.Visible=true
             end
         end
@@ -3749,12 +4096,15 @@ function Hud.Render(self: any,state: any,receivedAt: number)
         slot.Stored.Visible=id=="Marauder_6" and type(state.StolenPower)=="string"
         slot.Recorded.Visible=a~=nil and a.PathwayId=="Apprentice" and (a.Operation.Kind=="Record" or a.Operation.Kind=="Release") and (state.RecordedCharges or 0)>0
         slot.Recorded.Text=tostring(state.RecordedCharges or 0)
+        if a then
+            slot.Cost.TextColor3=if (state.Spirituality or 0)>=a.SpiritualityCost then T.Colors.Spirituality else T.Colors.Muted
+        end
         if slot.Id~=id then
             slot.Id=id;Kit.Clear(slot.Glyph)
             slot.Seal.Visible=not a;slot.KeyBadge.Visible=a~=nil;slot.Cost.Text=if a then "✦ "..tostring(a.SpiritualityCost) else ""
             for _,child in ipairs(slot.Face:GetChildren()) do if child:IsA("UIStroke") then child.Transparency=if a then T.Style.BorderAlpha else 1 end end
             if a and self.Layout then
-                local icon=Kit.Glyph(slot.Glyph,T.OperationGlyph[a.Operation.Kind] or "Seal",self.Layout.Profile.Slot*T.Layout.Hotbar.GlyphFraction,Kit.PathColor(a.PathwayId))
+                local icon=Kit.Glyph(slot.Glyph,Kit.AbilityGlyph(a),self.Layout.Profile.Slot*T.Layout.Hotbar.GlyphFraction,Kit.PathColor(a.PathwayId))
                 icon.Size=UDim2.fromScale(1,1)
             end
         end
@@ -3900,6 +4250,9 @@ function Kit.Glyph(parent: Instance,kind: string,pixels: number,color: Color3?):
     end
     return f
 end
+function Kit.AbilityGlyph(a: any): string
+    return (a and T.AbilityGlyphs and T.AbilityGlyphs[a.Id]) or (a and a.Operation and T.OperationGlyph[a.Operation.Kind]) or "Seal"
+end
 -- All ornaments are original line geometry with no input surface or external image.
 function Kit.Skin(parent: Instance,pathway: any,small: boolean?): any
     local old=parent:FindFirstChild("PathwaySkin");if old then old:Destroy() end
@@ -3920,11 +4273,36 @@ function Kit.Skin(parent: Instance,pathway: any,small: boolean?): any
         if pathway=="Seer" then
             Kit.New("Frame",root,{BorderSizePixel=0,BackgroundColor3=spec.Accent,BackgroundTransparency=T.Skins.OrnamentAlpha,
                 AnchorPoint=Vector2.new(0.5,0),Position=UDim2.new(0.5,0,0,T.Skins.Inset),Size=UDim2.new(0.5,0,0,T.Style.Stroke),Rotation=spec.Rotation})
+            Kit.New("Frame",root,{BorderSizePixel=0,BackgroundColor3=spec.Accent,BackgroundTransparency=T.Skins.OrnamentAlpha,
+                AnchorPoint=Vector2.new(0.5,1),Position=UDim2.new(0.5,0,1,-T.Skins.Inset),Size=UDim2.new(0.36,0,0,T.Style.Stroke),Rotation=-spec.Rotation})
+        elseif pathway=="Marauder" then
+            Kit.New("Frame",root,{BorderSizePixel=0,BackgroundColor3=spec.Accent,BackgroundTransparency=T.Skins.OrnamentAlpha,
+                AnchorPoint=Vector2.new(1,0.5),Position=UDim2.new(1,-T.Skins.Inset,0.5,0),Size=UDim2.new(0,T.Style.Stroke,0.34,0),Rotation=spec.Rotation})
         elseif pathway=="Apprentice" then
             for _,side in ipairs({0,1}) do
                 Kit.New("Frame",root,{BorderSizePixel=0,BackgroundColor3=spec.Accent,BackgroundTransparency=T.Skins.OrnamentAlpha,
                     Position=UDim2.new(side,if side==0 then T.Skins.Inset else -T.Skins.Inset,0,T.Skins.Inset),Size=UDim2.new(0,T.Style.Stroke,1,-T.Skins.Inset*2)})
             end
+            Kit.New("Frame",root,{BorderSizePixel=0,BackgroundColor3=spec.Accent,BackgroundTransparency=T.Skins.OrnamentAlpha,
+                AnchorPoint=Vector2.new(0.5,0),Position=UDim2.new(0.5,0,0,T.Skins.Inset+2),Size=UDim2.new(0.56,0,0,T.Style.Stroke)})
+        end
+    else
+        -- Large panel folio ornament: top/bottom hairlines and pathway motif accents
+        Kit.New("Frame",root,{Name="TopRule",BorderSizePixel=0,BackgroundColor3=spec.Accent,
+            BackgroundTransparency=T.Style.GoldHairlineAlpha,Position=UDim2.fromOffset(T.Skins.Inset+T.Skins.Spine+4,T.Skins.Inset),
+            Size=UDim2.new(1,-(T.Skins.Inset*2+T.Skins.Spine+8),0,T.Style.Stroke),Rotation=if pathway=="Marauder" then 0.5 else 0})
+        if pathway=="Seer" then
+            Kit.New("Frame",root,{Name="BottomRule",BorderSizePixel=0,BackgroundColor3=spec.Accent,
+                BackgroundTransparency=T.Style.GoldHairlineAlpha,Position=UDim2.new(0,T.Skins.Inset+T.Skins.Spine+4,1,-T.Skins.Inset-1),
+                Size=UDim2.new(0.65,0,0,T.Style.Stroke)})
+        elseif pathway=="Marauder" then
+            Kit.New("Frame",root,{Name="SplitRule",BorderSizePixel=0,BackgroundColor3=spec.Accent,
+                BackgroundTransparency=T.Skins.OrnamentAlpha,AnchorPoint=Vector2.new(1,1),
+                Position=UDim2.new(1,-T.Skins.Inset,1,-T.Skins.Inset),Size=UDim2.new(0.28,0,0,T.Style.Stroke),Rotation=spec.Rotation})
+        elseif pathway=="Apprentice" then
+            Kit.New("Frame",root,{Name="RightJamb",BorderSizePixel=0,BackgroundColor3=spec.Accent,
+                BackgroundTransparency=T.Skins.OrnamentAlpha,AnchorPoint=Vector2.new(1,0),
+                Position=UDim2.new(1,-T.Skins.Inset,0,T.Skins.Inset),Size=UDim2.new(0,T.Style.Stroke,1,-T.Skins.Inset*2)})
         end
     end
     return root
@@ -4019,16 +4397,20 @@ end
 function Menus.Render(self: any)
     if not self.Layout then return end
     self:Resize(self.Layout)
-    Kit.Skin(self.Card,self.State and self.State.PathwayId)
+    local state=self.State
+    local pathAccent=Kit.PathColor(state and state.PathwayId)
+    Kit.Skin(self.Card,state and state.PathwayId)
     local oldScroll=self.Scroll.CanvasPosition
     Kit.Clear(self.PreviewActions);Kit.Clear(self.Scroll);Kit.List(self.Scroll,T.Layout.Modal.Gap);self.Rows={}
     self.Title.Text=if self.View=="Preview" then (if self.Purchase then "POTION ALTAR" else "POTION RITUAL") else "BEYONDER "..string.upper(self.Tab)
-    self.Footer.Text=if self.View=="Preview" then "The altar seals only what you confirm." else "B · close journal"
+    self.Footer.Text=if self.View=="Preview" then "The altar seals only what you confirm." else "B · close journal   |   Select slot 1–6 to bind unlocked powers"
     for name,b in pairs(self.Tabs) do
-        b.BackgroundColor3=if name==self.Tab then T.Colors.Ink:Lerp(T.Colors.Gold,T.Style.HoverBlend) else T.Colors.Slate
-        b.TextColor3=if name==self.Tab then T.Colors.Gold else T.Colors.Text
+        local active=name==self.Tab
+        b.BackgroundColor3=if active then T.Colors.Ink:Lerp(pathAccent,T.Style.HoverBlend) else T.Colors.Slate
+        b.TextColor3=if active then pathAccent else T.Colors.Text
+        local stroke=b:FindFirstChildOfClass("UIStroke")
+        if stroke then stroke.Color=if active then pathAccent else T.Colors.Gold;stroke.Transparency=if active then T.Skins.ReadyAlpha else T.Style.BorderAlpha end
     end
-    local state=self.State
     if not state or not state.Ready then self:TextRow("Your journal is opening…");return end
     if self.View=="Preview" then
         local view=Model.Potion(self.Data,state,self.PreviewId,self.Purchase)
@@ -4038,7 +4420,7 @@ function Menus.Render(self: any)
             Kit.Glyph(row,"Bottle",T.Layout.Modal.Bottle,Kit.PathColor(potion.PathwayId))
             local title=Kit.Text(row,potion.Name,self.Layout.Profile.HeadingSize,T.Fonts.Heading)
             title.Position=UDim2.fromOffset(T.Layout.Modal.Bottle+T.Layout.Modal.Gap,0);title.Size=UDim2.new(1,-T.Layout.Modal.Bottle-T.Layout.Modal.Gap,1,0)
-            self:TextRow(potion.PathwayId.." · "..(if potion.TargetSequence==9 then "Uninitiated → 9" else tostring(potion.RequiredSequence).." → "..tostring(potion.TargetSequence)))
+            self:TextRow(potion.PathwayId.." · "..(if potion.TargetSequence==9 then "Uninitiated → Sequence 9" else "Sequence "..tostring(potion.RequiredSequence).." → Sequence "..tostring(potion.TargetSequence)))
             self:TextRow("Required digestion: "..potion.RequiredDigestion.."%  ·  Yours: "..string.format("%.1f%%",state.Digestion))
             self:TextRow("Owned: "..view.Owned..(if self.Purchase then "  ·  Price: "..view.Cost.." gold" else "  ·  Drinking consumes one potion"))
         end
@@ -4058,10 +4440,10 @@ function Menus.Render(self: any)
         self:UpdatePreview()
     elseif self.Tab=="Journal" then
         if type(state.RecordedPowerId)=="string" and (state.RecordedCharges or 0)>0 then
-            self:TextRow("Recorded: "..(T.AbilityUI.PowerNames[state.RecordedPowerId] or state.RecordedPowerId).." · "..state.RecordedCharges.." uses remaining.")
+            self:TextRow("Recorded inscription: "..(T.AbilityUI.PowerNames[state.RecordedPowerId] or state.RecordedPowerId).." · "..state.RecordedCharges.." uses remaining.")
         end
         if type(state.StolenPower)=="string" then
-            self:TextRow(T.AbilityUI.StoredPrefix..(T.AbilityUI.PowerNames[state.StolenPower] or state.StolenPower).." · use Ability Theft again to release it.")
+            self:TextRow(T.AbilityUI.StoredPrefix..(T.AbilityUI.PowerNames[state.StolenPower] or state.StolenPower).." · cast Ability Theft again to release it.")
         end
         self:TextRow((T.Skins[state.PathwayId] or T.Skins.Seer).Name.." · The acting method",true)
         if state.PathwayId then
@@ -4069,25 +4451,54 @@ function Menus.Render(self: any)
             self:TextRow(seq.ActingObjectives[1].Label)
             self:TextRow(string.format("Digestion %.1f%% · Acting progress %d",state.Digestion,state.ActingProgress))
         else self:TextRow("Choose one starter potion in Inventory. Its pathway becomes your permanent path.") end
-        self:TextRow("Choose a slot, then select an ability below.")
+        self:TextRow("Select a hotbar slot (1–6), then click an unlocked ability below to bind it.")
         local slots=Kit.New("ScrollingFrame",self.Scroll,{Name="SlotPicker",Size=UDim2.new(1,0,0,T.Layout.Modal.SlotHeight),CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.X,
             ScrollingDirection=Enum.ScrollingDirection.X,BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=T.Style.Stroke,ScrollBarImageColor3=T.Colors.Gold})
         Kit.List(slots,T.Layout.Modal.NavGap,true)
         for i=1,T.Layout.Hotbar.Slots do
-            local b=Kit.Button(slots,tostring(i),function() self.SelectedSlot=i;self:Render() end)
-            b.Size=UDim2.fromOffset(T.Layout.Modal.SlotHeight,T.Layout.Modal.SlotHeight);b.LayoutOrder=i
-            if self.SelectedSlot==i then b.BackgroundColor3=T.Colors.Ink:Lerp(T.Colors.Gold,T.Style.HoverBlend) end
+            local keyLabel=T.Input.KeyNames[i] or tostring(i)
+            local label=tostring(i).."·"..keyLabel
+            local b=Kit.Button(slots,label,function() self.SelectedSlot=i;self:Render() end)
+            b.Size=UDim2.fromOffset(math.max(T.Layout.Modal.SlotHeight,54),T.Layout.Modal.SlotHeight);b.LayoutOrder=i
+            local active=self.SelectedSlot==i
+            if active then
+                b.BackgroundColor3=T.Colors.Ink:Lerp(pathAccent,T.Style.HoverBlend)
+                b.TextColor3=pathAccent
+                local stroke=b:FindFirstChildOfClass("UIStroke")
+                if stroke then stroke.Color=pathAccent;stroke.Transparency=T.Skins.ReadyAlpha end
+            elseif state.Loadout and state.Loadout[i] then
+                b.TextColor3=T.Colors.Text
+            else
+                b.TextColor3=T.Colors.Muted
+            end
         end
         for _,id in ipairs(Model.Unlocked(self.Data,state)) do
             local ability=self.Data.Abilities[id]
+            local equippedSlots={}
+            for slotIdx=1,T.Layout.Hotbar.Slots do
+                if state.Loadout and state.Loadout[slotIdx]==id then
+                    table.insert(equippedSlots,T.Input.KeyNames[slotIdx] or tostring(slotIdx))
+                end
+            end
+            local isCurrentSlot=state.Loadout and state.Loadout[self.SelectedSlot]==id
             local b=self:ActionRow("",function() self.Callbacks.Intent("Equip",{Id=id,Slot=self.SelectedSlot}) end)
             b.Size=UDim2.new(1,-T.Layout.Modal.Gap,0,T.Layout.Modal.AbilityRow)
-            local glyph=Kit.Glyph(b,T.OperationGlyph[ability.Operation.Kind],T.Layout.Modal.Icon,Kit.PathColor(ability.PathwayId));glyph.Position=UDim2.fromOffset(T.Layout.Modal.Gap,T.Layout.Modal.Gap)
-            local text=Kit.Text(b,ability.Name,self.Layout.Profile.BodySize,T.Fonts.Heading)
+            if isCurrentSlot then
+                b.BackgroundColor3=T.Colors.Ink:Lerp(pathAccent,T.Style.HoverBlend)
+                local stroke=b:FindFirstChildOfClass("UIStroke")
+                if stroke then stroke.Color=pathAccent;stroke.Transparency=T.Skins.ReadyAlpha end
+            end
+            local glyph=Kit.Glyph(b,Kit.AbilityGlyph(ability),T.Layout.Modal.Icon,Kit.PathColor(ability.PathwayId))
+            glyph.Position=UDim2.fromOffset(T.Layout.Modal.Gap,(T.Layout.Modal.AbilityRow-T.Layout.Modal.Icon)/2)
             local x=T.Layout.Modal.Icon+T.Layout.Modal.Gap*2
-            text.Position=UDim2.fromOffset(x,0);text.Size=UDim2.new(1,-x-T.Layout.Modal.Gap,0,T.Layout.Modal.AbilityRow-T.Layout.Modal.Footer)
-            local info=Kit.Text(b,"Seq "..ability.UnlockSequence.." · "..ability.SpiritualityCost.." spirit · "..ability.CooldownSeconds.."s",T.Type.Micro,T.Fonts.Number)
-            info.Position=UDim2.new(0,x,1,-T.Layout.Modal.Footer);info.Size=UDim2.new(1,-x-T.Layout.Modal.Gap,0,T.Layout.Modal.Footer);info.TextColor3=T.Colors.Muted
+            local titleStr=ability.Name..(if #equippedSlots>0 then "  ·  Equipped ["..table.concat(equippedSlots,",").."]" else "")
+            local text=Kit.Text(b,titleStr,self.Layout.Profile.BodySize,T.Fonts.Heading)
+            text.Position=UDim2.fromOffset(x,4);text.Size=UDim2.new(1,-x-T.Layout.Modal.Gap,0,24)
+            if #equippedSlots>0 then text.TextColor3=pathAccent end
+            local desc=Kit.Text(b,ability.Description or "",T.Type.Micro,T.Fonts.Body)
+            desc.Position=UDim2.fromOffset(x,28);desc.Size=UDim2.new(1,-x-T.Layout.Modal.Gap,0,28);desc.TextColor3=T.Colors.Text
+            local info=Kit.Text(b,"Seq "..ability.UnlockSequence.." · "..ability.SpiritualityCost.." spirit · "..ability.CooldownSeconds.."s CD · Target: "..ability.Target,T.Type.Micro,T.Fonts.Number)
+            info.Position=UDim2.new(0,x,1,-T.Layout.Modal.Footer+4);info.Size=UDim2.new(1,-x-T.Layout.Modal.Gap,0,T.Layout.Modal.Footer-4);info.TextColor3=T.Colors.Muted
         end
         self:ActionRow("Reduced motion: "..(if self.ReducedMotion then "on" else "off"),function()
             self.ReducedMotion=not self.ReducedMotion;self.Callbacks.ReducedMotion(self.ReducedMotion);self:Render()
@@ -4102,10 +4513,17 @@ function Menus.Render(self: any)
             local path=self.Data.Pathways[state.PathwayId];local seq=path.Sequences[state.Sequence]
             self:TextRow(path.Name.." / "..path.Alias,true);self:TextRow("Sequence "..state.Sequence.." — "..seq.Name,true)
             self:TextRow(seq.ActingObjectives[1].Label)
+            if seq.PassiveTraits and #seq.PassiveTraits>0 then
+                self:TextRow("Sequence passives",true)
+                for _,trait in ipairs(seq.PassiveTraits) do
+                    self:TextRow(if type(trait)=="string" then trait else tostring(trait.Name).." — "..tostring(trait.Description))
+                end
+            end
+            self:TextRow("Attributes",true)
             for _,key in ipairs({"Health","Spirituality","Strength","Agility","Perception","Intuition","Resistance"}) do
                 self:TextRow(key.."   "..tostring(seq.BaseStats[key]))
             end
-            self:TextRow("Earlier abilities remain available in your journal.")
+            self:TextRow("Earlier sequence abilities remain retained in your journal.")
         else
             self:TextRow("Three paths into the unknown",true)
             for _,id in ipairs({"Seer","Marauder","Apprentice"}) do
@@ -4542,13 +4960,17 @@ function Ability.Layers(self: any,a: any,e: any): (any,number)
     local context={Layer=layer,Frame=function(position: Vector3) return self:Frame(position) end,Simplified=profile.Low or profile.Mobile}
     context=Choreography.Extend(a,e,context)
     if e.Phase=="Begin" then
-        local at=e.Position+Vector3.yAxis*C.Ability.HandHeight
-        local family=Anim.AbilityTimings[a.Id] and Anim.AbilityTimings[a.Id].Family
-        local glyph=C.Ability.WindupGlyphs[family] or (if a.PathwayId=="Seer" then C.Ability.EyeGlyph elseif a.PathwayId=="Marauder" then C.Ability.TheftGlyph else C.Ability.DoorGlyph)
-        local lowGlyph=if a.PathwayId=="Seer" then C.Ability.LowEyeGlyph elseif a.PathwayId=="Marauder" then glyph else C.Ability.LowDoorGlyph
+        local timing=Anim.AbilityTimings[a.Id]
+        local gestureHeight=Choreography.GestureHeight(a)
+        local offset=Vector3.yAxis*gestureHeight
+        local at=e.Position+offset
+        local family=timing and timing.Family
+        local glyph=(timing and timing.Stencil) or C.Ability.WindupGlyphs[family] or (if a.PathwayId=="Seer" then C.Ability.EyeGlyph elseif a.PathwayId=="Marauder" then C.Ability.TheftGlyph else C.Ability.DoorGlyph)
+        local lowKey=glyph.."Low"
+        local lowGlyph=if C.Blocks.SigilStencil.Paths[lowKey] then lowKey elseif a.PathwayId=="Seer" then C.Ability.LowEyeGlyph elseif a.PathwayId=="Marauder" then glyph else C.Ability.LowDoorGlyph
         local root=e.Character and (e.Character.PrimaryPart or e.Character:FindFirstChild("HumanoidRootPart"))
         return {layer("SigilStencil",at,{Frame=self:Frame(at),Glyph=glyph,LowGlyph=lowGlyph,Scale=C.Ability.WindupScale,
-            Follow=root,Offset=Vector3.yAxis*C.Ability.HandHeight})},
+            Follow=root,Offset=offset})},
             math.max(C.Composition.CancelFade,e.EndsAt-self.Callbacks.Clock())
     end
     local layers,duration=Families[a.PathwayId].Build(a,e,context)
@@ -5222,7 +5644,9 @@ return Outfit
 ```lua
 --!strict
 -- Shared original composition vocabulary; no targets, statuses or outcomes are decided here.
-local C=require(game:GetService("ReplicatedStorage").Shared.VfxConfig)
+local Shared=game:GetService("ReplicatedStorage").Shared
+local C=require(Shared.VfxConfig)
+local Anim=require(Shared.AnimConfig)
 local Choreography={}
 function Choreography.Root(target: any): any
     if typeof(target)~="Instance" then return nil end
@@ -5230,13 +5654,23 @@ function Choreography.Root(target: any): any
     if target:IsA("Model") then return target.PrimaryPart or target:FindFirstChild("HumanoidRootPart") end
     return nil
 end
+function Choreography.GestureHeight(a: any): number
+    local timing=Anim.AbilityTimings[a.Id]
+    local spec=timing and timing.Origin
+    return if spec and type(spec[2])=="number" then spec[2] else C.Ability.HandHeight
+end
 function Choreography.Extend(a: any,e: any,c: any): any
+    local gestureY=Choreography.GestureHeight(a)
     c.Root=Choreography.Root
     c.Self=e.Destination or e.Position
     c.Origin=e.Origin or e.Position
     c.Head=c.Self+Vector3.yAxis*C.Ability.HeadHeight
     c.Chest=c.Self+Vector3.yAxis*C.Ability.ChestHeight
+    c.Gesture=c.Self+Vector3.yAxis*gestureY
+    c.OriginGesture=c.Origin+Vector3.yAxis*gestureY
     c.Target=e.Position
+    c.TargetHead=e.Position+Vector3.yAxis*C.Ability.HeadHeight
+    c.TargetChest=e.Position+Vector3.yAxis*C.Ability.ChestHeight
     c.Radius=e.Radius or math.max(C.Ability.PreviewRadius,a.RadiusStuds)
     c.Ground=function(at: Vector3?): Vector3
         if at then return at+Vector3.yAxis*C.Blocks.Common.HeightOffset end
@@ -5245,7 +5679,8 @@ function Choreography.Extend(a: any,e: any,c: any): any
     c.Mark=function(glyph: string,at: Vector3,scale: number?,options: any?): any
         local opts=table.clone(options or {})
         opts.Frame=opts.Frame or c.Frame(at);opts.Glyph=glyph
-        opts.LowGlyph=opts.LowGlyph or (if glyph=="Eye" then "EyeLow" elseif glyph=="Door" then "DoorLow" else glyph)
+        local lowKey=glyph.."Low"
+        opts.LowGlyph=opts.LowGlyph or (if C.Blocks.SigilStencil.Paths[lowKey] then lowKey elseif glyph=="Eye" then "EyeLow" elseif glyph=="Door" then "DoorLow" else glyph)
         opts.Scale=scale or C.Ability.Medium
         return c.Layer("SigilStencil",at,opts)
     end
@@ -5254,17 +5689,44 @@ function Choreography.Extend(a: any,e: any,c: any): any
         if radius then opts.Radius=radius/C.Tier[e.Tier].Scale end
         return c.Layer("GroundRune",at,opts)
     end
+    c.Burst=function(at: Vector3,scale: number?,tint: Color3?): any
+        return c.Layer("RingBurst",at,{Scale=scale or C.Ability.Medium,Detail=C.Ability.Detail,Tint=tint})
+    end
+    c.Shock=function(at: Vector3,scale: number?,tint: Color3?): any
+        return c.Layer("ShockwaveRing",at,{Scale=scale or C.Ability.Medium,Detail=C.Ability.Detail,Tint=tint})
+    end
+    c.Motes=function(at: Vector3,scale: number?,tint: Color3?): any
+        return c.Layer("RisingMotes",at,{Scale=scale or C.Ability.Small,Detail=C.Ability.Detail,Tint=tint})
+    end
+    c.Star=function(at: Vector3,scale: number?,tint: Color3?): any
+        return c.Layer("StarBurst",at,{Frame=c.Frame(at),Scale=scale or C.Ability.Medium,Tint=tint})
+    end
+    c.Glitch=function(at: Vector3,scale: number?,tint: Color3?): any
+        return c.Layer("GlitchFlicker",at,{Frame=c.Frame(at),Scale=scale or C.Ability.Medium,Tint=tint})
+    end
+    c.Cards=function(at: Vector3,scale: number?,moveTo: Vector3?): any
+        return c.Layer("CardFan",at,{Frame=c.Frame(at),Scale=scale or C.Ability.Medium,MoveTo=moveTo})
+    end
+    c.Paper=function(at: Vector3,broken: boolean?,scale: number?): any
+        return c.Layer("PaperFold",at,{Frame=c.Frame(at),Scale=scale or C.Ability.Medium,Break=broken})
+    end
+    c.Trail=function(at: Vector3,scale: number?,moveTo: Vector3?): any
+        return c.Layer("AfterimageTrail",at,{Frame=c.Frame(at),Scale=scale or C.Ability.Medium,MoveTo=moveTo})
+    end
+    c.Flash=function(at: Vector3,scale: number?): any
+        return c.Layer("ImpactFlash",at,{Frame=c.Frame(at),Scale=scale or C.Ability.Small})
+    end
     c.Beam=function(from: Vector3,to: Vector3,tint: Color3?): any
         return c.Layer("ThreadBeam",from,{EndPosition=to,Scale=C.Ability.ThreadScale,Tint=tint})
     end
     c.Ghost=function(at: Vector3,to: Vector3?): any
         return c.Layer("ContourEcho",at,{Frame=c.Frame(at),Scale=C.Ability.Medium,MoveTo=to})
     end
-    c.Veil=function(at: Vector3): any
-        return c.Layer("VeilRibbon",at,{Frame=c.Frame(at),Scale=C.Ability.VeilScale})
+    c.Veil=function(at: Vector3,scale: number?): any
+        return c.Layer("VeilRibbon",at,{Frame=c.Frame(at),Scale=scale or C.Ability.VeilScale})
     end
-    c.Door=function(at: Vector3,scale: number?): any
-        return c.Layer("DoorFrame",at,{Frame=c.Frame(at),Scale=scale or C.Ability.Medium})
+    c.Door=function(at: Vector3,scale: number?,nested: number?): any
+        return c.Layer("DoorFrame",at,{Frame=c.Frame(at),Scale=scale or C.Ability.Medium,Nested=nested})
     end
     return c
 end
@@ -5992,34 +6454,113 @@ function Apprentice.Build(a: any,e: any,c: any): (any,number?)
     end
     if id=="Apprentice_9" then
         local target=e.Target
-        if typeof(target)~="Instance" or not target:IsA("BasePart") or not target.Parent then return {c.Mark("Key",e.Position)},C.Ability.Life end
+        if typeof(target)~="Instance" or not target:IsA("BasePart") or not target.Parent then
+            return {c.Mark("Key",e.Position,C.Ability.Medium),c.Mark("Door",c.Gesture,C.Ability.Small)},C.Ability.Life
+        end
         local at=target.Position-Vector3.yAxis*(target.Size.Y/2)
-        return {c.Layer("DoorFrame",at,{Frame=CFrame.new(at)*target.CFrame.Rotation,Scale=1/C.Tier[e.Tier].Scale,
-            Width=target.Size.X+C.Ability.DoorMargin,Height=target.Size.Y+C.Ability.DoorMargin}),
-            c.Mark("Key",target.Position,C.Ability.Small)},C.Composition.ResultLife
+        local layers={
+            c.Layer("DoorFrame",at,{Frame=CFrame.new(at)*target.CFrame.Rotation,Scale=1/C.Tier[e.Tier].Scale,
+                Width=target.Size.X+C.Ability.DoorMargin,Height=target.Size.Y+C.Ability.DoorMargin}),
+            c.Mark("Key",target.Position,C.Ability.Small),
+        }
+        if not c.Simplified then
+            table.insert(layers,c.Beam(c.Gesture,target.Position))
+            table.insert(layers,c.Mark("Star",target.Position,C.Ability.Small))
+        end
+        return layers,C.Composition.ResultLife
     elseif id=="Apprentice_9_Secondary" then
-        return {c.Mark("Key",c.Chest,C.Ability.Medium),c.Mark("Star",c.Head,C.Ability.Small)},C.Ability.Life
+        local layers={c.Mark("Key",c.Gesture,C.Ability.Medium),c.Mark("Arch",c.Head,C.Ability.Small)}
+        if not c.Simplified then
+            table.insert(layers,c.Ring(c.Ground()))
+            table.insert(layers,c.Motes(c.Self,C.Ability.Small))
+        end
+        return layers,C.Ability.Life
     elseif id=="Apprentice_8" then
-        return {c.Mark("Star",c.Target,C.Ability.Small),c.Beam(c.Chest,c.Target)},C.Ability.Life
+        local layers={
+            c.Star(c.TargetChest,C.Ability.Medium),
+            c.Beam(c.Gesture,c.TargetChest),
+            c.Mark("Star",c.TargetHead,C.Ability.Small),
+        }
+        if not c.Simplified then table.insert(layers,c.Flash(c.TargetChest,C.Ability.Small)) end
+        return layers,C.Ability.Life
     elseif id=="Apprentice_8_Secondary" then
         local offset=Vector3.xAxis*C.Ability.Medium
-        return {c.Beam(e.Position-offset,e.Position+offset),c.Beam(e.Position-offset+Vector3.yAxis*C.Ability.Small,e.Position+offset+Vector3.yAxis*C.Ability.Small),
-            c.Ring(c.Ground(),c.Radius)},C.Ability.Life
+        local layers={
+            c.Beam(e.Position-offset,e.Position+offset),
+            c.Beam(e.Position-offset+Vector3.yAxis*C.Ability.Small,e.Position+offset+Vector3.yAxis*C.Ability.Small),
+            c.Ring(c.Ground(),c.Radius),
+            c.Mark("Circle",e.Position+Vector3.yAxis*C.Ability.ChestHeight,C.Ability.Medium),
+        }
+        if not c.Simplified then
+            for _,target in ipairs(e.Affected or {}) do
+                if #layers>=C.Composition.MaxLayers then break end
+                table.insert(layers,c.Mark("Circle",target.Position+Vector3.yAxis*C.Ability.ChestHeight,C.Ability.Small))
+            end
+        end
+        return layers,C.Ability.Life
     elseif id=="Apprentice_7" then
-        if e.Outcome=="Obscured" then return {c.Mark("Split",c.Chest,C.Ability.Small)},C.Ability.Life end
-        return {c.Mark("Star",c.Head,C.Ability.Large),c.Ring(c.Ground()),c.Beam(c.Chest,c.Head)},C.Ability.Life
+        if e.Outcome=="Obscured" then
+            return {c.Mark("Split",c.Gesture,C.Ability.Small),c.Veil(c.Chest,C.Ability.Small)},C.Ability.Life
+        end
+        local layers={c.Mark("Star",c.Head,C.Ability.Large),c.Ring(c.Ground()),c.Beam(c.Gesture,c.Head)}
+        if not c.Simplified then
+            table.insert(layers,c.Star(c.Head,C.Ability.Small))
+            table.insert(layers,c.Motes(c.Self,C.Ability.Small))
+        end
+        return layers,C.Ability.Life
     elseif id=="Apprentice_7_Secondary" then
-        return {c.Door(c.Self+Vector3.yAxis*C.Ability.GroundOffset),c.Mark("Star",c.Head,C.Ability.Small)},C.Ability.Life
+        local layers={
+            c.Door(c.Self+Vector3.yAxis*C.Ability.GroundOffset),
+            c.Mark("Arch",c.Gesture,C.Ability.Medium),
+            c.Mark("Star",c.Head,C.Ability.Small),
+        }
+        if not c.Simplified then table.insert(layers,c.Ring(c.Ground())) end
+        return layers,C.Ability.Life
     elseif id=="Apprentice_6" then
-        return {c.Mark("Book",c.Target),c.Beam(c.Target,c.Chest),c.Mark("Door",c.Chest,C.Ability.Small)},C.Ability.Life
+        local layers={
+            c.Mark("Book",c.Gesture,C.Ability.Medium),
+            c.Beam(c.TargetChest,c.Gesture),
+            c.Mark("Star",c.TargetChest,C.Ability.Small,{MoveTo=c.Gesture}),
+        }
+        if not c.Simplified then table.insert(layers,c.Mark("Key",c.Chest,C.Ability.Small)) end
+        return layers,C.Ability.Life
     elseif id=="Apprentice_6_Secondary" then
-        return {c.Mark("Book",c.Chest,C.Ability.Small),c.Beam(c.Chest,c.Target),c.Mark("Star",c.Target,C.Ability.Medium)},C.Ability.Life
-    elseif id=="Apprentice_5" then return pair(false,false),C.Ability.EndpointLife
+        local layers={
+            c.Mark("Book",c.Gesture,C.Ability.Medium),
+            c.Beam(c.Gesture,c.TargetChest),
+            c.Star(c.TargetChest,C.Ability.Medium),
+        }
+        if not c.Simplified then
+            table.insert(layers,c.Mark("Star",c.Gesture,C.Ability.Small,{MoveTo=c.TargetChest}))
+            if (e.RecordedCharges or 0)>0 then
+                table.insert(layers,c.Mark("Key",c.Head,C.Ability.Small))
+            end
+        end
+        return layers,C.Ability.Life
+    elseif id=="Apprentice_5" then
+        local layers=pair(false,false)
+        if not c.Simplified then
+            table.insert(layers,c.Beam(c.OriginGesture,c.Gesture))
+            table.insert(layers,c.Mark("Key",c.Gesture,C.Ability.Small))
+        end
+        return layers,C.Ability.EndpointLife
     elseif id=="Apprentice_5_Secondary" then
         if e.Preview then return pair(false,false),C.Ability.Life end
-        return {c.Mark("Key",c.Origin,C.Ability.Medium),c.Mark("Key",e.Position,C.Ability.Medium)},C.Ability.Life
+        local layers={
+            c.Mark("Key",c.Origin,C.Ability.Medium),
+            c.Mark("Key",e.Position,C.Ability.Medium),
+            c.Mark("Arch",c.Gesture,C.Ability.Small),
+        }
+        if not c.Simplified then table.insert(layers,c.Beam(c.Origin,e.Position)) end
+        return layers,C.Ability.Life
     elseif id=="Apprentice_4" then
-        return {c.Door(c.Self+Vector3.yAxis*C.Ability.GroundOffset),c.Veil(c.Chest),c.Mark("Key",c.Chest,C.Ability.Small)},C.Ability.Life
+        local layers={
+            c.Door(c.Self+Vector3.yAxis*C.Ability.GroundOffset),
+            c.Veil(c.Chest),
+            c.Mark("Key",c.Gesture,C.Ability.Small),
+        }
+        if not c.Simplified then table.insert(layers,c.Mark("Arch",c.Head,C.Ability.Small)) end
+        return layers,C.Ability.Life
     elseif id=="Apprentice_4_Secondary" then
         local radius=c.Radius
         local layers={c.Ring(c.Ground(),radius)}
@@ -6027,19 +6568,72 @@ function Apprentice.Build(a: any,e: any,c: any): (any,number?)
             table.insert(layers,c.Door(c.Ground()+direction*radius,C.Ability.CornerScale))
             if c.Simplified and #layers>=3 then break end
         end
+        if not c.Simplified and #layers<C.Composition.MaxLayers then
+            table.insert(layers,c.Mark("Seal",e.Position+Vector3.yAxis*C.Ability.ChestHeight,C.Ability.Medium))
+        end
         return layers,C.Ability.Life
-    elseif id=="Apprentice_3" then return pair(true,false),C.Ability.Life
+    elseif id=="Apprentice_3" then
+        local layers=pair(true,false)
+        if not c.Simplified then
+            table.insert(layers,c.Mark("Arch",c.Self+Vector3.yAxis*C.Ability.ChestHeight,C.Ability.Large))
+            table.insert(layers,c.Veil(c.Self,C.Ability.Small))
+        end
+        return layers,C.Ability.Life
     elseif id=="Apprentice_3_Secondary" then
-        return {c.Door(c.Self+Vector3.yAxis*C.Ability.GroundOffset,C.Ability.Small),c.Veil(c.Chest),c.Mark("Star",c.Chest,C.Ability.Small)},C.Ability.Life
+        local layers={
+            c.Door(c.Self+Vector3.yAxis*C.Ability.GroundOffset,C.Ability.Small),
+            c.Mark("Arch",c.Gesture,C.Ability.Medium),
+            c.Veil(c.Chest),
+            c.Mark("Star",c.Head,C.Ability.Small),
+        }
+        if not c.Simplified then table.insert(layers,c.Ghost(c.Self)) end
+        return layers,C.Ability.Life
     elseif id=="Apprentice_2" then
-        return {c.Mark("Book",c.Chest),c.Mark("Book",c.Chest+Vector3.xAxis*C.Ability.Medium,C.Ability.Small),
-            c.Beam(c.Chest,c.Target),c.Mark("Star",c.Target,C.Ability.Medium)},C.Ability.Life
-    elseif id=="Apprentice_2_Secondary" then return pair(false,true),C.Ability.Life
+        local layers={
+            c.Mark("Book",c.Gesture-Vector3.xAxis*C.Ability.Small,C.Ability.Medium),
+            c.Mark("Book",c.Gesture+Vector3.xAxis*C.Ability.Small,C.Ability.Small),
+            c.Beam(c.Gesture,c.TargetChest),
+            c.Star(c.TargetChest,C.Ability.Medium),
+        }
+        if not c.Simplified then
+            table.insert(layers,c.Mark("Arch",c.Gesture,C.Ability.Small))
+            table.insert(layers,c.Mark("Star",c.TargetHead,C.Ability.Small))
+        end
+        return layers,C.Ability.Life
+    elseif id=="Apprentice_2_Secondary" then
+        local layers=pair(false,true)
+        if not c.Simplified then
+            table.insert(layers,c.Trail(c.Origin,C.Ability.Medium,c.Self))
+            table.insert(layers,c.Star(c.Self+Vector3.yAxis*C.Ability.ChestHeight,C.Ability.Small))
+        end
+        return layers,C.Ability.Life
     elseif id=="Apprentice_1" then
         if e.Preview then return pair(false,true),C.Ability.Life end
-        return {c.Mark("Star",c.Origin,C.Ability.Large),c.Mark("Star",e.Position,C.Ability.Large),c.Mark("Door",c.Chest,C.Ability.Small)},C.Ability.Life
+        local layers={
+            c.Mark("Star",c.Origin,C.Ability.Large),
+            c.Mark("Star",e.Position,C.Ability.Large),
+            c.Mark("Key",c.Gesture,C.Ability.Medium),
+        }
+        if not c.Simplified then
+            table.insert(layers,c.Mark("Arch",c.Origin+Vector3.yAxis*C.Ability.ChestHeight,C.Ability.Medium))
+            table.insert(layers,c.Mark("Arch",e.Position+Vector3.yAxis*C.Ability.ChestHeight,C.Ability.Medium))
+            table.insert(layers,c.Motes(c.Self,C.Ability.Medium))
+        end
+        return layers,C.Ability.Life
     elseif id=="Apprentice_1_Secondary" then
-        return {c.Ring(c.Ground(),c.Radius),c.Door(e.Position,C.Ability.Small),c.Mark("Key",e.Position,C.Ability.Small)},C.Ability.Life
+        local layers={
+            c.Ring(c.Ground(),c.Radius),
+            c.Door(e.Position,C.Ability.Small),
+            c.Mark("Seal",e.Position+Vector3.yAxis*C.Ability.ChestHeight,C.Ability.Large),
+            c.Mark("Key",e.Position+Vector3.yAxis*C.Ability.HeadHeight,C.Ability.Small),
+        }
+        if not c.Simplified then
+            for _,target in ipairs(e.Affected or {}) do
+                if #layers>=C.Composition.MaxLayers then break end
+                table.insert(layers,c.Mark("Seal",target.Position+Vector3.yAxis*C.Ability.ChestHeight,C.Ability.Small))
+            end
+        end
+        return layers,C.Ability.Life
     end
     return nil,nil
 end
@@ -6060,55 +6654,170 @@ local C=require(game:GetService("ReplicatedStorage").Shared.VfxConfig)
 local Marauder={}
 function Marauder.Build(a: any,e: any,c: any): (any,number?)
     local id=a.Id
-    local function cut(at: Vector3): any return c.Mark("Cut",at,C.Ability.Medium,{Tint=C.Ability.TheftTint}) end
-    if id=="Marauder_9" or id=="Marauder_6" then
+    local function cut(at: Vector3,scale: number?): any
+        return c.Mark("Cut",at,scale or C.Ability.Medium,{Tint=C.Ability.TheftTint})
+    end
+    if id=="Marauder_9" then
         local from=e.Position+Vector3.yAxis*C.Ability.HandHeight
-        local to=c.Chest
-        if e.Outcome=="Released" then from,to=to,from end
-        return {c.Layer("ThreadBeam",from,{EndPosition=to,Scale=C.Ability.TransferScale,Tint=C.Ability.TheftTint}),
-            c.Mark("Split",from,C.Ability.DefaultScale,{MoveTo=to})},if id=="Marauder_9" then C.Ability.PickpocketLife else C.Ability.TheftLife
+        local to=c.Gesture
+        local layers={
+            c.Layer("ThreadBeam",from,{EndPosition=to,Scale=C.Ability.TransferScale,Tint=C.Ability.TheftTint}),
+            c.Mark("Split",from,C.Ability.DefaultScale,{MoveTo=to}),
+        }
+        if not c.Simplified then table.insert(layers,cut(from,C.Ability.Small)) end
+        return layers,C.Ability.PickpocketLife
     elseif id=="Marauder_9_Secondary" then
-        return {c.Layer("GlitchFlicker",c.Chest,{Frame=c.Frame(c.Chest),Scale=C.Ability.Small}),c.Veil(c.Chest)},C.Ability.Life
+        local layers={c.Glitch(c.Chest,C.Ability.Small),c.Veil(c.Chest)}
+        if not c.Simplified then
+            table.insert(layers,c.Mark("Split",c.Gesture,C.Ability.Small))
+            table.insert(layers,c.Burst(c.Ground(),C.Ability.Small))
+        end
+        return layers,C.Ability.Life
     elseif id=="Marauder_8" then
-        return {c.Mark("Split",c.Target+Vector3.yAxis*C.Ability.HeadHeight),c.Layer("GlitchFlicker",c.Target,{Scale=C.Ability.Medium})},C.Ability.Life
+        local layers={c.Mark("Split",c.TargetHead,C.Ability.Medium),c.Glitch(c.Target,C.Ability.Medium)}
+        if not c.Simplified then
+            table.insert(layers,c.Mark("Mask",c.TargetHead,C.Ability.Small,{Tint=C.Ability.TheftTint}))
+            table.insert(layers,c.Beam(c.Gesture,c.TargetHead,C.Ability.TheftTint))
+        end
+        return layers,C.Ability.Life
     elseif id=="Marauder_8_Secondary" then
         local offset=Vector3.xAxis*C.Ability.GhostSpacing
-        return {c.Layer("GlitchFlicker",c.Target+offset,{Frame=c.Frame(c.Target),Scale=C.Ability.Medium}),
-            c.Beam(c.Target,c.Target+offset,C.Ability.TheftTint)},C.Ability.Life
+        local layers={
+            c.Glitch(c.Target+offset,C.Ability.Medium),
+            c.Ghost(c.Target,c.Target+offset),
+            c.Beam(c.Target,c.Target+offset,C.Ability.TheftTint),
+        }
+        if not c.Simplified then table.insert(layers,cut(c.Target,C.Ability.Small)) end
+        return layers,C.Ability.Life
     elseif id=="Marauder_7" then
-        return {c.Mark("Book",c.Chest),c.Mark("Split",c.Head,C.Ability.Small),c.Ring(c.Ground())},C.Ability.Life
+        local layers={c.Mark("Book",c.Gesture,C.Ability.Medium),c.Mark("Split",c.Head,C.Ability.Small),c.Ring(c.Ground())}
+        if not c.Simplified then table.insert(layers,c.Mark("Eye",c.Head,C.Ability.Small)) end
+        return layers,C.Ability.Life
     elseif id=="Marauder_7_Secondary" then
-        if e.Outcome=="Obscured" then return {cut(c.Chest)},C.Ability.Life end
-        return {c.Mark("Split",c.Head,C.Ability.Large),c.Layer("GlitchFlicker",c.Chest,{Scale=C.Ability.Small})},C.Ability.Life
+        if e.Outcome=="Obscured" then
+            return {cut(c.Chest,C.Ability.Small),c.Glitch(c.Chest,C.Ability.Small)},C.Ability.Life
+        end
+        local layers={c.Mark("Split",c.Head,C.Ability.Large),c.Glitch(c.Gesture,C.Ability.Small)}
+        if not c.Simplified then
+            table.insert(layers,c.Mark("Scale",c.Gesture,C.Ability.Small))
+            table.insert(layers,c.Ring(c.Ground()))
+        end
+        return layers,C.Ability.Life
+    elseif id=="Marauder_6" then
+        local from=e.Position+Vector3.yAxis*C.Ability.HandHeight
+        local to=c.Gesture
+        if e.Outcome=="Released" then
+            from,to=c.Gesture,e.Position+Vector3.yAxis*C.Ability.HandHeight
+            local layers={
+                c.Layer("ThreadBeam",from,{EndPosition=to,Scale=C.Ability.TransferScale,Tint=C.Ability.TheftTint}),
+                c.Mark("Split",from,C.Ability.Medium,{MoveTo=to}),
+                c.Star(to,C.Ability.Medium,C.Ability.TheftTint),
+            }
+            if not c.Simplified then table.insert(layers,c.Glitch(to,C.Ability.Small)) end
+            return layers,C.Ability.TheftLife
+        end
+        local layers={
+            c.Layer("ThreadBeam",from,{EndPosition=to,Scale=C.Ability.TransferScale,Tint=C.Ability.TheftTint}),
+            c.Mark("Split",from,C.Ability.Medium,{MoveTo=to}),
+            c.Glitch(from,C.Ability.Small),
+        }
+        if not c.Simplified then
+            table.insert(layers,cut(from,C.Ability.Small))
+            table.insert(layers,c.Mark("Star",to,C.Ability.Small,{Tint=C.Ability.TheftTint}))
+        end
+        return layers,C.Ability.TheftLife
     elseif id=="Marauder_6_Secondary" then
-        return {c.Beam(c.Target,c.Chest,C.Ability.TheftTint),c.Layer("RisingMotes",c.Chest,{Scale=C.Ability.Small}),cut(c.Target)},C.Ability.Life
+        local layers={c.Beam(c.TargetChest,c.Chest,C.Ability.TheftTint),c.Motes(c.Chest,C.Ability.Small),cut(c.TargetChest)}
+        if not c.Simplified then table.insert(layers,c.Mark("Split",c.TargetChest,C.Ability.Small,{MoveTo=c.Chest})) end
+        return layers,C.Ability.Life
     elseif id=="Marauder_5" then
-        local at=c.Target+Vector3.yAxis*C.Ability.HeadHeight
-        return {c.Mark("Split",at,C.Ability.Small,{MoveTo=c.Chest}),c.Beam(at,c.Chest),cut(at)},C.Ability.Life
+        local at=c.TargetHead
+        local layers={c.Mark("Split",at,C.Ability.Small,{MoveTo=c.Gesture}),c.Beam(at,c.Gesture),cut(at)}
+        if not c.Simplified then table.insert(layers,c.Mark("Eye",at,C.Ability.Small)) end
+        return layers,C.Ability.Life
     elseif id=="Marauder_5_Secondary" then
-        return {cut(c.Target),c.Layer("RisingMotes",c.Target,{Scale=C.Ability.Small,Tint=C.Ability.TheftTint}),
-            c.Mark("Split",c.Target,C.Ability.Small)},C.Ability.Life
+        local layers={
+            cut(c.TargetHead),
+            c.Motes(c.Target,C.Ability.Small,C.Ability.TheftTint),
+            c.Mark("Split",c.TargetChest,C.Ability.Small),
+        }
+        if not c.Simplified then table.insert(layers,c.Veil(c.Target,C.Ability.Small)) end
+        return layers,C.Ability.Life
     elseif id=="Marauder_4" then
-        return {c.Beam(c.Chest,c.Target),c.Mark("Split",c.Target,C.Ability.Small),c.Veil(c.Target)},C.Ability.Life
+        local layers={c.Beam(c.Gesture,c.TargetChest),c.Mark("Split",c.TargetChest,C.Ability.Small),c.Veil(c.Target)}
+        if not c.Simplified then
+            table.insert(layers,c.Beam(c.Chest,c.TargetHead,C.Ability.TheftTint))
+            table.insert(layers,c.Mark("Thread",c.TargetChest,C.Ability.Small,{Tint=C.Ability.TheftTint}))
+        end
+        return layers,C.Ability.Life
     elseif id=="Marauder_4_Secondary" then
-        return {c.Beam(c.Target,c.Chest,C.Ability.TheftTint),c.Beam(c.Target+Vector3.yAxis*C.Ability.Small,c.Chest),
-            c.Ring(c.Ground())},C.Ability.Life
+        local layers={
+            c.Beam(c.TargetChest,c.Chest,C.Ability.TheftTint),
+            c.Beam(c.TargetHead,c.Gesture),
+            c.Ring(c.Ground()),
+        }
+        if not c.Simplified then
+            table.insert(layers,cut(c.TargetChest,C.Ability.Small))
+            table.insert(layers,c.Motes(c.Self,C.Ability.Small,C.Ability.TheftTint))
+        end
+        return layers,C.Ability.Life
     elseif id=="Marauder_3" then
-        return {c.Layer("GlitchFlicker",c.Target,{Frame=c.Frame(c.Target),Scale=C.Ability.Medium}),
-            c.Mark("Eye",c.Target+Vector3.yAxis*C.Ability.HeadHeight,C.Ability.Small,{Tint=C.Ability.TheftTint})},C.Ability.Life
+        local layers={
+            c.Glitch(c.Target,C.Ability.Medium),
+            c.Mark("Eye",c.TargetHead,C.Ability.Small,{Tint=C.Ability.TheftTint}),
+            c.Mark("Mask",c.TargetChest,C.Ability.Medium),
+        }
+        if not c.Simplified then table.insert(layers,c.Mark("Split",c.Gesture,C.Ability.Small)) end
+        return layers,C.Ability.Life
     elseif id=="Marauder_3_Secondary" then
-        return {c.Veil(c.Target),c.Beam(c.Chest,c.Target),c.Mark("Split",c.Target,C.Ability.Large)},C.Ability.Life
+        local layers={
+            c.Veil(c.Target),
+            c.Beam(c.Gesture,c.TargetHead,C.Ability.TheftTint),
+            c.Mark("Split",c.TargetChest,C.Ability.Large),
+        }
+        if not c.Simplified then table.insert(layers,c.Mark("Crown",c.TargetHead,C.Ability.Medium,{Tint=C.Ability.TheftTint})) end
+        return layers,C.Ability.Life
     elseif id=="Marauder_2" then
-        return {cut(c.Origin),cut(c.Self),c.Ghost(c.Self),c.Mark("Split",c.Target,C.Ability.Small)},C.Ability.EndpointLife
+        local layers={cut(c.Origin),cut(c.Self),c.Ghost(c.Origin,c.Self),c.Mark("Split",c.Target,C.Ability.Small)}
+        if not c.Simplified then table.insert(layers,c.Beam(c.Self,c.Target,C.Ability.TheftTint)) end
+        return layers,C.Ability.EndpointLife
     elseif id=="Marauder_2_Secondary" then
         if e.Trigger=="PayloadTriggered" then
-            return {cut(e.Position),c.Mark("Star",e.Position,C.Ability.Medium,{Tint=C.Ability.TheftTint}),c.Mark("Split",e.Position,C.Ability.Large)},C.Ability.TriggerLife
+            local layers={
+                cut(e.Position),
+                c.Mark("Star",e.Position,C.Ability.Medium,{Tint=C.Ability.TheftTint}),
+                c.Mark("Split",e.Position,C.Ability.Large),
+            }
+            if not c.Simplified then table.insert(layers,c.Glitch(e.Position,C.Ability.Medium)) end
+            return layers,C.Ability.TriggerLife
         end
-        return {c.Mark("Split",c.Target,C.Ability.Small),c.Beam(c.Target,c.Target+Vector3.yAxis*C.Ability.Medium,C.Ability.TheftTint)},C.Ability.Life
+        local layers={
+            c.Mark("Split",c.TargetChest,C.Ability.Small),
+            c.Beam(c.Target,c.Target+Vector3.yAxis*C.Ability.Medium,C.Ability.TheftTint),
+        }
+        if not c.Simplified then table.insert(layers,c.Mark("Star",c.TargetChest,C.Ability.Small,{Tint=C.Ability.TheftTint})) end
+        return layers,C.Ability.Life
     elseif id=="Marauder_1" then
-        return {c.Mark("Clock",c.Target),c.Beam(c.Target,c.Chest),c.Mark("Cut",c.Target,C.Ability.Small,{MoveTo=c.Chest})},C.Ability.Life
+        local layers={
+            c.Mark("Clock",c.TargetHead,C.Ability.Large),
+            c.Beam(c.TargetHead,c.Gesture,C.Ability.TheftTint),
+            c.Mark("Cut",c.TargetHead,C.Ability.Small,{MoveTo=c.Gesture,Tint=C.Ability.TheftTint}),
+        }
+        if not c.Simplified then table.insert(layers,c.Mark("Clock",c.Gesture,C.Ability.Small)) end
+        return layers,C.Ability.Life
     elseif id=="Marauder_1_Secondary" then
-        return {c.Ring(c.Ground(),c.Radius),c.Mark("Clock",e.Position,C.Ability.Large),c.Layer("GlitchFlicker",e.Position,{Scale=C.Ability.Medium})},C.Ability.Life
+        local layers={
+            c.Ring(c.Ground(),c.Radius),
+            c.Mark("Clock",e.Position,C.Ability.Large),
+            c.Glitch(e.Position,C.Ability.Medium),
+        }
+        if not c.Simplified then
+            for _,target in ipairs(e.Affected or {}) do
+                if #layers>=C.Composition.MaxLayers then break end
+                table.insert(layers,c.Mark("Clock",target.Position+Vector3.yAxis*C.Ability.HeadHeight,C.Ability.Small))
+            end
+        end
+        return layers,C.Ability.Life
     end
     return nil,nil
 end
@@ -6130,77 +6839,174 @@ local Seer={}
 function Seer.Build(a: any,e: any,c: any): (any,number?)
     local id=a.Id
     if id=="Seer_9" then
-        if e.Outcome=="Obscured" then return {c.Mark("Split",c.Chest,C.Ability.Small)},C.Ability.Life end
-        return {c.Layer("CardFan",c.Chest,{Frame=c.Frame(c.Chest)}),c.Ring(c.Ground()),c.Mark("Star",c.Head,C.Ability.Small)},C.Ability.Life
+        if e.Outcome=="Obscured" then
+            return {c.Mark("Split",c.Gesture,C.Ability.Small),c.Veil(c.Chest,C.Ability.Small)},C.Ability.Life
+        end
+        local layers={c.Cards(c.Gesture,C.Ability.Medium),c.Ring(c.Ground()),c.Mark("Card",c.Head,C.Ability.Small)}
+        if not c.Simplified then table.insert(layers,c.Mark("Star",c.Head+Vector3.yAxis*C.Ability.Small,C.Ability.Small)) end
+        return layers,C.Ability.Life
     elseif id=="Seer_9_Secondary" then
-        local at=c.Head
-        local layers={c.Mark("Eye",at,C.Ability.EyeScale)}
-        if not c.Simplified then table.insert(layers,c.Ring(c.Ground())) end
+        local layers={c.Mark("Eye",c.Head,C.Ability.EyeScale),c.Veil(c.Head,C.Ability.Small)}
+        if not c.Simplified then
+            table.insert(layers,c.Ring(c.Ground()))
+            table.insert(layers,c.Motes(c.Self,C.Ability.Small))
+        end
         return layers,C.Composition.ResultLife
     elseif id=="Seer_8" then
-        return {c.Ghost(c.Origin),c.Layer("RingBurst",c.Origin+Vector3.yAxis*C.Ability.GroundOffset,{Scale=C.Ability.Small}),
-            c.Mark("Seal",c.Self,C.Ability.Small)},C.Ability.EndpointLife
+        local layers={
+            c.Ghost(c.Origin,c.Self),
+            c.Burst(c.Origin+Vector3.yAxis*C.Ability.GroundOffset,C.Ability.Small),
+            c.Mark("Circle",c.Self,C.Ability.Small),
+        }
+        if not c.Simplified then table.insert(layers,c.Trail(c.Origin,C.Ability.Small,c.Self)) end
+        return layers,C.Ability.EndpointLife
     elseif id=="Seer_8_Secondary" then
-        return {c.Mark("Seal",c.Chest,C.Ability.Medium),c.Ring(c.Ground())},C.Ability.Life
+        local layers={c.Mark("Scale",c.Gesture,C.Ability.Medium),c.Ring(c.Ground())}
+        if not c.Simplified then
+            table.insert(layers,c.Mark("Mask",c.Head,C.Ability.Small))
+            table.insert(layers,c.Burst(c.Ground(),C.Ability.Small))
+        end
+        return layers,C.Ability.Life
     elseif id=="Seer_7" then
         local layers={}
         for _,at in ipairs({c.Origin,c.Self}) do
             table.insert(layers,c.Layer("RingBurst",at+Vector3.yAxis*C.Ability.GroundOffset,{Scale=C.Ability.FlameScale,Tint=C.Ability.FlameRim}))
             table.insert(layers,c.Layer("RisingMotes",at,{Scale=C.Ability.FlameScale,Tint=C.Ability.FlameTint}))
         end
+        if not c.Simplified then
+            table.insert(layers,c.Beam(c.OriginGesture,c.Gesture,C.Ability.FlameTint))
+            table.insert(layers,c.Mark("Flame",c.Gesture,C.Ability.Small))
+        end
         return layers,C.Ability.EndpointLife
     elseif id=="Seer_7_Secondary" then
         if e.Trigger=="SubstituteTriggered" then
-            return {c.Layer("PaperFold",e.Position,{Frame=c.Frame(e.Position),Scale=C.Ability.Large,Break=true}),
-                c.Layer("CardFan",e.Position,{Frame=c.Frame(e.Position),Scale=C.Ability.Small})},C.Ability.TriggerLife
+            local layers={
+                c.Paper(e.Position,true,C.Ability.Large),
+                c.Cards(e.Position,C.Ability.Small),
+                c.Mark("Thread",e.Position,C.Ability.Small),
+            }
+            if not c.Simplified then table.insert(layers,c.Burst(e.Position,C.Ability.Small)) end
+            return layers,C.Ability.TriggerLife
         end
-        return {c.Layer("PaperFold",c.Chest,{Frame=c.Frame(c.Chest),Scale=C.Ability.Medium}),c.Mark("Seal",c.Chest,C.Ability.Small)},C.Ability.Life
+        local layers={c.Paper(c.Gesture,false,C.Ability.Medium),c.Mark("Card",c.Chest,C.Ability.Small)}
+        if not c.Simplified then table.insert(layers,c.Beam(c.Gesture,c.Head)) end
+        return layers,C.Ability.Life
     elseif id=="Seer_6" then
-        return {c.Veil(c.Head),c.Ghost(c.Self),c.Mark("Eye",c.Head,C.Ability.Small)},C.Ability.Life
+        local layers={c.Mark("Mask",c.Head,C.Ability.Medium),c.Veil(c.Head),c.Ghost(c.Self)}
+        if not c.Simplified then table.insert(layers,c.Motes(c.Self,C.Ability.Small)) end
+        return layers,C.Ability.Life
     elseif id=="Seer_6_Secondary" then
-        return {c.Veil(c.Chest),c.Beam(c.Chest-Vector3.xAxis*C.Ability.Small,c.Chest+Vector3.xAxis*C.Ability.Small),
-            c.Mark("Seal",c.Head,C.Ability.Small)},C.Ability.Life
+        local layers={
+            c.Mark("Circle",c.Gesture,C.Ability.Small),
+            c.Beam(c.Gesture-Vector3.xAxis*C.Ability.Small,c.Gesture+Vector3.xAxis*C.Ability.Small),
+            c.Veil(c.Chest,C.Ability.Small),
+        }
+        if not c.Simplified then table.insert(layers,c.Burst(c.Gesture,C.Ability.Small)) end
+        return layers,C.Ability.Life
     elseif id=="Seer_5" then
-        local layers={c.Beam(c.Chest,c.Target),c.Mark("Thread",c.Target,C.Ability.Medium)}
-        if not c.Simplified then table.insert(layers,c.Beam(c.Chest+Vector3.xAxis*C.Ability.Small,c.Target+Vector3.yAxis*C.Ability.Small)) end
+        local stageScale=if e.Controlled then C.Ability.Large else C.Ability.Medium
+        local layers={c.Beam(c.Gesture,c.Target),c.Mark("Thread",c.Target,stageScale)}
+        if not c.Simplified then
+            table.insert(layers,c.Beam(c.Gesture+Vector3.xAxis*C.Ability.Small,c.Target+Vector3.yAxis*C.Ability.Small))
+            if (e.Threads and e.Threads>=2) or e.Controlled then
+                table.insert(layers,c.Beam(c.Gesture-Vector3.xAxis*C.Ability.Small,c.TargetHead))
+            end
+            if e.Controlled then
+                table.insert(layers,c.Mark("Seal",c.TargetHead,C.Ability.Small))
+            end
+        end
         return layers,C.Ability.Life
     elseif id=="Seer_5_Secondary" then
-        local layers={c.Beam(c.Chest,c.Target),c.Mark("Thread",c.Target,C.Ability.Small)}
+        local layers={c.Beam(c.Gesture,c.Target),c.Mark("Thread",c.Target,C.Ability.Small)}
         local hit=e.Affected and e.Affected[1]
-        if hit then table.insert(layers,c.Beam(c.Target,hit.Position)) end
+        if hit then
+            table.insert(layers,c.Beam(c.Target,hit.Position))
+            if not c.Simplified then table.insert(layers,c.Mark("Star",hit.Position,C.Ability.Small)) end
+        elseif not c.Simplified then
+            table.insert(layers,c.Mark("Crown",c.TargetHead,C.Ability.Small))
+        end
         return layers,C.Ability.Life
     elseif id=="Seer_4" then
-        return {c.Ghost(c.Origin,c.Self),c.Ghost(c.Self,c.Origin),c.Beam(c.Origin,c.Self)},C.Ability.EndpointLife
+        local layers={c.Ghost(c.Origin,c.Self),c.Ghost(c.Self,c.Origin),c.Beam(c.Origin,c.Self),c.Mark("Thread",c.Self,C.Ability.Small)}
+        if not c.Simplified then table.insert(layers,c.Mark("Thread",c.Origin,C.Ability.Small)) end
+        return layers,C.Ability.EndpointLife
     elseif id=="Seer_4_Secondary" then
-        local layers={c.Ring(c.Ground(),c.Radius),c.Ghost(e.Position)}
+        local layers={c.Ring(c.Ground(),c.Radius),c.Mark("Mask",e.Position+Vector3.yAxis*C.Ability.HeadHeight,C.Ability.Medium),c.Ghost(e.Position)}
         if not c.Simplified then
             table.insert(layers,c.Ghost(e.Position+Vector3.xAxis*C.Ability.GhostSpacing))
             table.insert(layers,c.Ghost(e.Position-Vector3.xAxis*C.Ability.GhostSpacing))
+            local hit=e.Affected and e.Affected[1]
+            if hit then table.insert(layers,c.Mark("Eye",hit.Position+Vector3.yAxis*C.Ability.HeadHeight,C.Ability.Small)) end
         end
         return layers,C.Ability.Life
     elseif id=="Seer_3" then
         local root=c.Root(e.Echo)
         local at=if root then root.Position else e.Position
-        return {c.Veil(at),c.Ghost(at),c.Ring(c.Ground(at))},C.Ability.Life
+        local layers={c.Veil(at),c.Ghost(at),c.Ring(c.Ground(at)),c.Mark("Hourglass",at+Vector3.yAxis*C.Ability.HeadHeight,C.Ability.Small)}
+        if not c.Simplified then
+            table.insert(layers,c.Beam(c.Gesture,at+Vector3.yAxis*C.Ability.ChestHeight))
+            table.insert(layers,c.Motes(at,C.Ability.Small))
+        end
+        return layers,C.Ability.Life
     elseif id=="Seer_3_Secondary" then
-        return {c.Ghost(c.Self+Vector3.xAxis*C.Ability.RecallOffset,c.Self),c.Beam(c.Chest+Vector3.xAxis*C.Ability.RecallOffset,c.Chest),
-            c.Mark("Eye",c.Chest,C.Ability.Small)},C.Ability.Life
+        local past=c.Self+Vector3.xAxis*C.Ability.RecallOffset
+        local layers={
+            c.Ghost(past,c.Self),
+            c.Beam(c.Chest+Vector3.xAxis*C.Ability.RecallOffset,c.Chest),
+            c.Mark("Hourglass",c.Gesture,C.Ability.Medium),
+        }
+        if not c.Simplified then
+            table.insert(layers,c.Ring(c.Ground()))
+            table.insert(layers,c.Motes(c.Self,C.Ability.Small))
+        end
+        return layers,C.Ability.Life
     elseif id=="Seer_2" then
-        return {c.Ring(c.Ground()),c.Mark("Seal",c.Chest,C.Ability.Large),c.Layer("RisingMotes",c.Self,{Scale=C.Ability.Medium})},C.Ability.Life
+        local layers={
+            c.Ring(c.Ground()),
+            c.Mark("Star",c.Gesture,C.Ability.Large),
+            c.Motes(c.Self,C.Ability.Medium),
+        }
+        if not c.Simplified then
+            table.insert(layers,c.Beam(c.Gesture,c.Chest))
+            table.insert(layers,c.Mark("Seal",c.Chest,C.Ability.Medium))
+        end
+        return layers,C.Ability.Life
     elseif id=="Seer_2_Secondary" then
-        return {c.Beam(c.Chest-Vector3.xAxis*C.Ability.Medium,c.Chest),c.Beam(c.Chest+Vector3.xAxis*C.Ability.Medium,c.Chest),
-            c.Mark("Star",c.Chest,C.Ability.Medium)},C.Ability.Life
+        local layers={
+            c.Beam(c.Chest-Vector3.xAxis*C.Ability.Medium,c.Chest),
+            c.Beam(c.Chest+Vector3.xAxis*C.Ability.Medium,c.Chest),
+            c.Star(c.Chest,C.Ability.Medium),
+        }
+        if not c.Simplified then
+            table.insert(layers,c.Mark("Hourglass",c.Head,C.Ability.Small))
+            table.insert(layers,c.Motes(c.Self,C.Ability.Small))
+        end
+        return layers,C.Ability.Life
     elseif id=="Seer_1" then
-        if e.Trigger=="GraftReflected" then return {c.Mark("Thread",e.Position,C.Ability.Large),c.Beam(e.Position,c.Chest)},C.Ability.TriggerLife end
-        local layers={c.Mark("Thread",e.Position,C.Ability.Large)}
+        if e.Trigger=="GraftReflected" then
+            local layers={c.Mark("Thread",e.Position,C.Ability.Large),c.Beam(e.Position,c.Chest)}
+            if not c.Simplified then table.insert(layers,c.Star(e.Position,C.Ability.Small)) end
+            return layers,C.Ability.TriggerLife
+        end
+        local layers={c.Mark("Thread",e.Position,C.Ability.Large),c.Mark("Seal",e.Position,C.Ability.Small)}
         for i,target in ipairs(e.Affected or {}) do
-            if c.Simplified and i>1 then break end
-            table.insert(layers,c.Beam(c.Chest,target.Position))
+            if (c.Simplified and i>1) or #layers>=C.Composition.MaxLayers then break end
+            table.insert(layers,c.Beam(c.Gesture,target.Position))
         end
         return layers,C.Ability.Life
     elseif id=="Seer_1_Secondary" then
-        local layers={c.Ring(c.Ground(),c.Radius),c.Veil(e.Position+Vector3.xAxis*C.Ability.GhostSpacing)}
-        if not c.Simplified then table.insert(layers,c.Veil(e.Position-Vector3.xAxis*C.Ability.GhostSpacing)) end
+        local layers={
+            c.Ring(c.Ground(),c.Radius),
+            c.Mark("Crown",e.Position+Vector3.yAxis*C.Ability.HeadHeight,C.Ability.Large),
+            c.Veil(e.Position+Vector3.xAxis*C.Ability.GhostSpacing),
+        }
+        if not c.Simplified then
+            table.insert(layers,c.Veil(e.Position-Vector3.xAxis*C.Ability.GhostSpacing))
+            for _,target in ipairs(e.Affected or {}) do
+                if #layers>=C.Composition.MaxLayers then break end
+                table.insert(layers,c.Mark("Seal",target.Position+Vector3.yAxis*C.Ability.ChestHeight,C.Ability.Small))
+            end
+        end
         return layers,C.Ability.Life
     end
     return nil,nil

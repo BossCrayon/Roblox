@@ -16,7 +16,7 @@ files = [
     'src/ServerScriptService/Services/EffectService.lua',
     'src/ServerScriptService/Services/VisualEventService.lua',
 ]
-files.extend(str(p.relative_to(root)) for p in sorted(
+files.extend(p.relative_to(root).as_posix() for p in sorted(
     (root / 'src/StarterPlayer/StarterPlayerScripts/Visuals').rglob('*.lua')))
 files.extend([
     'src/StarterPlayer/StarterPlayerScripts/UI/Feedback.lua',
@@ -40,7 +40,7 @@ for filename in dict.fromkeys(files):
     manifest.append({
         'file': filename,
         'script_class': kind,
-        'explorer_path': str(path.relative_to('src').parent / name),
+        'explorer_path': (path.relative_to('src').parent / name).as_posix(),
     })
 
 parts = [

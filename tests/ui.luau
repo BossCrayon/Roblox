@@ -280,7 +280,17 @@ return function(data: any,load: any,sharedNode: any)
         hud.Callbacks.ReducedMotion=nil
         check(skinState.Cooldowns[path.."_9"]==0.5,"Cooldown polish never mutates the server snapshot")
     end
-    menus:Update(visualState);menus:Open("Journal")
+    local abilityGlyphCount=0
+    for id,ability in pairs(data.Abilities) do
+        local key=T.AbilityGlyphs[id]
+        check(type(key)=="string" and T.Glyphs[key]~=nil,"Ability has bespoke vector glyph: "..id)
+        check(Kit.AbilityGlyph(ability)==key,"Kit.AbilityGlyph resolves ability icon: "..id)
+        abilityGlyphCount+=1
+    end
+    check(abilityGlyphCount==54,"All 54 abilities have bespoke glyph entries")
+    menus:Update(visualState);menus:Open("Pathway")
+    check(menus.Root.Visible and menus.Tab=="Pathway","Pathway tab renders sequence progression and passive traits")
+    menus:Open("Journal")
     local priorKey=menus.LastKey
     local recordedUpdate=table.clone(visualState);recordedUpdate.RecordedCharges=2;menus:Update(recordedUpdate)
     check(menus.LastKey~=priorKey,"Open Journal refreshes when confirmed recording charges change")

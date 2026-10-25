@@ -19,10 +19,10 @@ def literal(text):
             return '[' + marker + '[' + text + ']' + marker + ']'
     raise ValueError('Cannot quote source')
 
-sources = {str(p.relative_to(shared).with_suffix('')): p.read_text()
+sources = {p.relative_to(shared).with_suffix('').as_posix(): p.read_text(encoding='utf-8')
            for p in sorted(shared.rglob('*.lua'))}
-sources.update({'Server/'+str(p.relative_to(root/'src/ServerScriptService').with_suffix('')): p.read_text() for p in sorted((root/'src/ServerScriptService').rglob('*.lua')) if not p.name.endswith('.server.lua')})
-sources.update({'Client/'+str(p.relative_to(root/'src/StarterPlayer/StarterPlayerScripts').with_suffix('')): p.read_text() for p in sorted((root/'src/StarterPlayer/StarterPlayerScripts').rglob('*.lua')) if not p.name.endswith('.client.lua')})
+sources.update({'Server/'+p.relative_to(root/'src/ServerScriptService').with_suffix('').as_posix(): p.read_text(encoding='utf-8') for p in sorted((root/'src/ServerScriptService').rglob('*.lua')) if not p.name.endswith('.server.lua')})
+sources.update({'Client/'+p.relative_to(root/'src/StarterPlayer/StarterPlayerScripts').with_suffix('').as_posix(): p.read_text(encoding='utf-8') for p in sorted((root/'src/StarterPlayer/StarterPlayerScripts').rglob('*.lua')) if not p.name.endswith('.client.lua')})
 lines = ['local sources = {']
 lines += ['[' + json.dumps(k) + '] = ' + literal(v) + ',' for k, v in sources.items()]
 lines += ['}', '''

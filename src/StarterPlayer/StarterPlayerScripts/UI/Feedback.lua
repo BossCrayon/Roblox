@@ -14,7 +14,9 @@ function Feedback.new(parent: GuiObject,data: any,cinematic: (boolean)->()): any
     self.AdvanceSmall=Kit.Text(self.Advance,"",T.Type.Small,T.Fonts.Number);self.AdvanceSmall.Size=UDim2.new(1,0,0,T.Feedback.SubtitleHeight);self.AdvanceSmall.TextXAlignment=Enum.TextXAlignment.Center
     self.AdvanceTitle=Kit.Text(self.Advance,"",T.Type.Title,T.Fonts.Title);self.AdvanceTitle.Size=UDim2.new(1,-T.Layout.Modal.BodyPad*2,0,T.Feedback.AdvanceTitleHeight);self.AdvanceTitle.Position=UDim2.fromOffset(T.Layout.Modal.BodyPad,T.Feedback.SubtitleHeight);self.AdvanceTitle.TextXAlignment=Enum.TextXAlignment.Center
     self.Acting=Kit.Text(self.Root,"",T.Type.Small,T.Fonts.Number);self.Acting.BackgroundColor3=T.Colors.Ink;self.Acting.BackgroundTransparency=0;self.Acting.Visible=false
+    self.Acting.TextXAlignment=Enum.TextXAlignment.Center;Kit.Corner(self.Acting);Kit.Stroke(self.Acting,T.Colors.Gold,T.Style.BorderAlpha)
     self.SanityWarning=Kit.Text(self.Root,"",T.Type.Small,T.Fonts.Number);self.SanityWarning.BackgroundColor3=T.Colors.Ink;self.SanityWarning.BackgroundTransparency=0;self.SanityWarning.Visible=false
+    self.SanityWarning.TextXAlignment=Enum.TextXAlignment.Center;self.SanityWarning.TextColor3=T.Colors.Danger;Kit.Corner(self.SanityWarning);Kit.Stroke(self.SanityWarning,T.Colors.Danger,T.Style.BorderAlpha)
     self.Vignette=Kit.New("Frame",self.Root,{Name="SanityVignette",Size=UDim2.fromScale(1,1),BackgroundTransparency=1})
     self.Edges={}
     self.Flashes={}
@@ -86,6 +88,9 @@ end
 function Feedback.Sequence(self: any,state: any)
     self.AdvanceSerial+=1;local serial=self.AdvanceSerial
     local seq=self.Data.Pathways[state.PathwayId].Sequences[state.Sequence]
+    Kit.Skin(self.Advance,state.PathwayId)
+    local stroke=self.Advance:FindFirstChildOfClass("UIStroke")
+    if stroke then stroke.Color=Kit.PathColor(state.PathwayId) end
     self.AdvanceSmall.Text="SEQUENCE "..state.Sequence.." · "..string.upper(state.PathwayId)
     self.AdvanceSmall.TextColor3=Kit.PathColor(state.PathwayId);self.AdvanceTitle.Text=seq.Name
     self.Advance.Visible=true;self.Advance.GroupTransparency=1;self.Cinematic(true);Kit.Sound(self.Root,"Advance")
@@ -106,6 +111,8 @@ function Feedback.Update(self: any,state: any)
         if state.Health<previous.Health then self:Flash() end
         if state.PathwayId==previous.PathwayId and state.Sequence==previous.Sequence and state.Digestion>previous.Digestion then
             self.Acting.Text=T.Ritual.DigestionText..string.format("%.1f%%",state.Digestion-previous.Digestion)
+            local stroke=self.Acting:FindFirstChildOfClass("UIStroke")
+            if stroke then stroke.Color=Kit.PathColor(state.PathwayId) end
             self.ActingUntil=os.clock()+T.Ritual.DigestionTime
         end
         if state.PathwayId and (state.PathwayId~=previous.PathwayId or state.Sequence~=previous.Sequence) then self:Sequence(state) end

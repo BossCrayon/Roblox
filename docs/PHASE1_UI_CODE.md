@@ -182,6 +182,34 @@ return freeze({
         Book={{{0.5,0.25},{0.15,0.15},{0.15,0.8},{0.5,0.9},{0.85,0.8},{0.85,0.15},{0.5,0.25},{0.5,0.9}}},
         Bottle={{{0.39,0.10},{0.61,0.10},{0.61,0.32},{0.79,0.5},{0.79,0.86},{0.21,0.86},{0.21,0.5},{0.39,0.32},{0.39,0.10}},{{0.23,0.6},{0.77,0.6}}},
         Seal={{{0.5,0.12},{0.88,0.5},{0.5,0.88},{0.12,0.5},{0.5,0.12}}},
+        Card={{{0.26,0.12},{0.74,0.12},{0.74,0.88},{0.26,0.88},{0.26,0.12}},{{0.5,0.32},{0.64,0.5},{0.5,0.68},{0.36,0.5},{0.5,0.32}}},
+        Flame={{{0.5,0.10},{0.74,0.44},{0.68,0.78},{0.5,0.90},{0.32,0.78},{0.26,0.44},{0.5,0.10}},{{0.5,0.38},{0.58,0.64},{0.5,0.80},{0.42,0.64},{0.5,0.38}}},
+        Mask={{{0.20,0.24},{0.5,0.14},{0.80,0.24},{0.74,0.68},{0.5,0.88},{0.26,0.68},{0.20,0.24}},{{0.30,0.44},{0.44,0.44}},{{0.56,0.44},{0.70,0.44}}},
+        Scale={{{0.5,0.14},{0.5,0.86}},{{0.18,0.34},{0.82,0.34}},{{0.18,0.34},{0.12,0.62},{0.28,0.62},{0.18,0.34}},{{0.82,0.34},{0.72,0.62},{0.88,0.62},{0.82,0.34}}},
+        Crown={{{0.16,0.76},{0.16,0.34},{0.38,0.54},{0.5,0.20},{0.62,0.54},{0.84,0.34},{0.84,0.76},{0.16,0.76}}},
+        Hourglass={{{0.24,0.14},{0.76,0.14},{0.24,0.86},{0.76,0.86},{0.24,0.14}},{{0.36,0.5},{0.64,0.5}}},
+        Arch={{{0.18,0.90},{0.18,0.36},{0.5,0.12},{0.82,0.36},{0.82,0.90}},{{0.34,0.90},{0.34,0.46},{0.5,0.28},{0.66,0.46},{0.66,0.90}}},
+        Circle={{{0.5,0.12},{0.78,0.24},{0.88,0.5},{0.78,0.76},{0.5,0.88},{0.22,0.76},{0.12,0.5},{0.22,0.24},{0.5,0.12}}},
+        Key={{{0.4,0.12},{0.6,0.12},{0.7,0.25},{0.6,0.4},{0.4,0.4},{0.3,0.25},{0.4,0.12}},{{0.5,0.4},{0.5,0.9},{0.7,0.9}},{{0.5,0.72},{0.65,0.72}}},
+        Clock={{{0.5,0.08},{0.5,0.2}},{{0.9,0.5},{0.78,0.5}},{{0.5,0.92},{0.5,0.8}},{{0.1,0.5},{0.22,0.5}},{{0.5,0.5},{0.5,0.3}},{{0.5,0.5},{0.68,0.6}}},
+        Cut={{{0.25,0.85},{0.7,0.15}},{{0.4,0.85},{0.85,0.15}}},
+    },
+    AbilityGlyphs={
+        Seer_9="Card",Seer_9_Secondary="Eye",Seer_8="Circle",Seer_8_Secondary="Scale",
+        Seer_7="Flame",Seer_7_Secondary="Card",Seer_6="Mask",Seer_6_Secondary="Circle",
+        Seer_5="Thread",Seer_5_Secondary="Thread",Seer_4="Thread",Seer_4_Secondary="Mask",
+        Seer_3="Hourglass",Seer_3_Secondary="Hourglass",Seer_2="Star",Seer_2_Secondary="Star",
+        Seer_1="Thread",Seer_1_Secondary="Crown",
+        Marauder_9="Split",Marauder_9_Secondary="Split",Marauder_8="Split",Marauder_8_Secondary="Cut",
+        Marauder_7="Book",Marauder_7_Secondary="Split",Marauder_6="Split",Marauder_6_Secondary="Cut",
+        Marauder_5="Split",Marauder_5_Secondary="Cut",Marauder_4="Thread",Marauder_4_Secondary="Split",
+        Marauder_3="Mask",Marauder_3_Secondary="Crown",Marauder_2="Cut",Marauder_2_Secondary="Star",
+        Marauder_1="Clock",Marauder_1_Secondary="Clock",
+        Apprentice_9="Key",Apprentice_9_Secondary="Key",Apprentice_8="Star",Apprentice_8_Secondary="Circle",
+        Apprentice_7="Star",Apprentice_7_Secondary="Arch",Apprentice_6="Book",Apprentice_6_Secondary="Book",
+        Apprentice_5="Door",Apprentice_5_Secondary="Key",Apprentice_4="Door",Apprentice_4_Secondary="Seal",
+        Apprentice_3="Arch",Apprentice_3_Secondary="Door",Apprentice_2="Book",Apprentice_2_Secondary="Arch",
+        Apprentice_1="Key",Apprentice_1_Secondary="Seal",
     },
     OperationGlyph={Sense="Eye",SenseDoors="Door",Cipher="Split",Theft="Split",StealPower="Split",Siphon="Split",
         Parasite="Split",Infiltrate="Split",Control="Thread",Command="Thread",Graft="Thread",Exchange="Thread",
@@ -510,6 +538,9 @@ function Kit.Glyph(parent: Instance,kind: string,pixels: number,color: Color3?):
     end
     return f
 end
+function Kit.AbilityGlyph(a: any): string
+    return (a and T.AbilityGlyphs and T.AbilityGlyphs[a.Id]) or (a and a.Operation and T.OperationGlyph[a.Operation.Kind]) or "Seal"
+end
 -- All ornaments are original line geometry with no input surface or external image.
 function Kit.Skin(parent: Instance,pathway: any,small: boolean?): any
     local old=parent:FindFirstChild("PathwaySkin");if old then old:Destroy() end
@@ -530,11 +561,36 @@ function Kit.Skin(parent: Instance,pathway: any,small: boolean?): any
         if pathway=="Seer" then
             Kit.New("Frame",root,{BorderSizePixel=0,BackgroundColor3=spec.Accent,BackgroundTransparency=T.Skins.OrnamentAlpha,
                 AnchorPoint=Vector2.new(0.5,0),Position=UDim2.new(0.5,0,0,T.Skins.Inset),Size=UDim2.new(0.5,0,0,T.Style.Stroke),Rotation=spec.Rotation})
+            Kit.New("Frame",root,{BorderSizePixel=0,BackgroundColor3=spec.Accent,BackgroundTransparency=T.Skins.OrnamentAlpha,
+                AnchorPoint=Vector2.new(0.5,1),Position=UDim2.new(0.5,0,1,-T.Skins.Inset),Size=UDim2.new(0.36,0,0,T.Style.Stroke),Rotation=-spec.Rotation})
+        elseif pathway=="Marauder" then
+            Kit.New("Frame",root,{BorderSizePixel=0,BackgroundColor3=spec.Accent,BackgroundTransparency=T.Skins.OrnamentAlpha,
+                AnchorPoint=Vector2.new(1,0.5),Position=UDim2.new(1,-T.Skins.Inset,0.5,0),Size=UDim2.new(0,T.Style.Stroke,0.34,0),Rotation=spec.Rotation})
         elseif pathway=="Apprentice" then
             for _,side in ipairs({0,1}) do
                 Kit.New("Frame",root,{BorderSizePixel=0,BackgroundColor3=spec.Accent,BackgroundTransparency=T.Skins.OrnamentAlpha,
                     Position=UDim2.new(side,if side==0 then T.Skins.Inset else -T.Skins.Inset,0,T.Skins.Inset),Size=UDim2.new(0,T.Style.Stroke,1,-T.Skins.Inset*2)})
             end
+            Kit.New("Frame",root,{BorderSizePixel=0,BackgroundColor3=spec.Accent,BackgroundTransparency=T.Skins.OrnamentAlpha,
+                AnchorPoint=Vector2.new(0.5,0),Position=UDim2.new(0.5,0,0,T.Skins.Inset+2),Size=UDim2.new(0.56,0,0,T.Style.Stroke)})
+        end
+    else
+        -- Large panel folio ornament: top/bottom hairlines and pathway motif accents
+        Kit.New("Frame",root,{Name="TopRule",BorderSizePixel=0,BackgroundColor3=spec.Accent,
+            BackgroundTransparency=T.Style.GoldHairlineAlpha,Position=UDim2.fromOffset(T.Skins.Inset+T.Skins.Spine+4,T.Skins.Inset),
+            Size=UDim2.new(1,-(T.Skins.Inset*2+T.Skins.Spine+8),0,T.Style.Stroke),Rotation=if pathway=="Marauder" then 0.5 else 0})
+        if pathway=="Seer" then
+            Kit.New("Frame",root,{Name="BottomRule",BorderSizePixel=0,BackgroundColor3=spec.Accent,
+                BackgroundTransparency=T.Style.GoldHairlineAlpha,Position=UDim2.new(0,T.Skins.Inset+T.Skins.Spine+4,1,-T.Skins.Inset-1),
+                Size=UDim2.new(0.65,0,0,T.Style.Stroke)})
+        elseif pathway=="Marauder" then
+            Kit.New("Frame",root,{Name="SplitRule",BorderSizePixel=0,BackgroundColor3=spec.Accent,
+                BackgroundTransparency=T.Skins.OrnamentAlpha,AnchorPoint=Vector2.new(1,1),
+                Position=UDim2.new(1,-T.Skins.Inset,1,-T.Skins.Inset),Size=UDim2.new(0.28,0,0,T.Style.Stroke),Rotation=spec.Rotation})
+        elseif pathway=="Apprentice" then
+            Kit.New("Frame",root,{Name="RightJamb",BorderSizePixel=0,BackgroundColor3=spec.Accent,
+                BackgroundTransparency=T.Skins.OrnamentAlpha,AnchorPoint=Vector2.new(1,0),
+                Position=UDim2.new(1,-T.Skins.Inset,0,T.Skins.Inset),Size=UDim2.new(0,T.Style.Stroke,1,-T.Skins.Inset*2)})
         end
     end
     return root
@@ -630,11 +686,15 @@ function Hud.new(parent: Instance,data: any,callbacks: any): any
         local segments={}
         local stored=Kit.Text(face,T.AbilityUI.StoredSymbol,T.Type.Small,T.Fonts.Number)
         stored.Name="StoredPower";stored.TextColor3=T.Colors.Bronze;stored.Visible=false;stored.TextXAlignment=Enum.TextXAlignment.Center
+        stored.BackgroundColor3=T.Colors.Ink;stored.BackgroundTransparency=0.15
         stored.Size=UDim2.fromOffset(T.AbilityUI.StoredSize,T.AbilityUI.StoredSize)
         stored.Position=UDim2.new(1,-T.AbilityUI.StoredSize-T.AbilityUI.StoredPad,0,T.AbilityUI.StoredPad)
+        Kit.Corner(stored,T.Style.FillCorner);Kit.Stroke(stored,T.Colors.Bronze,T.Style.BorderAlpha)
         local recorded=Kit.Text(face,"",T.Type.Small,T.Fonts.Number)
         recorded.Name="RecordedCharges";recorded.TextColor3=T.Colors.Teal;recorded.Visible=false
+        recorded.BackgroundColor3=T.Colors.Ink;recorded.BackgroundTransparency=0.15
         recorded.Size=stored.Size;recorded.Position=stored.Position;recorded.TextXAlignment=Enum.TextXAlignment.Center
+        Kit.Corner(recorded,T.Style.FillCorner);Kit.Stroke(recorded,T.Colors.Teal,T.Style.BorderAlpha)
         for segment=1,T.Layout.Hotbar.Segments do
             local angle=(segment-1)/T.Layout.Hotbar.Segments*math.pi*2-math.pi/2
             table.insert(segments,Kit.New("Frame",face,{Name="CooldownSegment",BorderSizePixel=0,BackgroundColor3=T.Colors.Gold,
@@ -647,8 +707,14 @@ function Hud.new(parent: Instance,data: any,callbacks: any): any
             local id=self.State and self.State.Loadout and self.State.Loadout[i]
             local a=id and data.Abilities[id]
             if a then
-                self.TooltipText.Text=a.Name.." · "..tostring(a.SpiritualityCost).." spirituality"
-                if a.Id=="Marauder_6" and self.State.StolenPower then self.TooltipText.Text..=" · "..T.AbilityUI.StoredPrefix..(T.AbilityUI.PowerNames[self.State.StolenPower] or self.State.StolenPower) end
+                local summary=a.Name.." · "..tostring(a.SpiritualityCost).." spirituality · "..string.format("%.0fs CD",a.CooldownSeconds)
+                if a.Id=="Marauder_6" and self.State.StolenPower then
+                    summary..=" · "..T.AbilityUI.StoredPrefix..(T.AbilityUI.PowerNames[self.State.StolenPower] or tostring(self.State.StolenPower))
+                elseif a.PathwayId=="Apprentice" and (a.Operation.Kind=="Record" or a.Operation.Kind=="Release") and (self.State.RecordedCharges or 0)>0 then
+                    local recName=self.State.RecordedPowerId and (T.AbilityUI.PowerNames[self.State.RecordedPowerId] or tostring(self.State.RecordedPowerId)) or "Power"
+                    summary..=" · Recorded: "..recName.." ("..tostring(self.State.RecordedCharges).."x)"
+                end
+                self.TooltipText.Text=summary
                 self.Tooltip.Visible=true
             end
         end
@@ -748,12 +814,15 @@ function Hud.Render(self: any,state: any,receivedAt: number)
         slot.Stored.Visible=id=="Marauder_6" and type(state.StolenPower)=="string"
         slot.Recorded.Visible=a~=nil and a.PathwayId=="Apprentice" and (a.Operation.Kind=="Record" or a.Operation.Kind=="Release") and (state.RecordedCharges or 0)>0
         slot.Recorded.Text=tostring(state.RecordedCharges or 0)
+        if a then
+            slot.Cost.TextColor3=if (state.Spirituality or 0)>=a.SpiritualityCost then T.Colors.Spirituality else T.Colors.Muted
+        end
         if slot.Id~=id then
             slot.Id=id;Kit.Clear(slot.Glyph)
             slot.Seal.Visible=not a;slot.KeyBadge.Visible=a~=nil;slot.Cost.Text=if a then "✦ "..tostring(a.SpiritualityCost) else ""
             for _,child in ipairs(slot.Face:GetChildren()) do if child:IsA("UIStroke") then child.Transparency=if a then T.Style.BorderAlpha else 1 end end
             if a and self.Layout then
-                local icon=Kit.Glyph(slot.Glyph,T.OperationGlyph[a.Operation.Kind] or "Seal",self.Layout.Profile.Slot*T.Layout.Hotbar.GlyphFraction,Kit.PathColor(a.PathwayId))
+                local icon=Kit.Glyph(slot.Glyph,Kit.AbilityGlyph(a),self.Layout.Profile.Slot*T.Layout.Hotbar.GlyphFraction,Kit.PathColor(a.PathwayId))
                 icon.Size=UDim2.fromScale(1,1)
             end
         end
@@ -883,16 +952,20 @@ end
 function Menus.Render(self: any)
     if not self.Layout then return end
     self:Resize(self.Layout)
-    Kit.Skin(self.Card,self.State and self.State.PathwayId)
+    local state=self.State
+    local pathAccent=Kit.PathColor(state and state.PathwayId)
+    Kit.Skin(self.Card,state and state.PathwayId)
     local oldScroll=self.Scroll.CanvasPosition
     Kit.Clear(self.PreviewActions);Kit.Clear(self.Scroll);Kit.List(self.Scroll,T.Layout.Modal.Gap);self.Rows={}
     self.Title.Text=if self.View=="Preview" then (if self.Purchase then "POTION ALTAR" else "POTION RITUAL") else "BEYONDER "..string.upper(self.Tab)
-    self.Footer.Text=if self.View=="Preview" then "The altar seals only what you confirm." else "B · close journal"
+    self.Footer.Text=if self.View=="Preview" then "The altar seals only what you confirm." else "B · close journal   |   Select slot 1–6 to bind unlocked powers"
     for name,b in pairs(self.Tabs) do
-        b.BackgroundColor3=if name==self.Tab then T.Colors.Ink:Lerp(T.Colors.Gold,T.Style.HoverBlend) else T.Colors.Slate
-        b.TextColor3=if name==self.Tab then T.Colors.Gold else T.Colors.Text
+        local active=name==self.Tab
+        b.BackgroundColor3=if active then T.Colors.Ink:Lerp(pathAccent,T.Style.HoverBlend) else T.Colors.Slate
+        b.TextColor3=if active then pathAccent else T.Colors.Text
+        local stroke=b:FindFirstChildOfClass("UIStroke")
+        if stroke then stroke.Color=if active then pathAccent else T.Colors.Gold;stroke.Transparency=if active then T.Skins.ReadyAlpha else T.Style.BorderAlpha end
     end
-    local state=self.State
     if not state or not state.Ready then self:TextRow("Your journal is opening…");return end
     if self.View=="Preview" then
         local view=Model.Potion(self.Data,state,self.PreviewId,self.Purchase)
@@ -902,7 +975,7 @@ function Menus.Render(self: any)
             Kit.Glyph(row,"Bottle",T.Layout.Modal.Bottle,Kit.PathColor(potion.PathwayId))
             local title=Kit.Text(row,potion.Name,self.Layout.Profile.HeadingSize,T.Fonts.Heading)
             title.Position=UDim2.fromOffset(T.Layout.Modal.Bottle+T.Layout.Modal.Gap,0);title.Size=UDim2.new(1,-T.Layout.Modal.Bottle-T.Layout.Modal.Gap,1,0)
-            self:TextRow(potion.PathwayId.." · "..(if potion.TargetSequence==9 then "Uninitiated → 9" else tostring(potion.RequiredSequence).." → "..tostring(potion.TargetSequence)))
+            self:TextRow(potion.PathwayId.." · "..(if potion.TargetSequence==9 then "Uninitiated → Sequence 9" else "Sequence "..tostring(potion.RequiredSequence).." → Sequence "..tostring(potion.TargetSequence)))
             self:TextRow("Required digestion: "..potion.RequiredDigestion.."%  ·  Yours: "..string.format("%.1f%%",state.Digestion))
             self:TextRow("Owned: "..view.Owned..(if self.Purchase then "  ·  Price: "..view.Cost.." gold" else "  ·  Drinking consumes one potion"))
         end
@@ -922,10 +995,10 @@ function Menus.Render(self: any)
         self:UpdatePreview()
     elseif self.Tab=="Journal" then
         if type(state.RecordedPowerId)=="string" and (state.RecordedCharges or 0)>0 then
-            self:TextRow("Recorded: "..(T.AbilityUI.PowerNames[state.RecordedPowerId] or state.RecordedPowerId).." · "..state.RecordedCharges.." uses remaining.")
+            self:TextRow("Recorded inscription: "..(T.AbilityUI.PowerNames[state.RecordedPowerId] or state.RecordedPowerId).." · "..state.RecordedCharges.." uses remaining.")
         end
         if type(state.StolenPower)=="string" then
-            self:TextRow(T.AbilityUI.StoredPrefix..(T.AbilityUI.PowerNames[state.StolenPower] or state.StolenPower).." · use Ability Theft again to release it.")
+            self:TextRow(T.AbilityUI.StoredPrefix..(T.AbilityUI.PowerNames[state.StolenPower] or state.StolenPower).." · cast Ability Theft again to release it.")
         end
         self:TextRow((T.Skins[state.PathwayId] or T.Skins.Seer).Name.." · The acting method",true)
         if state.PathwayId then
@@ -933,25 +1006,54 @@ function Menus.Render(self: any)
             self:TextRow(seq.ActingObjectives[1].Label)
             self:TextRow(string.format("Digestion %.1f%% · Acting progress %d",state.Digestion,state.ActingProgress))
         else self:TextRow("Choose one starter potion in Inventory. Its pathway becomes your permanent path.") end
-        self:TextRow("Choose a slot, then select an ability below.")
+        self:TextRow("Select a hotbar slot (1–6), then click an unlocked ability below to bind it.")
         local slots=Kit.New("ScrollingFrame",self.Scroll,{Name="SlotPicker",Size=UDim2.new(1,0,0,T.Layout.Modal.SlotHeight),CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.X,
             ScrollingDirection=Enum.ScrollingDirection.X,BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=T.Style.Stroke,ScrollBarImageColor3=T.Colors.Gold})
         Kit.List(slots,T.Layout.Modal.NavGap,true)
         for i=1,T.Layout.Hotbar.Slots do
-            local b=Kit.Button(slots,tostring(i),function() self.SelectedSlot=i;self:Render() end)
-            b.Size=UDim2.fromOffset(T.Layout.Modal.SlotHeight,T.Layout.Modal.SlotHeight);b.LayoutOrder=i
-            if self.SelectedSlot==i then b.BackgroundColor3=T.Colors.Ink:Lerp(T.Colors.Gold,T.Style.HoverBlend) end
+            local keyLabel=T.Input.KeyNames[i] or tostring(i)
+            local label=tostring(i).."·"..keyLabel
+            local b=Kit.Button(slots,label,function() self.SelectedSlot=i;self:Render() end)
+            b.Size=UDim2.fromOffset(math.max(T.Layout.Modal.SlotHeight,54),T.Layout.Modal.SlotHeight);b.LayoutOrder=i
+            local active=self.SelectedSlot==i
+            if active then
+                b.BackgroundColor3=T.Colors.Ink:Lerp(pathAccent,T.Style.HoverBlend)
+                b.TextColor3=pathAccent
+                local stroke=b:FindFirstChildOfClass("UIStroke")
+                if stroke then stroke.Color=pathAccent;stroke.Transparency=T.Skins.ReadyAlpha end
+            elseif state.Loadout and state.Loadout[i] then
+                b.TextColor3=T.Colors.Text
+            else
+                b.TextColor3=T.Colors.Muted
+            end
         end
         for _,id in ipairs(Model.Unlocked(self.Data,state)) do
             local ability=self.Data.Abilities[id]
+            local equippedSlots={}
+            for slotIdx=1,T.Layout.Hotbar.Slots do
+                if state.Loadout and state.Loadout[slotIdx]==id then
+                    table.insert(equippedSlots,T.Input.KeyNames[slotIdx] or tostring(slotIdx))
+                end
+            end
+            local isCurrentSlot=state.Loadout and state.Loadout[self.SelectedSlot]==id
             local b=self:ActionRow("",function() self.Callbacks.Intent("Equip",{Id=id,Slot=self.SelectedSlot}) end)
             b.Size=UDim2.new(1,-T.Layout.Modal.Gap,0,T.Layout.Modal.AbilityRow)
-            local glyph=Kit.Glyph(b,T.OperationGlyph[ability.Operation.Kind],T.Layout.Modal.Icon,Kit.PathColor(ability.PathwayId));glyph.Position=UDim2.fromOffset(T.Layout.Modal.Gap,T.Layout.Modal.Gap)
-            local text=Kit.Text(b,ability.Name,self.Layout.Profile.BodySize,T.Fonts.Heading)
+            if isCurrentSlot then
+                b.BackgroundColor3=T.Colors.Ink:Lerp(pathAccent,T.Style.HoverBlend)
+                local stroke=b:FindFirstChildOfClass("UIStroke")
+                if stroke then stroke.Color=pathAccent;stroke.Transparency=T.Skins.ReadyAlpha end
+            end
+            local glyph=Kit.Glyph(b,Kit.AbilityGlyph(ability),T.Layout.Modal.Icon,Kit.PathColor(ability.PathwayId))
+            glyph.Position=UDim2.fromOffset(T.Layout.Modal.Gap,(T.Layout.Modal.AbilityRow-T.Layout.Modal.Icon)/2)
             local x=T.Layout.Modal.Icon+T.Layout.Modal.Gap*2
-            text.Position=UDim2.fromOffset(x,0);text.Size=UDim2.new(1,-x-T.Layout.Modal.Gap,0,T.Layout.Modal.AbilityRow-T.Layout.Modal.Footer)
-            local info=Kit.Text(b,"Seq "..ability.UnlockSequence.." · "..ability.SpiritualityCost.." spirit · "..ability.CooldownSeconds.."s",T.Type.Micro,T.Fonts.Number)
-            info.Position=UDim2.new(0,x,1,-T.Layout.Modal.Footer);info.Size=UDim2.new(1,-x-T.Layout.Modal.Gap,0,T.Layout.Modal.Footer);info.TextColor3=T.Colors.Muted
+            local titleStr=ability.Name..(if #equippedSlots>0 then "  ·  Equipped ["..table.concat(equippedSlots,",").."]" else "")
+            local text=Kit.Text(b,titleStr,self.Layout.Profile.BodySize,T.Fonts.Heading)
+            text.Position=UDim2.fromOffset(x,4);text.Size=UDim2.new(1,-x-T.Layout.Modal.Gap,0,24)
+            if #equippedSlots>0 then text.TextColor3=pathAccent end
+            local desc=Kit.Text(b,ability.Description or "",T.Type.Micro,T.Fonts.Body)
+            desc.Position=UDim2.fromOffset(x,28);desc.Size=UDim2.new(1,-x-T.Layout.Modal.Gap,0,28);desc.TextColor3=T.Colors.Text
+            local info=Kit.Text(b,"Seq "..ability.UnlockSequence.." · "..ability.SpiritualityCost.." spirit · "..ability.CooldownSeconds.."s CD · Target: "..ability.Target,T.Type.Micro,T.Fonts.Number)
+            info.Position=UDim2.new(0,x,1,-T.Layout.Modal.Footer+4);info.Size=UDim2.new(1,-x-T.Layout.Modal.Gap,0,T.Layout.Modal.Footer-4);info.TextColor3=T.Colors.Muted
         end
         self:ActionRow("Reduced motion: "..(if self.ReducedMotion then "on" else "off"),function()
             self.ReducedMotion=not self.ReducedMotion;self.Callbacks.ReducedMotion(self.ReducedMotion);self:Render()
@@ -966,10 +1068,17 @@ function Menus.Render(self: any)
             local path=self.Data.Pathways[state.PathwayId];local seq=path.Sequences[state.Sequence]
             self:TextRow(path.Name.." / "..path.Alias,true);self:TextRow("Sequence "..state.Sequence.." — "..seq.Name,true)
             self:TextRow(seq.ActingObjectives[1].Label)
+            if seq.PassiveTraits and #seq.PassiveTraits>0 then
+                self:TextRow("Sequence passives",true)
+                for _,trait in ipairs(seq.PassiveTraits) do
+                    self:TextRow(if type(trait)=="string" then trait else tostring(trait.Name).." — "..tostring(trait.Description))
+                end
+            end
+            self:TextRow("Attributes",true)
             for _,key in ipairs({"Health","Spirituality","Strength","Agility","Perception","Intuition","Resistance"}) do
                 self:TextRow(key.."   "..tostring(seq.BaseStats[key]))
             end
-            self:TextRow("Earlier abilities remain available in your journal.")
+            self:TextRow("Earlier sequence abilities remain retained in your journal.")
         else
             self:TextRow("Three paths into the unknown",true)
             for _,id in ipairs({"Seer","Marauder","Apprentice"}) do
@@ -1212,7 +1321,9 @@ function Feedback.new(parent: GuiObject,data: any,cinematic: (boolean)->()): any
     self.AdvanceSmall=Kit.Text(self.Advance,"",T.Type.Small,T.Fonts.Number);self.AdvanceSmall.Size=UDim2.new(1,0,0,T.Feedback.SubtitleHeight);self.AdvanceSmall.TextXAlignment=Enum.TextXAlignment.Center
     self.AdvanceTitle=Kit.Text(self.Advance,"",T.Type.Title,T.Fonts.Title);self.AdvanceTitle.Size=UDim2.new(1,-T.Layout.Modal.BodyPad*2,0,T.Feedback.AdvanceTitleHeight);self.AdvanceTitle.Position=UDim2.fromOffset(T.Layout.Modal.BodyPad,T.Feedback.SubtitleHeight);self.AdvanceTitle.TextXAlignment=Enum.TextXAlignment.Center
     self.Acting=Kit.Text(self.Root,"",T.Type.Small,T.Fonts.Number);self.Acting.BackgroundColor3=T.Colors.Ink;self.Acting.BackgroundTransparency=0;self.Acting.Visible=false
+    self.Acting.TextXAlignment=Enum.TextXAlignment.Center;Kit.Corner(self.Acting);Kit.Stroke(self.Acting,T.Colors.Gold,T.Style.BorderAlpha)
     self.SanityWarning=Kit.Text(self.Root,"",T.Type.Small,T.Fonts.Number);self.SanityWarning.BackgroundColor3=T.Colors.Ink;self.SanityWarning.BackgroundTransparency=0;self.SanityWarning.Visible=false
+    self.SanityWarning.TextXAlignment=Enum.TextXAlignment.Center;self.SanityWarning.TextColor3=T.Colors.Danger;Kit.Corner(self.SanityWarning);Kit.Stroke(self.SanityWarning,T.Colors.Danger,T.Style.BorderAlpha)
     self.Vignette=Kit.New("Frame",self.Root,{Name="SanityVignette",Size=UDim2.fromScale(1,1),BackgroundTransparency=1})
     self.Edges={}
     self.Flashes={}
@@ -1284,6 +1395,9 @@ end
 function Feedback.Sequence(self: any,state: any)
     self.AdvanceSerial+=1;local serial=self.AdvanceSerial
     local seq=self.Data.Pathways[state.PathwayId].Sequences[state.Sequence]
+    Kit.Skin(self.Advance,state.PathwayId)
+    local stroke=self.Advance:FindFirstChildOfClass("UIStroke")
+    if stroke then stroke.Color=Kit.PathColor(state.PathwayId) end
     self.AdvanceSmall.Text="SEQUENCE "..state.Sequence.." · "..string.upper(state.PathwayId)
     self.AdvanceSmall.TextColor3=Kit.PathColor(state.PathwayId);self.AdvanceTitle.Text=seq.Name
     self.Advance.Visible=true;self.Advance.GroupTransparency=1;self.Cinematic(true);Kit.Sound(self.Root,"Advance")
@@ -1304,6 +1418,8 @@ function Feedback.Update(self: any,state: any)
         if state.Health<previous.Health then self:Flash() end
         if state.PathwayId==previous.PathwayId and state.Sequence==previous.Sequence and state.Digestion>previous.Digestion then
             self.Acting.Text=T.Ritual.DigestionText..string.format("%.1f%%",state.Digestion-previous.Digestion)
+            local stroke=self.Acting:FindFirstChildOfClass("UIStroke")
+            if stroke then stroke.Color=Kit.PathColor(state.PathwayId) end
             self.ActingUntil=os.clock()+T.Ritual.DigestionTime
         end
         if state.PathwayId and (state.PathwayId~=previous.PathwayId or state.Sequence~=previous.Sequence) then self:Sequence(state) end
