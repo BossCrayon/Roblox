@@ -1,5 +1,7 @@
 # Tingen map update
 
+**City atlas:** press **M** to browse named locations. Door players can press **F**, select a destination and use **Travel**. [Controls and server validation](docs/CITY_MAP_TRAVEL.md).
+
 The default world is now a Tingen city reconstruction with 1,204 unnamed street-front buildings surrounding the reference landmarks. See [scope, sources and Studio instructions](docs/TINGEN_MAP.md). Training-arena descriptions below describe the previous layout.
 
 # Mysteries — playable Roblox foundation

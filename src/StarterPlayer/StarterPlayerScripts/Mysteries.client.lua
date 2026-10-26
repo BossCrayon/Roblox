@@ -13,6 +13,7 @@ local UI=script.Parent:WaitForChild("UI")
 local Kit=require(UI.Kit)
 local Hud=require(UI.Hud)
 local Menus=require(UI.Menus)
+local CityMap=require(UI.CityMap)
 local Prompts=require(UI.Prompts)
 local Feedback=require(UI.Feedback)
 local Developer=require(UI.Developer)
@@ -35,6 +36,8 @@ local state: any=nil
 local modal=false
 local menuModal=false
 local roomModal=false
+local mapModal=false
+local cityMap: any=nil
 local cinematic=false
 local worldView: any=nil
 local zoneTitle=false
@@ -110,11 +113,11 @@ local feedback=Feedback.new(safeRoot,data,function(active: boolean)
     if hud then hud.Wordmark.Visible=not active and not promptUI.Root.Visible;hud.Pathway.Visible=not active and not zoneTitle and not promptUI.Root.Visible end
 end)
 hud=Hud.new(safeRoot,data,{Cast=cast,Melee=melee,Dash=dash,Ultimate=ultimate,ToggleRun=toggleRun,Touch=UserInputService.TouchEnabled,TouchAim=touchAim,ReducedMotion=function() return menus and menus.ReducedMotion end,Journal=function(tab: string)
-    if roomModal then return end
+    if roomModal or mapModal then return end
     if menus.Root.Visible and menus.Tab==tab and menus.View=="Page" then menus:Close() else menus:Open(tab) end
 end})
 local function updateModal()
-    modal=menuModal or roomModal;promptUI:SetModal(modal);hud.Tooltip.Visible=false
+    modal=menuModal or roomModal or mapModal;promptUI:SetModal(modal);hud.Tooltip.Visible=false
     if developer then developer:SetSuppressed(modal) end
 end
 local function visualSettings(reduced: boolean,low: boolean)
@@ -131,6 +134,13 @@ menus=Menus.new(safeRoot,data,{Intent=send,Modal=function(open: boolean)
     menuModal=open;updateModal()
 end,ReducedMotion=function(reduced: boolean) visualSettings(reduced,menus.LowGraphics) end,
     LowGraphics=function(low: boolean) visualSettings(menus.ReducedMotion,low) end})
+cityMap=CityMap.new(safeRoot,send,function(open: boolean)
+    if open then
+        if menus.Root.Visible then menus:Close() end
+        if testRoom and testRoom.Root.Visible then testRoom:Close() end
+    end
+    mapModal=open;updateModal()
+end)
 presentation=Presentation.new(gui,data,{Notice=function(text: string) feedback:Tell(text) end,Damage=function(event: any) feedback:Damage(event) end,
     CastVisual=function(event: any) hud:SetVisualCast(event) end,
     ScreenEdgePulse=function() feedback:Flash() end})
@@ -167,6 +177,7 @@ safeRoot:GetPropertyChangedSignal("AbsoluteSize"):Connect(resize)
 UserInputService:GetPropertyChangedSignal("TouchEnabled"):Connect(resize)
 stateEvent.OnClientEvent:Connect(function(update: any)
     if type(update)~="table" then return end
+    if update.CityTravel then cityMap:Result(update.CityTravel);return end
     if update.Message then
         feedback:Tell(update.Message)
         if menus.Waiting and not menus.Purchase then menus:Close() end
@@ -178,6 +189,7 @@ stateEvent.OnClientEvent:Connect(function(update: any)
         menus:Close();feedback:Tell(update.Purchase.Message,not update.Purchase.Ok);return
     end
     state=update
+    cityMap:Update(update)
     developer:Update(update);hud:Render(update,os.clock());menus:Update(update);feedback:Update(update)
     presentation:Update(update)
     if not developer.Allowed and testRoom.Root.Visible then testRoom:Close() end
@@ -191,16 +203,21 @@ end)
 UserInputService.InputBegan:Connect(function(input: InputObject,processed: boolean)
     if UserInputService:GetFocusedTextBox() then return end
     if input.KeyCode==T.Input.Developer then
+        if mapModal then return end
         if testRoom.Root.Visible then testRoom:Close() else developer:Toggle() end
         return
     end
+    if input.KeyCode==Enum.KeyCode.Escape and cityMap.Root.Visible then cityMap:Close();return end
     if processed then return end
+    if input.KeyCode==Enum.KeyCode.M then cityMap:Toggle();return end
+    if input.KeyCode==Enum.KeyCode.F and state and state.PathwayId=="Apprentice" then cityMap:Toggle();return end
     if input.KeyCode==T.Input.Journal then
-        if roomModal then return end
+        if roomModal or mapModal then return end
         if menus.Root.Visible then menus:Close() else menus:Open("Journal") end
         return
     end
     if input.KeyCode==Enum.KeyCode.Escape then
+        if cityMap.Root.Visible then cityMap:Close();return end
         if testRoom.Root.Visible then testRoom:Close();return end
         if menus.Root.Visible then menus:Close();return end
     end
@@ -220,7 +237,7 @@ RunService.Heartbeat:Connect(function(dt: number)
     if accumulator<T.Timing.Step then return end
     accumulator=0
     local now=os.clock()
-    hud:Step(now);menus:Step(now);feedback:Step(now)
+    hud:Step(now);menus:Step(now);feedback:Step(now);cityMap:Step()
     feedback.Notice.Visible=now<(feedback.NoticeUntil or 0) and not hud.Cast.Visible and not cinematic and not modal
     hud.Wordmark.Visible=false -- the zone compass occupies the Art Bible's top-center strip.
     feedback.Acting.Position=UDim2.fromOffset(hud.Layout.Pathway.X,hud.Layout.Pathway.Y+hud.Pathway.AbsoluteSize.Y+T.World.Labels.Pad)
@@ -230,4 +247,4 @@ RunService.Heartbeat:Connect(function(dt: number)
 end)
 resize()
 send("Sync",{})
-script.Destroying:Connect(function() testRoom:Close();worldView:Destroy();presentation:Destroy() end)
+script.Destroying:Connect(function() cityMap:Destroy();testRoom:Close();worldView:Destroy();presentation:Destroy() end)

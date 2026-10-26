@@ -293,6 +293,70 @@ return function(data: any,load: any,shared: any,e: any)
             end
         end
     end
+    -- City travel: execute real authorization and relocation with engine adapters.
+    local registry=load("CityDestinations",env)
+    local travel=load("Server/Services/CityTravel",env)
+    local Domain=load("Server/Domain/PlayerDomain",env);local domain=Domain.new(data)
+    local st=domain:NewState(domain:Default(),0)
+    local destination=registry.Entries[1].Id
+    check(#registry.Entries==70,"Every named site, including grouped businesses and riverbank arrivals, is selectable")
+    check(not travel.Check(domain,st,destination,100),"Non-Door travel denied")
+    st.Profile.PathwayId="Apprentice";st.Spirituality=50
+    for sequence=1,9 do st.Profile.Sequence=sequence;check(travel.Check(domain,st,destination,100),"Door travel available at every requested sequence") end
+    for _,id in ipairs({"unknown",{},3,string.rep("x",30)}) do check(not travel.Check(domain,st,id,100),"Forged destination rejected") end
+    st.Dead=true;check(not travel.Check(domain,st,destination,100),"Dead travel denied");st.Dead=false
+    st.Pending={};check(not travel.Check(domain,st,destination,100),"Pending cast prevents travel");st.Pending=nil
+    for _,status in ipairs({"Silenced","Stasis","Sleep"}) do
+        st.Statuses[status]={ExpiresAt=200};check(not travel.Check(domain,st,destination,100),"Control effects block travel");st.Statuses={}
+    end
+    st.Spirituality=0;check(not travel.Check(domain,st,destination,100),"Resource requirement enforced");st.Spirituality=50
+    local root=instance("Part");root.CFrame=cf(0,4,0)
+    local moves=0;local character={PivotTo=function(_,frame) root.CFrame=frame;moves+=1 end}
+    local traveler={Character=character}
+    local blocked=true
+    local adapter={Transient=instance("Folder"),Root=function() return root end,Humanoid=function() return {Health=100} end,
+        SafeDestination=function(_,_,position) return if blocked then nil else position+v(0,4,0) end}
+    check(not travel.Go(adapter,domain,traveler,st,destination,100),"Blocked arrival rejected")
+    check(st.Spirituality==50 and not st.Cooldowns.CityTravel and moves==0,"Failed travel consumes nothing and never moves")
+    blocked=false
+    check(travel.Go(adapter,domain,traveler,st,destination,100),"Valid Door travel succeeds")
+    check(moves==1 and st.Spirituality==40 and st.Cooldowns.CityTravel==105 and st.TeleportGraceUntil==103,"Successful travel charges once and grants movement grace")
+    check(not travel.Go(adapter,domain,traveler,st,destination,101) and moves==1,"Repeated request cannot bypass cooldown")
+    -- Exercise the real map controller with GUI signal stand-ins.
+    local function event()
+        local handlers={}
+        return {Connect=function(_,fn) table.insert(handlers,fn);return {Disconnect=function() end} end,
+            Fire=function(_,...) for _,fn in ipairs(handlers) do fn(...) end end}
+    end
+    local guiEnv=table.clone(env)
+    guiEnv.Instance={new=function(class)
+        local object=instance(class);object.AbsoluteSize={X=900,Y=600}
+        for _,key in ipairs({"Activated","MouseEnter","MouseLeave","InputBegan"}) do object[key]=event() end
+        object.GetPropertyChangedSignal=function() return event() end
+        return object
+    end}
+    local input={InputChanged=event(),InputEnded=event()}
+    guiEnv.game={GetService=function(_,key) return if key=="UserInputService" then input else services[key] end}
+    load("Client/UI/Kit",guiEnv)
+    local CityMap=load("Client/UI/CityMap",guiEnv)
+    local sent={};local isModal=false
+    local map=CityMap.new(instance("Frame"),function(action,payload) table.insert(sent,{Action=action,Payload=payload}) end,function(open) isModal=open end)
+    map:Update({Ready=true,Dead=false,PathwayId="Seer"});map:Toggle()
+    check(isModal and map.Root.Visible and not map.TravelButton.Visible,"All pathways can view map but non-Door cannot travel")
+    map.Search.Text="Daffodil";map:Filter()
+    -- Registry uses the supplied name Moretti Residence (New), so search that label.
+    map.Search.Text="Moretti";map:Filter()
+    local visible=0;for _,row in ipairs(map.Rows) do if row.Button.Visible then visible+=1 end end
+    check(visible==2,"Search filters destination list by name")
+    map:Update({Ready=true,Dead=false,PathwayId="Apprentice"})
+    map:Select(registry.Entries[1]);map.TravelButton.Activated:Fire();map.TravelButton.Activated:Fire()
+    check(#sent==1 and sent[1].Action=="CityTravel" and sent[1].Payload.Id==destination,"Map sends only selected registry ID and suppresses repeated clicks")
+    map:Result({Ok=false,Message="Blocked"});check(map.Root.Visible and not map.Waiting,"Travel failure keeps map usable")
+    map:SetZoom(100);check(map.Zoom==5,"Zoom bounded")
+    map:Result({Ok=true,Message="Arrived"});check(not map.Root.Visible and not isModal,"Successful travel closes map and releases input")
+    map:Toggle();map:Update({Ready=true,Dead=true,PathwayId="Apprentice"});check(not map.Root.Visible,"Death closes map")
+    map:Destroy()
+
     service:Destroy()
     print("PASS: "..checks.." F-I world/outfit/mythical-form/enemy/telegraph/stress assertions (engine stand-ins; no rendering)")
 end

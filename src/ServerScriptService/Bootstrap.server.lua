@@ -32,6 +32,7 @@ local Sessions=require(script.Parent.Domain.SessionStore)
 local RateLimiter=require(script.Parent.Domain.RateLimiter)
 local World=require(script.Parent.Services.WorldService)
 local Effects=require(script.Parent.Services.EffectService)
+local CityTravel=require(script.Parent.Services.CityTravel)
 local VisualEvents=require(script.Parent.Services.VisualEventService)
 local VfxConfig=require(ReplicatedStorage.Shared.VfxConfig)
 local domain=Domain.new(data)
@@ -222,7 +223,10 @@ intent.OnServerEvent:Connect(function(player: Player,action: any,payload: any)
     local s=states[player]
     if not s or not s.Ready or s.Dead or type(payload)~="table" then return end
     local now=os.clock()
-    if action=="Buy" then
+    if action=="CityTravel" then
+        local ok,message=CityTravel.Go(world,domain,player,s,payload.Id,now)
+        stateEvent:FireClient(player,{CityTravel={Ok=ok,Message=message}})
+    elseif action=="Buy" then
         local root=world:Root(player)
         local ticket=s.AltarTicket
         s.AltarTicket=nil

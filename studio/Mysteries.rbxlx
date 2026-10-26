@@ -649,6 +649,30 @@ return freeze(config)
       </Item>
       <Item class="ModuleScript" referent="4">
         <Properties>
+          <string name="Name">CityDestinations</string>
+          <string name="Source"><![CDATA[--!strict
+-- Stable IDs only cross the travel remote; coordinates always come from this registry.
+local layout=require(script.Parent.TingenLayout)
+local plan=require(script.Parent.TingenPlan)
+local entries: {any}={}
+local byId: {[string]: any}={}
+for index,p in ipairs(plan.Plots) do
+    local id=tostring(p[1])..":"..index
+    local entry={Id=id,MapId=p[1],Name=p[2],X=p[3],Y=p[4],LandingX=p[3],LandingY=p[4]-p[6]/2-4,Approximate=p[1]==68}
+    if p[1]==47 then entry.LandingX=655;entry.LandingY=310 end
+    table.insert(entries,entry);byId[id]=entry
+end
+for _,r in ipairs({{66,550,546},{67,833,171}}) do
+    local item=layout.Landmarks[r[1]]
+    local entry={Id=tostring(r[1]),MapId=r[1],Name=item.Name,X=item.X,Y=item.Y,LandingX=r[2],LandingY=r[3],Approximate=false}
+    table.insert(entries,entry);byId[entry.Id]=entry
+end
+return require(script.Parent.Freeze)({Entries=entries,ById=byId,Cost=10,Cooldown=5})
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="5">
+        <Properties>
           <string name="Name">Freeze</string>
           <string name="Source"><![CDATA[--!strict
 -- Return deeply immutable configuration. Never put live player state in these tables.
@@ -665,7 +689,7 @@ return freeze
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="5">
+      <Item class="ModuleScript" referent="6">
         <Properties>
           <string name="Name">GameData</string>
           <string name="Source"><![CDATA[--!strict
@@ -683,7 +707,7 @@ return freeze({
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="6">
+      <Item class="ModuleScript" referent="7">
         <Properties>
           <string name="Name">MotionTracks</string>
           <string name="Source"><![CDATA[--!strict
@@ -693,7 +717,7 @@ return {["Seer"]={{["Time"]=0,["Pose"]={["Root"]={-3.6,5.4,1.8},["Waist"]={-2.25
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="7">
+      <Item class="ModuleScript" referent="8">
         <Properties>
           <string name="Name">PathwayData</string>
           <string name="Source"><![CDATA[--!strict
@@ -716,7 +740,7 @@ return freeze(byId)
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="8">
+      <Item class="ModuleScript" referent="9">
         <Properties>
           <string name="Name">PathwayFactory</string>
           <string name="Source"><![CDATA[--!strict
@@ -755,11 +779,11 @@ end
 ]]></string>
         </Properties>
       </Item>
-      <Item class="Folder" referent="9">
+      <Item class="Folder" referent="10">
         <Properties>
           <string name="Name">Pathways</string>
         </Properties>
-        <Item class="ModuleScript" referent="10">
+        <Item class="ModuleScript" referent="11">
           <Properties>
             <string name="Name">Apprentice</string>
             <string name="Source"><![CDATA[--!strict
@@ -778,7 +802,7 @@ return make("Apprentice", "Door", {
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="11">
+        <Item class="ModuleScript" referent="12">
           <Properties>
             <string name="Name">Marauder</string>
             <string name="Source"><![CDATA[--!strict
@@ -797,7 +821,7 @@ return make("Marauder", "Error", {
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="12">
+        <Item class="ModuleScript" referent="13">
           <Properties>
             <string name="Name">Seer</string>
             <string name="Source"><![CDATA[--!strict
@@ -817,7 +841,7 @@ return make("Seer", "Fool", {
           </Properties>
         </Item>
       </Item>
-      <Item class="ModuleScript" referent="13">
+      <Item class="ModuleScript" referent="14">
         <Properties>
           <string name="Name">PotionData</string>
           <string name="Source"><![CDATA[--!strict
@@ -850,7 +874,7 @@ return freeze({ById=potions, Rules={
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="14">
+      <Item class="ModuleScript" referent="15">
         <Properties>
           <string name="Name">ProgressionConfig</string>
           <string name="Source"><![CDATA[--!strict
@@ -887,7 +911,7 @@ return freeze({
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="15">
+      <Item class="ModuleScript" referent="16">
         <Properties>
           <string name="Name">RuntimeConfig</string>
           <string name="Source"><![CDATA[--!strict
@@ -964,7 +988,7 @@ return freeze({
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="16">
+      <Item class="ModuleScript" referent="17">
         <Properties>
           <string name="Name">StatData</string>
           <string name="Source"><![CDATA[--!strict
@@ -1004,7 +1028,7 @@ return freeze({BaseStats=bases, TierMultipliers=tiers, GetMultipliers=multiplier
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="17">
+      <Item class="ModuleScript" referent="18">
         <Properties>
           <string name="Name">StatusEffectData</string>
           <string name="Source"><![CDATA[--!strict
@@ -1013,7 +1037,7 @@ return freeze({Madness={Id="Madness", DurationSeconds=10, Stacking="Refresh", Ma
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="18">
+      <Item class="ModuleScript" referent="19">
         <Properties>
           <string name="Name">Theme</string>
           <string name="Source"><![CDATA[--!strict
@@ -1228,7 +1252,7 @@ return freeze({
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="19">
+      <Item class="ModuleScript" referent="20">
         <Properties>
           <string name="Name">TingenLayout</string>
           <string name="Source"><![CDATA[--!strict
@@ -1308,7 +1332,7 @@ return require(script.Parent.Freeze)(Layout)
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="20">
+      <Item class="ModuleScript" referent="21">
         <Properties>
           <string name="Name">TingenPlan</string>
           <string name="Source"><![CDATA[--!strict
@@ -5196,7 +5220,7 @@ return require(script.Parent.Freeze)(plan)
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="21">
+      <Item class="ModuleScript" referent="22">
         <Properties>
           <string name="Name">Types</string>
           <string name="Source"><![CDATA[--!strict
@@ -5234,7 +5258,7 @@ return table.freeze({})
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="22">
+      <Item class="ModuleScript" referent="23">
         <Properties>
           <string name="Name">VfxConfig</string>
           <string name="Source"><![CDATA[--!strict
@@ -5376,7 +5400,7 @@ return freeze({
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="23">
+      <Item class="ModuleScript" referent="24">
         <Properties>
           <string name="Name">VisualBudget</string>
           <string name="Source"><![CDATA[--!strict
@@ -5452,7 +5476,7 @@ return Budget
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="24">
+      <Item class="ModuleScript" referent="25">
         <Properties>
           <string name="Name">VisualLayout</string>
           <string name="Source"><![CDATA[--!strict
@@ -5518,7 +5542,7 @@ return table.freeze(Layout)
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="25">
+      <Item class="ModuleScript" referent="26">
         <Properties>
           <string name="Name">VisualModel</string>
           <string name="Source"><![CDATA[--!strict
@@ -5596,11 +5620,11 @@ return table.freeze(Model)
       </Item>
     </Item>
   </Item>
-  <Item class="ServerScriptService" referent="26">
+  <Item class="ServerScriptService" referent="27">
     <Properties>
       <string name="Name">ServerScriptService</string>
     </Properties>
-    <Item class="ModuleScript" referent="27">
+    <Item class="ModuleScript" referent="28">
       <Properties>
         <string name="Name">AdminConfig</string>
         <string name="Source"><![CDATA[--!strict
@@ -5611,7 +5635,7 @@ return table.freeze({AdminUserIds=table.freeze({}),AdminUsernames=table.freeze({
 ]]></string>
       </Properties>
     </Item>
-    <Item class="Script" referent="28">
+    <Item class="Script" referent="29">
       <Properties>
         <string name="Name">Bootstrap</string>
         <token name="RunContext">0</token>
@@ -5649,6 +5673,7 @@ local Sessions=require(script.Parent.Domain.SessionStore)
 local RateLimiter=require(script.Parent.Domain.RateLimiter)
 local World=require(script.Parent.Services.WorldService)
 local Effects=require(script.Parent.Services.EffectService)
+local CityTravel=require(script.Parent.Services.CityTravel)
 local VisualEvents=require(script.Parent.Services.VisualEventService)
 local VfxConfig=require(ReplicatedStorage.Shared.VfxConfig)
 local domain=Domain.new(data)
@@ -5839,7 +5864,10 @@ intent.OnServerEvent:Connect(function(player: Player,action: any,payload: any)
     local s=states[player]
     if not s or not s.Ready or s.Dead or type(payload)~="table" then return end
     local now=os.clock()
-    if action=="Buy" then
+    if action=="CityTravel" then
+        local ok,message=CityTravel.Go(world,domain,player,s,payload.Id,now)
+        stateEvent:FireClient(player,{CityTravel={Ok=ok,Message=message}})
+    elseif action=="Buy" then
         local root=world:Root(player)
         local ticket=s.AltarTicket
         s.AltarTicket=nil
@@ -6038,11 +6066,11 @@ end)
 ]]></string>
       </Properties>
     </Item>
-    <Item class="Folder" referent="29">
+    <Item class="Folder" referent="30">
       <Properties>
         <string name="Name">Domain</string>
       </Properties>
-      <Item class="ModuleScript" referent="30">
+      <Item class="ModuleScript" referent="31">
         <Properties>
           <string name="Name">AdminProgression</string>
           <string name="Source"><![CDATA[--!strict
@@ -6077,7 +6105,7 @@ return table.freeze(Admin)
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="31">
+      <Item class="ModuleScript" referent="32">
         <Properties>
           <string name="Name">PlayerDomain</string>
           <string name="Source"><![CDATA[--!strict
@@ -6422,7 +6450,7 @@ return Domain
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="32">
+      <Item class="ModuleScript" referent="33">
         <Properties>
           <string name="Name">RateLimiter</string>
           <string name="Source"><![CDATA[--!strict
@@ -6445,7 +6473,7 @@ return RateLimiter
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="33">
+      <Item class="ModuleScript" referent="34">
         <Properties>
           <string name="Name">SessionStore</string>
           <string name="Source"><![CDATA[--!strict
@@ -6520,7 +6548,7 @@ return SessionStore
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="34">
+      <Item class="ModuleScript" referent="35">
         <Properties>
           <string name="Name">VisualAccess</string>
           <string name="Source"><![CDATA[--!strict
@@ -6540,11 +6568,65 @@ return table.freeze(Access)
         </Properties>
       </Item>
     </Item>
-    <Item class="Folder" referent="35">
+    <Item class="Folder" referent="36">
       <Properties>
         <string name="Name">Services</string>
       </Properties>
-      <Item class="ModuleScript" referent="36">
+      <Item class="ModuleScript" referent="37">
+        <Properties>
+          <string name="Name">CityTravel</string>
+          <string name="Source"><![CDATA[--!strict
+local Registry=require(game:GetService("ReplicatedStorage").Shared.CityDestinations)
+local Layout=require(game:GetService("ReplicatedStorage").Shared.TingenLayout)
+local Travel={}
+function Travel.Check(domain: any,s: any,id: any,now: number): (boolean,string)
+    if type(id)~="string" or #id>20 or not Registry.ById[id] then return false,"Choose a named city destination" end
+    if not s or not s.Profile or s.Profile.PathwayId~="Apprentice" then return false,"City travel requires the Door pathway" end
+    local ok,message=domain:CanMove(s,now)
+    if not ok then return false,message or "Cannot travel now" end
+    for key,st in pairs(s.Statuses or {}) do
+        local def=domain.Data.StatusEffects[key]
+        if st.ExpiresAt>now and def and (def.BlocksCasting or def.BlocksAbilities) then return false,"Travel is blocked by "..key end
+    end
+    if now<(s.Cooldowns.CityTravel or 0) then return false,"City travel is cooling down" end
+    if s.Spirituality<Registry.Cost then return false,"Not enough spirituality" end
+    return true,""
+end
+function Travel.Go(world: any,domain: any,player: Player,s: any,id: any,now: number): (boolean,string)
+    local ok,message=Travel.Check(domain,s,id,now)
+    if not ok then return false,message end
+    local root=world:Root(player);local hum=world:Humanoid(player)
+    if not root or not hum or hum.Health<=0 or not player.Character then return false,"Wait for your character" end
+    local entry=Registry.ById[id]
+    local anchor=Vector3.new((entry.LandingX-Layout.OriginX)*Layout.Scale,0,(entry.LandingY-Layout.OriginY)*Layout.Scale)
+    local destination: Vector3?=nil
+    -- Ground-level, collision-checked arrival; never choose roofs or riverbeds.
+    for _,offset in ipairs({Vector3.zero,Vector3.new(0,0,-8),Vector3.new(8,0,0),Vector3.new(-8,0,0),Vector3.new(0,0,8),Vector3.new(0,0,-16),Vector3.new(16,0,0),Vector3.new(-16,0,0)}) do
+        local safe=world:SafeDestination(player,anchor+offset)
+        if safe and safe.Y>=2 and safe.Y<=7 then destination=safe;break end
+    end
+    if not destination then return false,"That arrival point is blocked. Try again shortly." end
+    local origin=root.Position
+    player.Character:PivotTo(CFrame.new(destination)*root.CFrame.Rotation)
+    root.AssemblyLinearVelocity=Vector3.zero;root.AssemblyAngularVelocity=Vector3.zero
+    s.Spirituality-=Registry.Cost;s.Cooldowns.CityTravel=now+Registry.Cooldown
+    s.TeleportGraceUntil=now+3;s.LastPosition=destination;s.LastPositionAt=now
+    -- Native, short-lived portal rims are visible to everyone, without granting other players travel.
+    for _,at in ipairs({origin,destination}) do
+        for _,edge in ipairs({{-3,0,1,8},{3,0,1,8},{0,4,7,1}}) do
+            local p=Instance.new("Part");p.Name="City travel threshold";p.Size=Vector3.new(edge[3],edge[4],.5)
+            p.CFrame=CFrame.new(at+Vector3.new(edge[1],edge[2],0));p.Anchored=true;p.CanCollide=false;p.CanQuery=false;p.CanTouch=false
+            p.Material=Enum.Material.Neon;p.Color=Color3.fromRGB(92,220,220);p.Transparency=.25;p.Parent=world.Transient
+            game:GetService("Debris"):AddItem(p,1)
+        end
+    end
+    return true,"Arrived at "..entry.Name
+end
+return Travel
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="38">
         <Properties>
           <string name="Name">EffectService</string>
           <string name="Source"><![CDATA[--!strict
@@ -6968,7 +7050,7 @@ return Effects
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="37">
+      <Item class="ModuleScript" referent="39">
         <Properties>
           <string name="Name">TingenArchitecture</string>
           <string name="Source"><![CDATA[--!strict
@@ -7144,7 +7226,7 @@ return A
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="38">
+      <Item class="ModuleScript" referent="40">
         <Properties>
           <string name="Name">TingenWorld</string>
           <string name="Source"><![CDATA[--!strict
@@ -7281,7 +7363,7 @@ return City
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="39">
+      <Item class="ModuleScript" referent="41">
         <Properties>
           <string name="Name">VisualEventService</string>
           <string name="Source"><![CDATA[--!strict
@@ -7489,7 +7571,7 @@ return Visual
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="40">
+      <Item class="ModuleScript" referent="42">
         <Properties>
           <string name="Name">WorldArt</string>
           <string name="Source"><![CDATA[--!strict
@@ -7652,7 +7734,7 @@ return Art
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="41">
+      <Item class="ModuleScript" referent="43">
         <Properties>
           <string name="Name">WorldService</string>
           <string name="Source"><![CDATA[--!strict
@@ -7961,20 +8043,20 @@ return World
       </Item>
     </Item>
   </Item>
-  <Item class="StarterGui" referent="42">
+  <Item class="StarterGui" referent="44">
     <Properties>
       <string name="Name">StarterGui</string>
     </Properties>
   </Item>
-  <Item class="StarterPlayer" referent="43">
+  <Item class="StarterPlayer" referent="45">
     <Properties>
       <string name="Name">StarterPlayer</string>
     </Properties>
-    <Item class="StarterPlayerScripts" referent="44">
+    <Item class="StarterPlayerScripts" referent="46">
       <Properties>
         <string name="Name">StarterPlayerScripts</string>
       </Properties>
-      <Item class="LocalScript" referent="45">
+      <Item class="LocalScript" referent="47">
         <Properties>
           <string name="Name">Mysteries</string>
           <string name="Source"><![CDATA[--!strict
@@ -7992,6 +8074,7 @@ local UI=script.Parent:WaitForChild("UI")
 local Kit=require(UI.Kit)
 local Hud=require(UI.Hud)
 local Menus=require(UI.Menus)
+local CityMap=require(UI.CityMap)
 local Prompts=require(UI.Prompts)
 local Feedback=require(UI.Feedback)
 local Developer=require(UI.Developer)
@@ -8014,6 +8097,8 @@ local state: any=nil
 local modal=false
 local menuModal=false
 local roomModal=false
+local mapModal=false
+local cityMap: any=nil
 local cinematic=false
 local worldView: any=nil
 local zoneTitle=false
@@ -8089,11 +8174,11 @@ local feedback=Feedback.new(safeRoot,data,function(active: boolean)
     if hud then hud.Wordmark.Visible=not active and not promptUI.Root.Visible;hud.Pathway.Visible=not active and not zoneTitle and not promptUI.Root.Visible end
 end)
 hud=Hud.new(safeRoot,data,{Cast=cast,Melee=melee,Dash=dash,Ultimate=ultimate,ToggleRun=toggleRun,Touch=UserInputService.TouchEnabled,TouchAim=touchAim,ReducedMotion=function() return menus and menus.ReducedMotion end,Journal=function(tab: string)
-    if roomModal then return end
+    if roomModal or mapModal then return end
     if menus.Root.Visible and menus.Tab==tab and menus.View=="Page" then menus:Close() else menus:Open(tab) end
 end})
 local function updateModal()
-    modal=menuModal or roomModal;promptUI:SetModal(modal);hud.Tooltip.Visible=false
+    modal=menuModal or roomModal or mapModal;promptUI:SetModal(modal);hud.Tooltip.Visible=false
     if developer then developer:SetSuppressed(modal) end
 end
 local function visualSettings(reduced: boolean,low: boolean)
@@ -8110,6 +8195,13 @@ menus=Menus.new(safeRoot,data,{Intent=send,Modal=function(open: boolean)
     menuModal=open;updateModal()
 end,ReducedMotion=function(reduced: boolean) visualSettings(reduced,menus.LowGraphics) end,
     LowGraphics=function(low: boolean) visualSettings(menus.ReducedMotion,low) end})
+cityMap=CityMap.new(safeRoot,send,function(open: boolean)
+    if open then
+        if menus.Root.Visible then menus:Close() end
+        if testRoom and testRoom.Root.Visible then testRoom:Close() end
+    end
+    mapModal=open;updateModal()
+end)
 presentation=Presentation.new(gui,data,{Notice=function(text: string) feedback:Tell(text) end,Damage=function(event: any) feedback:Damage(event) end,
     CastVisual=function(event: any) hud:SetVisualCast(event) end,
     ScreenEdgePulse=function() feedback:Flash() end})
@@ -8146,6 +8238,7 @@ safeRoot:GetPropertyChangedSignal("AbsoluteSize"):Connect(resize)
 UserInputService:GetPropertyChangedSignal("TouchEnabled"):Connect(resize)
 stateEvent.OnClientEvent:Connect(function(update: any)
     if type(update)~="table" then return end
+    if update.CityTravel then cityMap:Result(update.CityTravel);return end
     if update.Message then
         feedback:Tell(update.Message)
         if menus.Waiting and not menus.Purchase then menus:Close() end
@@ -8157,6 +8250,7 @@ stateEvent.OnClientEvent:Connect(function(update: any)
         menus:Close();feedback:Tell(update.Purchase.Message,not update.Purchase.Ok);return
     end
     state=update
+    cityMap:Update(update)
     developer:Update(update);hud:Render(update,os.clock());menus:Update(update);feedback:Update(update)
     presentation:Update(update)
     if not developer.Allowed and testRoom.Root.Visible then testRoom:Close() end
@@ -8170,16 +8264,21 @@ end)
 UserInputService.InputBegan:Connect(function(input: InputObject,processed: boolean)
     if UserInputService:GetFocusedTextBox() then return end
     if input.KeyCode==T.Input.Developer then
+        if mapModal then return end
         if testRoom.Root.Visible then testRoom:Close() else developer:Toggle() end
         return
     end
+    if input.KeyCode==Enum.KeyCode.Escape and cityMap.Root.Visible then cityMap:Close();return end
     if processed then return end
+    if input.KeyCode==Enum.KeyCode.M then cityMap:Toggle();return end
+    if input.KeyCode==Enum.KeyCode.F and state and state.PathwayId=="Apprentice" then cityMap:Toggle();return end
     if input.KeyCode==T.Input.Journal then
-        if roomModal then return end
+        if roomModal or mapModal then return end
         if menus.Root.Visible then menus:Close() else menus:Open("Journal") end
         return
     end
     if input.KeyCode==Enum.KeyCode.Escape then
+        if cityMap.Root.Visible then cityMap:Close();return end
         if testRoom.Root.Visible then testRoom:Close();return end
         if menus.Root.Visible then menus:Close();return end
     end
@@ -8199,7 +8298,7 @@ RunService.Heartbeat:Connect(function(dt: number)
     if accumulator<T.Timing.Step then return end
     accumulator=0
     local now=os.clock()
-    hud:Step(now);menus:Step(now);feedback:Step(now)
+    hud:Step(now);menus:Step(now);feedback:Step(now);cityMap:Step()
     feedback.Notice.Visible=now<(feedback.NoticeUntil or 0) and not hud.Cast.Visible and not cinematic and not modal
     hud.Wordmark.Visible=false -- the zone compass occupies the Art Bible's top-center strip.
     feedback.Acting.Position=UDim2.fromOffset(hud.Layout.Pathway.X,hud.Layout.Pathway.Y+hud.Pathway.AbsoluteSize.Y+T.World.Labels.Pad)
@@ -8209,15 +8308,153 @@ RunService.Heartbeat:Connect(function(dt: number)
 end)
 resize()
 send("Sync",{})
-script.Destroying:Connect(function() testRoom:Close();worldView:Destroy();presentation:Destroy() end)
+script.Destroying:Connect(function() cityMap:Destroy();testRoom:Close();worldView:Destroy();presentation:Destroy() end)
 ]]></string>
         </Properties>
       </Item>
-      <Item class="Folder" referent="46">
+      <Item class="Folder" referent="48">
         <Properties>
           <string name="Name">UI</string>
         </Properties>
-        <Item class="ModuleScript" referent="47">
+        <Item class="ModuleScript" referent="49">
+          <Properties>
+            <string name="Name">CityMap</string>
+            <string name="Source"><![CDATA[--!strict
+local Shared=game:GetService("ReplicatedStorage").Shared
+local Registry=require(Shared.CityDestinations)
+local Plan=require(Shared.TingenPlan)
+local Layout=require(Shared.TingenLayout)
+local Kit=require(script.Parent.Kit)
+local Input=game:GetService("UserInputService")
+local Map={};Map.__index=Map
+local ink=Color3.fromRGB(29,36,43)
+local paper=Color3.fromRGB(222,216,195)
+local gold=Color3.fromRGB(207,179,116)
+local function button(parent: Instance,text: string,position: UDim2,size: UDim2,callback: ()->()): TextButton
+    local b=Kit.New("TextButton",parent,{Text=text,Position=position,Size=size,BackgroundColor3=ink,TextColor3=paper,TextSize=14,Font=Enum.Font.Gotham})
+    b.Activated:Connect(callback);return b
+end
+function Map.new(parent: Instance,send: any,modal: any): any
+    local self: any=setmetatable({Send=send,Modal=modal,Zoom=1,Selected=nil,State=nil,Rows={},Pins={},Waiting=false,Connections={}},Map)
+    self.Root=Kit.New("Frame",parent,{Name="TingenCityMap",Size=UDim2.fromScale(1,1),BackgroundColor3=ink,Visible=false,ZIndex=20})
+    Kit.New("TextLabel",self.Root,{Text="TINGEN  /  CITY ATLAS",Position=UDim2.fromOffset(16,8),Size=UDim2.new(1,-190,0,30),TextXAlignment=Enum.TextXAlignment.Left,BackgroundTransparency=1,TextColor3=gold,TextSize=20,Font=Enum.Font.Garamond})
+    button(self.Root,"Close [M]",UDim2.new(1,-110,0,8),UDim2.fromOffset(100,30),function() self:Close() end)
+    self.Search=Kit.New("TextBox",self.Root,{PlaceholderText="Search locations…",Text="",ClearTextOnFocus=false,Position=UDim2.fromOffset(12,48),Size=UDim2.new(1,-24,0,32),TextColor3=paper,BackgroundColor3=Color3.fromRGB(49,58,65),TextSize=14})
+    self.View=Kit.New("ScrollingFrame",self.Root,{Position=UDim2.fromOffset(12,90),Size=UDim2.new(.68,-18,1,-205),CanvasSize=UDim2.fromOffset(1080,809),BackgroundColor3=paper,ScrollBarThickness=6,BorderSizePixel=0})
+    self.Canvas=Kit.New("Frame",self.View,{Size=UDim2.fromOffset(1080,809),BackgroundColor3=paper,BorderSizePixel=0})
+    self.Scale=Kit.New("UIScale",self.Canvas,{Scale=1})
+    local function rect(x: number,y: number,w: number,h: number,c: Color3)
+        return Kit.New("Frame",self.Canvas,{Position=UDim2.fromOffset(x-w/2,y-h/2),Size=UDim2.fromOffset(w,h),BackgroundColor3=c,BorderSizePixel=0})
+    end
+    for _,r in ipairs(Plan.Water) do rect(r[1],r[2],r[3],r[4],Color3.fromRGB(73,115,134)) end
+    for _,r in ipairs(Plan.Buildings) do
+        local b=rect(r[1],r[2],r[3],r[4],Color3.fromRGB(139,129,112));b.Rotation=-r[5]
+    end
+    for _,r in ipairs(Plan.Roads) do
+        local dx,dy=r[3]-r[1],r[4]-r[2]
+        local b=rect((r[1]+r[3])/2,(r[2]+r[4])/2,math.sqrt(dx*dx+dy*dy),r[5],Color3.fromRGB(185,179,161));b.Rotation=math.deg(math.atan2(dy,dx))
+    end
+    self.List=Kit.New("ScrollingFrame",self.Root,{Position=UDim2.new(.68,0,0,90),Size=UDim2.new(.32,-12,1,-205),BackgroundTransparency=1,ScrollBarThickness=5,CanvasSize=UDim2.new(),BorderSizePixel=0})
+    for _,entry in ipairs(Registry.Entries) do
+        local pin=button(self.Canvas,tostring(entry.MapId),UDim2.fromOffset(entry.X-6,entry.Y-6),UDim2.fromOffset(12,12),function() self:Select(entry) end)
+        pin.TextSize=9;pin.BackgroundColor3=Color3.fromRGB(126,49,44);pin.ZIndex=3
+        local name=Kit.New("TextLabel",pin,{Position=UDim2.fromOffset(14,-2),Size=UDim2.fromOffset(135,16),BackgroundTransparency=.2,BackgroundColor3=paper,TextColor3=ink,TextSize=10,TextXAlignment=Enum.TextXAlignment.Left,Text=entry.Name,ZIndex=4,Visible=false})
+        pin.MouseEnter:Connect(function() name.Visible=true end)
+        pin.MouseLeave:Connect(function() name.Visible=self.Zoom>=2 or self.Selected==entry end)
+        self.Pins[entry.Id]={Button=pin,Label=name}
+        local row=button(self.List,tostring(entry.MapId).."  "..entry.Name,UDim2.new(),UDim2.new(1,-8,0,40),function() self:Select(entry) end)
+        row.TextWrapped=true;row.TextSize=12;row.TextXAlignment=Enum.TextXAlignment.Left
+        table.insert(self.Rows,{Entry=entry,Button=row})
+    end
+    self.You=rect(655,310,8,8,Color3.fromRGB(0,160,180));self.You.ZIndex=6
+    self.Detail=Kit.New("TextLabel",self.Root,{Position=UDim2.new(0,12,1,-105),Size=UDim2.new(1,-24,0,40),Text="Select a named location. Right-drag or touch-drag to pan; + / − to zoom.",TextWrapped=true,BackgroundTransparency=1,TextColor3=paper,TextSize=14})
+    self.TravelButton=button(self.Root,"Door travel",UDim2.new(.48,0,1,-53),UDim2.new(.52,-12,0,38),function()
+        if self.Waiting or not self.Selected or not self.State or self.State.PathwayId~="Apprentice" then return end
+        self.Waiting=true;self.SentAt=os.clock();self.Detail.Text="Opening a door…"
+        self.Send("CityTravel",{Id=self.Selected.Id})
+    end)
+    button(self.Root,"−",UDim2.new(0,12,1,-53),UDim2.fromOffset(38,38),function() self:SetZoom(self.Zoom/1.5) end)
+    button(self.Root,"+",UDim2.new(0,56,1,-53),UDim2.fromOffset(38,38),function() self:SetZoom(self.Zoom*1.5) end)
+    button(self.Root,"Fit",UDim2.new(0,100,1,-53),UDim2.fromOffset(45,38),function() self:SetZoom(1);self.View.CanvasPosition=Vector2.zero end)
+    self.Launch=button(parent,"MAP [M]",UDim2.new(1,-116,0,54),UDim2.fromOffset(104,32),function() self:Toggle() end)
+    self.Search:GetPropertyChangedSignal("Text"):Connect(function() self:Filter() end)
+    self.Root:GetPropertyChangedSignal("AbsoluteSize"):Connect(function() self:SetZoom(self.Zoom) end)
+    self.View.InputBegan:Connect(function(input: InputObject)
+        if input.UserInputType==Enum.UserInputType.MouseButton2 then
+            self.DragStart=Vector2.new(input.Position.X,input.Position.Y);self.DragCanvas=self.View.CanvasPosition
+        end
+    end)
+    table.insert(self.Connections,Input.InputChanged:Connect(function(input: InputObject)
+        if self.Root.Visible and self.DragStart and input.UserInputType==Enum.UserInputType.MouseMovement then
+            local delta=Vector2.new(input.Position.X,input.Position.Y)-self.DragStart
+            self.View.CanvasPosition=self.DragCanvas-delta
+        end
+    end))
+    table.insert(self.Connections,Input.InputEnded:Connect(function(input: InputObject)
+        if input.UserInputType==Enum.UserInputType.MouseButton2 then self.DragStart=nil end
+    end))
+    self:Filter();return self
+end
+function Map.Filter(self: any)
+    local query=string.lower(self.Search.Text);local n=0
+    for _,row in ipairs(self.Rows) do
+        local visible=string.find(string.lower(row.Entry.Name),query,1,true)~=nil or tostring(row.Entry.MapId)==query
+        row.Button.Visible=visible
+        if visible then row.Button.Position=UDim2.fromOffset(0,n*42);n+=1 end
+        self.Pins[row.Entry.Id].Button.Visible=visible
+    end
+    self.List.CanvasSize=UDim2.fromOffset(0,n*42);self.List.CanvasPosition=Vector2.zero
+end
+function Map.Select(self: any,entry: any)
+    self.Selected=entry
+    self.Detail.Text=entry.Name..(if entry.Approximate then " · approximate site" else "")
+    for id,pin in pairs(self.Pins) do pin.Label.Visible=self.Zoom>=2 or id==entry.Id end
+    local scale=self.Scale.Scale
+    self.View.CanvasPosition=Vector2.new(math.max(0,entry.X*scale-self.View.AbsoluteSize.X/2),math.max(0,entry.Y*scale-self.View.AbsoluteSize.Y/2))
+end
+function Map.SetZoom(self: any,zoom: number)
+    self.Zoom=math.clamp(zoom,1,5)
+    local fit=math.min(self.View.AbsoluteSize.X/1080,self.View.AbsoluteSize.Y/809)
+    if fit<=0 then return end
+    self.Scale.Scale=fit*self.Zoom;self.View.CanvasSize=UDim2.fromOffset(1080*fit*self.Zoom,809*fit*self.Zoom)
+    for _,pin in pairs(self.Pins) do pin.Label.Visible=self.Zoom>=2 end
+end
+function Map.Update(self: any,state: any)
+    self.State=state
+    local door=state.Ready and not state.Dead and state.PathwayId=="Apprentice"
+    self.TravelButton.Visible=door==true
+    self.TravelButton.Text="Travel · "..Registry.Cost.." spirituality"
+    if state.Dead then self:Close() end
+end
+function Map.Result(self: any,result: any)
+    self.Waiting=false;self.Detail.Text=result.Message or "Travel complete"
+    if result.Ok then self:Close() end
+end
+function Map.Step(self: any)
+    if not self.Root.Visible then return end
+    if self.Waiting and os.clock()-self.SentAt>8 then self.Waiting=false;self.Detail.Text="No response. Select the destination to retry." end
+    local character=game:GetService("Players").LocalPlayer.Character
+    local root=character and character:FindFirstChild("HumanoidRootPart")
+    if root and root:IsA("BasePart") then
+        self.You.Position=UDim2.fromOffset(root.Position.X/Layout.Scale+Layout.OriginX-4,root.Position.Z/Layout.Scale+Layout.OriginY-4)
+    end
+end
+function Map.Toggle(self: any)
+    if self.Root.Visible then self:Close();return end
+    self.Root.Visible=true;self.Modal(true);self:SetZoom(1);self.View.CanvasPosition=Vector2.zero
+    self.Detail.Text=if self.State and self.State.PathwayId=="Apprentice" then "Select a location, then Travel · 10 spirituality · 5s cooldown" else "Select a location to find it. Door pathway unlocks city travel."
+end
+function Map.Close(self: any) self.DragStart=nil;self.Root.Visible=false;self.Modal(false) end
+function Map.Destroy(self: any)
+    self:Close()
+    for _,connection in ipairs(self.Connections) do connection:Disconnect() end
+    self.Root:Destroy();self.Launch:Destroy()
+end
+return Map
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="50">
           <Properties>
             <string name="Name">Developer</string>
             <string name="Source"><![CDATA[--!strict
@@ -8340,7 +8577,7 @@ return Developer
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="48">
+        <Item class="ModuleScript" referent="51">
           <Properties>
             <string name="Name">Feedback</string>
             <string name="Source"><![CDATA[--!strict
@@ -8504,7 +8741,7 @@ return Feedback
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="49">
+        <Item class="ModuleScript" referent="52">
           <Properties>
             <string name="Name">Hud</string>
             <string name="Source"><![CDATA[--!strict
@@ -8850,7 +9087,7 @@ return Hud
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="50">
+        <Item class="ModuleScript" referent="53">
           <Properties>
             <string name="Name">Kit</string>
             <string name="Source"><![CDATA[--!strict
@@ -9009,7 +9246,7 @@ return Kit
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="51">
+        <Item class="ModuleScript" referent="54">
           <Properties>
             <string name="Name">Menus</string>
             <string name="Source"><![CDATA[--!strict
@@ -9290,7 +9527,7 @@ return Menus
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="52">
+        <Item class="ModuleScript" referent="55">
           <Properties>
             <string name="Name">Presentation</string>
             <string name="Source"><![CDATA[--!strict
@@ -9547,7 +9784,7 @@ return Presentation
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="53">
+        <Item class="ModuleScript" referent="56">
           <Properties>
             <string name="Name">Prompts</string>
             <string name="Source"><![CDATA[--!strict
@@ -9695,11 +9932,11 @@ return Prompts
           </Properties>
         </Item>
       </Item>
-      <Item class="Folder" referent="54">
+      <Item class="Folder" referent="57">
         <Properties>
           <string name="Name">Visuals</string>
         </Properties>
-        <Item class="ModuleScript" referent="55">
+        <Item class="ModuleScript" referent="58">
           <Properties>
             <string name="Name">AbilityPresentation</string>
             <string name="Source"><![CDATA[--!strict
@@ -9936,7 +10173,7 @@ return Ability
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="56">
+        <Item class="ModuleScript" referent="59">
           <Properties>
             <string name="Name">AnimationController</string>
             <string name="Source"><![CDATA[--!strict
@@ -10186,7 +10423,7 @@ return AnimationController
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="57">
+        <Item class="ModuleScript" referent="60">
           <Properties>
             <string name="Name">CameraFeel</string>
             <string name="Source"><![CDATA[--!strict
@@ -10312,7 +10549,7 @@ return CameraFeel
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="58">
+        <Item class="ModuleScript" referent="61">
           <Properties>
             <string name="Name">CharacterArt</string>
             <string name="Source"><![CDATA[--!strict
@@ -10605,7 +10842,7 @@ return Outfit
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="59">
+        <Item class="ModuleScript" referent="62">
           <Properties>
             <string name="Name">Choreography</string>
             <string name="Source"><![CDATA[--!strict
@@ -10734,7 +10971,7 @@ return Choreography
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="60">
+        <Item class="ModuleScript" referent="63">
           <Properties>
             <string name="Name">EffectBlocks</string>
             <string name="Source"><![CDATA[--!strict
@@ -11171,7 +11408,7 @@ return Blocks
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="61">
+        <Item class="ModuleScript" referent="64">
           <Properties>
             <string name="Name">EnemyPresentation</string>
             <string name="Source"><![CDATA[--!strict
@@ -11348,7 +11585,7 @@ return Enemies
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="62">
+        <Item class="ModuleScript" referent="65">
           <Properties>
             <string name="Name">HitPresentation</string>
             <string name="Source"><![CDATA[--!strict
@@ -11423,7 +11660,7 @@ return HitPresentation
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="63">
+        <Item class="ModuleScript" referent="66">
           <Properties>
             <string name="Name">MotionSpring</string>
             <string name="Source"><![CDATA[--!strict
@@ -11459,11 +11696,11 @@ return MotionSpring
 ]]></string>
           </Properties>
         </Item>
-        <Item class="Folder" referent="64">
+        <Item class="Folder" referent="67">
           <Properties>
             <string name="Name">PathwayEffects</string>
           </Properties>
-          <Item class="ModuleScript" referent="65">
+          <Item class="ModuleScript" referent="68">
             <Properties>
               <string name="Name">Apprentice</string>
               <string name="Source"><![CDATA[--!strict
@@ -11676,7 +11913,7 @@ return Apprentice
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="66">
+          <Item class="ModuleScript" referent="69">
             <Properties>
               <string name="Name">Marauder</string>
               <string name="Source"><![CDATA[--!strict
@@ -11861,7 +12098,7 @@ return Marauder
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="67">
+          <Item class="ModuleScript" referent="70">
             <Properties>
               <string name="Name">Seer</string>
               <string name="Source"><![CDATA[--!strict
@@ -12053,7 +12290,7 @@ return Seer
             </Properties>
           </Item>
         </Item>
-        <Item class="ModuleScript" referent="68">
+        <Item class="ModuleScript" referent="71">
           <Properties>
             <string name="Name">PerformanceProbe</string>
             <string name="Source"><![CDATA[--!strict
@@ -12115,7 +12352,7 @@ return Probe
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="69">
+        <Item class="ModuleScript" referent="72">
           <Properties>
             <string name="Name">StatusPresentation</string>
             <string name="Source"><![CDATA[--!strict
@@ -12324,7 +12561,7 @@ return Status
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="70">
+        <Item class="ModuleScript" referent="73">
           <Properties>
             <string name="Name">VfxService</string>
             <string name="Source"><![CDATA[--!strict
@@ -12557,7 +12794,7 @@ return Service
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="71">
+        <Item class="ModuleScript" referent="74">
           <Properties>
             <string name="Name">VfxTestRoom</string>
             <string name="Source"><![CDATA[--!strict
@@ -12763,7 +13000,7 @@ return TestRoom
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="72">
+        <Item class="ModuleScript" referent="75">
           <Properties>
             <string name="Name">WorldPresentation</string>
             <string name="Source"><![CDATA[--!strict
@@ -12952,7 +13189,7 @@ return WorldView
       </Item>
     </Item>
   </Item>
-  <Item class="Workspace" referent="73">
+  <Item class="Workspace" referent="76">
     <Properties>
       <string name="Name">Workspace</string>
       <bool name="NeedsPivotMigration">false</bool>
