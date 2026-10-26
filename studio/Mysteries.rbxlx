@@ -8354,7 +8354,7 @@ function Map.new(parent: Instance,send: any,modal: any): any
     Kit.New("TextLabel",self.Root,{Text="TINGEN  /  CITY ATLAS",Position=UDim2.fromOffset(16,8),Size=UDim2.new(1,-190,0,30),TextXAlignment=Enum.TextXAlignment.Left,BackgroundTransparency=1,TextColor3=gold,TextSize=20,Font=Enum.Font.Garamond})
     button(self.Root,"Close [M]",UDim2.new(1,-110,0,8),UDim2.fromOffset(100,30),function() self:Close() end)
     self.Search=Kit.New("TextBox",self.Root,{PlaceholderText="Search locations…",Text="",ClearTextOnFocus=false,Position=UDim2.fromOffset(12,48),Size=UDim2.new(1,-24,0,32),TextColor3=paper,BackgroundColor3=Color3.fromRGB(49,58,65),TextSize=14})
-    self.View=Kit.New("ScrollingFrame",self.Root,{Position=UDim2.fromOffset(12,90),Size=UDim2.new(.68,-18,1,-205),CanvasSize=UDim2.fromOffset(1080,809),BackgroundColor3=paper,ScrollBarThickness=6,BorderSizePixel=0})
+    self.View=Kit.New("ScrollingFrame",self.Root,{Position=UDim2.fromOffset(12,90),Size=UDim2.new(.65,-18,1,-185),CanvasSize=UDim2.fromOffset(1080,809),BackgroundColor3=paper,ScrollBarThickness=6,BorderSizePixel=0})
     self.Canvas=Kit.New("Frame",self.View,{Size=UDim2.fromOffset(1080,809),BackgroundColor3=paper,BorderSizePixel=0})
     self.Scale=Kit.New("UIScale",self.Canvas,{Scale=1})
     local function rect(x: number,y: number,w: number,h: number,c: Color3)
@@ -8368,7 +8368,7 @@ function Map.new(parent: Instance,send: any,modal: any): any
         local dx,dy=r[3]-r[1],r[4]-r[2]
         local b=rect((r[1]+r[3])/2,(r[2]+r[4])/2,math.sqrt(dx*dx+dy*dy),r[5],Color3.fromRGB(185,179,161));b.Rotation=math.deg(math.atan2(dy,dx))
     end
-    self.List=Kit.New("ScrollingFrame",self.Root,{Position=UDim2.new(.68,0,0,90),Size=UDim2.new(.32,-12,1,-205),BackgroundTransparency=1,ScrollBarThickness=5,CanvasSize=UDim2.new(),BorderSizePixel=0})
+    self.List=Kit.New("ScrollingFrame",self.Root,{Position=UDim2.new(.65,0,0,90),Size=UDim2.new(.35,-12,1,-185),BackgroundColor3=Color3.fromRGB(31,40,48),BackgroundTransparency=0,ScrollBarThickness=5,CanvasSize=UDim2.new(),BorderSizePixel=0})
     for _,entry in ipairs(Registry.Entries) do
         local pin=button(self.Canvas,tostring(entry.MapId),UDim2.fromOffset(entry.X-6,entry.Y-6),UDim2.fromOffset(12,12),function() self:Select(entry) end)
         pin.TextSize=9;pin.BackgroundColor3=Color3.fromRGB(126,49,44);pin.ZIndex=3
@@ -8377,11 +8377,11 @@ function Map.new(parent: Instance,send: any,modal: any): any
         pin.MouseLeave:Connect(function() name.Visible=self.Zoom>=2 or self.Selected==entry end)
         self.Pins[entry.Id]={Button=pin,Label=name}
         local row=button(self.List,tostring(entry.MapId).."  "..entry.Name,UDim2.new(),UDim2.new(1,-8,0,40),function() self:Select(entry) end)
-        row.TextWrapped=true;row.TextSize=12;row.TextXAlignment=Enum.TextXAlignment.Left
+        row.TextWrapped=true;row.TextSize=12;row.TextColor3=paper;row.TextXAlignment=Enum.TextXAlignment.Left
         table.insert(self.Rows,{Entry=entry,Button=row})
     end
     self.You=rect(655,310,8,8,Color3.fromRGB(0,160,180));self.You.ZIndex=6
-    self.Detail=Kit.New("TextLabel",self.Root,{Position=UDim2.new(0,12,1,-105),Size=UDim2.new(1,-24,0,40),Text="Select a named location. Right-drag or touch-drag to pan; + / − to zoom.",TextWrapped=true,BackgroundTransparency=1,TextColor3=paper,TextSize=14})
+    self.Detail=Kit.New("TextLabel",self.Root,{Position=UDim2.new(0,12,1,-88),Size=UDim2.new(1,-24,0,30),Text="Select a named location. Right-drag or touch-drag to pan; + / − to zoom.",TextWrapped=true,BackgroundTransparency=1,TextColor3=paper,TextSize=14})
     self.TravelButton=button(self.Root,"Door travel",UDim2.new(.48,0,1,-53),UDim2.new(.52,-12,0,38),function()
         if self.Waiting or not self.Selected or not self.State or self.State.PathwayId~="Apprentice" then return end
         self.Waiting=true;self.SentAt=os.clock();self.Detail.Text="Opening a door…"
@@ -8558,10 +8558,12 @@ end
 function Developer.Resize(self: any,layout: any)
     local D=T.Layout.Developer
     local width=math.min(D.Width,layout.Width-layout.Profile.Margin*2)
+    local height=math.min(D.Height,layout.Height-layout.Profile.Margin*2)
     local rect=layout.Admin
-    local panelY=rect.Y+rect.H+D.ButtonGap
-    self.Root.Size=UDim2.fromOffset(width,math.min(D.Height,math.max(D.Row,layout.Height-panelY-layout.Profile.Margin)))
-    self.Root.Position=UDim2.fromOffset(layout.Width-layout.Profile.Margin-width,panelY)
+    local panelY=math.max(layout.Profile.Margin,(layout.Height-height)/2)
+    self.Root.Size=UDim2.fromOffset(width,height)
+    self.Root.Position=UDim2.fromOffset((layout.Width-width)/2,panelY)
+    self.Root.BackgroundTransparency=0
     Kit.Rect(self.ToggleButton,rect)
     self.ToggleButton.TextSize=12
     self.ToggleButton.Text=if rect.W<70 then "Dev" else "Admin"
@@ -9289,7 +9291,7 @@ function Menus.new(parent: Instance,data: any,callbacks: any): any
     self.Root=Kit.New("Frame",parent,{Name="Menus",Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Visible=false,ZIndex=T.Layers.Modal})
     self.Dim=Kit.New("TextButton",self.Root,{Name="Backdrop",Size=UDim2.fromScale(1,1),Text="",AutoButtonColor=false,BackgroundColor3=T.Colors.Ink,BackgroundTransparency=T.Style.ModalDim,BorderSizePixel=0})
     self.Dim.Activated:Connect(function() self:Close() end)
-    self.Card=Kit.Panel(self.Root,"JournalCard");self.Card.Active=true
+    self.Card=Kit.Panel(self.Root,"JournalCard");self.Card.Active=true;self.Card.BackgroundTransparency=0
     Kit.New("UIScale",self.Card,{Scale=T.Layout.Scale})
     self.Title=Kit.Text(self.Card,"BEYONDER JOURNAL",T.Type.Heading,T.Fonts.Title)
     self.Wallet=Kit.Text(self.Card,"",T.Type.Small,T.Fonts.Number);self.Wallet.TextColor3=T.Colors.Muted

@@ -9,7 +9,7 @@ function Menus.new(parent: Instance,data: any,callbacks: any): any
     self.Root=Kit.New("Frame",parent,{Name="Menus",Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Visible=false,ZIndex=T.Layers.Modal})
     self.Dim=Kit.New("TextButton",self.Root,{Name="Backdrop",Size=UDim2.fromScale(1,1),Text="",AutoButtonColor=false,BackgroundColor3=T.Colors.Ink,BackgroundTransparency=T.Style.ModalDim,BorderSizePixel=0})
     self.Dim.Activated:Connect(function() self:Close() end)
-    self.Card=Kit.Panel(self.Root,"JournalCard");self.Card.Active=true
+    self.Card=Kit.Panel(self.Root,"JournalCard");self.Card.Active=true;self.Card.BackgroundTransparency=0
     Kit.New("UIScale",self.Card,{Scale=T.Layout.Scale})
     self.Title=Kit.Text(self.Card,"BEYONDER JOURNAL",T.Type.Heading,T.Fonts.Title)
     self.Wallet=Kit.Text(self.Card,"",T.Type.Small,T.Fonts.Number);self.Wallet.TextColor3=T.Colors.Muted
