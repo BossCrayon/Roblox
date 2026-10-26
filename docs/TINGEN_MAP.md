@@ -1,15 +1,25 @@
-# Tingen city map
+# Tingen city revision
 
-Open studio/Mysteries.rbxlx in Roblox Studio and press Play. The city generates at runtime. This update has not been published to Roblox.
+Open `studio/Mysteries.rbxlx` in Studio and press **Play**. The server builds the city at runtime. This repository update does not publish a Roblox experience.
 
-The supplied settings-book photograph supplies positions for entries 1–67. Entry 5 has three businesses ordered north to south. River and Sea Cathedral is added as entry 68 with an explicitly approximate location in North Tingen. North is negative Z; Civic Square is the origin. Four studs per image pixel is a gameplay scale, not an official scale.
+The map now includes **1,204 unnamed buildings**, in addition to all 67 reference entries and the approximate River and Sea Cathedral. Entry 5 produces three businesses in north-to-south order. Residential street fronts sit close together (median nearest parcel-edge gap about 1.2 studs), with larger clearances around estate, university and civic plots. The old isolated-landmark layout and long access spurs have been replaced by a connected-looking street network and local frontage lanes. Street connectivity in the Roblox engine still needs play-testing.
 
-Sources checked: https://lordofthemysteries.fandom.com/wiki/Tingen_City and https://lordofthemysteries.fandom.com/wiki/Church_of_the_Lord_of_Storms confirm the cathedral's northern region, not a precise site.
+North is negative Z; Civic Square is the origin. Landmark coordinates come from the supplied photograph. Unnamed parcel footprints, secondary streets and architectural dimensions are reconstructed, not precise canon measurements. See [source decisions and limits](TINGEN_SOURCES.md).
 
-This is a landmark blockout with enterable building shells, towers, chimneys, cemetery, railway tracks, streets, lamps and labels. Architecture, roads and access paths are interpretive. Water uses flat collidable visual surfaces, not swimming Terrain. Dense city infill and furnished interiors remain future work. Photograph perspective limits coordinate accuracy.
+![Runtime footprint plan](TINGEN_PLAN.png)
 
-Four existing gameplay services remain near Civic Square; eighteen enemy spawns retain their existing tiers in southern gameplay yards. Services and combat-yard placement are gameplay additions.
+The diagram is generated from the same data used by the game. It shows building footprints and street spacing, not a separate illustrative layout.
 
-Validation passed: existing gameplay tests, new map construction checks using engine stand-ins (1507 parts, all map IDs, four service prompts, bounds), Luau compilation, strict Roblox API/type analysis, Rojo build and exact source-to-place verification. Studio rendering, navigation/collisions, multiplayer and device performance still require Play testing.
+![Architecture geometry review](TINGEN_ARCHITECTURE.png)
 
-Shared/TingenLayout stores coordinates. Services/TingenWorld constructs the map. WorldService selects the new builder. WorldArt retains reusable service architecture.
+This is an offline Blender render of native-part geometry emitted by the actual architecture module through a math/Instance adapter. It is not a Studio screenshot. From left: industrial shell, Saint Selena, Blackthorn, old lodging, Daffodil terrace. Roblox materials, lighting and signage require Studio review.
+
+Known landmarks have open entrances and simplified interiors; unnamed infill has solid exterior shells. Daffodil has gray-blue walls and a hipped roof. Saint Selena has a steep roof, central dark clock tower and colored windows. Blackthorn uses an earlier-style façade and upper-floor reception. Other landmarks use differentiated building classes, not fully researched individual replicas. Full room plans, exact ornament and basement passages remain incomplete.
+
+Four gameplay services remain around Civic Square; eighteen enemy spawns retain their tiers in reserved southern yards. These are gameplay additions. River surfaces are noncolliding above shallow riverbeds, with bank ground omitted over water. They do not implement swimming Terrain.
+
+Streaming is enabled (128-stud minimum / 512-stud target). The builder yields after batches of 100 infill buildings. No per-house light sources are added. The higher part count still requires real device profiling.
+
+Validation: parcel generation checks all infill against roads, water, landmarks, service plots and other parcels. Tests build the runtime map under engine stand-ins and check all landmark IDs, building count, service prompts, bounds and selected documented features. Luau compilation, strict API/type analysis, Rojo build and exact source-to-place verification also run. Studio navigation, physics, rendering, multiplayer and measured performance are not certified by these checks.
+
+Regenerate layout with `python scripts/map/generate_tingen.py` (Shapely, Matplotlib). Reproduce the architecture review with `python scripts/map/preview_architecture.py` (Luau, Blender). Run `python scripts/check.py` for the project checks. Metrics are saved in `TINGEN_METRICS.json`.

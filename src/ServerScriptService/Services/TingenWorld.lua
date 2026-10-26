@@ -3,6 +3,8 @@
 local Shared=game:GetService("ReplicatedStorage").Shared
 local Layout=require(Shared.TingenLayout)
 local Theme=require(Shared.Theme)
+local Plan=require(Shared.TingenPlan)
+local Architecture=require(script.Parent.TingenArchitecture)
 local Art=require(script.Parent.WorldArt)
 local Collection=game:GetService("CollectionService")
 local City={}
@@ -26,105 +28,59 @@ local function label(p: BasePart,text: string)
     local t=Instance.new("TextLabel");t.Size=UDim2.fromScale(1,1);t.BackgroundColor3=slate;t.BackgroundTransparency=0.15
     t.TextColor3=Color3.fromRGB(244,229,193);t.TextSize=15;t.TextWrapped=true;t.Font=Enum.Font.Garamond;t.Text=text;t.Parent=gui
 end
-local function landmark(parent: Instance,spec: any)
-    local model=Instance.new("Model");model.Name=string.format("%02d · %s",spec.Id,spec.Name);model.Parent=parent
-    model:SetAttribute("MapId",spec.Id);model:SetAttribute("ApproximateLocation",spec.Approximate)
-    local at=point(spec.X,spec.Y)
-    if spec.Kind=="River" then
-        local marker=part(model,spec.Name,Vector3.one,at+Vector3.yAxis*4,water,false);marker.Transparency=1;label(marker,spec.Name);return
-    end
-    if spec.Kind=="Square" then
-        local floor=part(model,spec.Name,Vector3.new(95,1,85),at,stone,true);floor.Material=Enum.Material.Cobblestone
-        if spec.Id==16 then
-            for x=-3,3 do for z=-2,2 do
-                part(model,"Headstone",Vector3.new(3,5,1),at+Vector3.new(x*10,3,z*12),stone,true)
+local function landmark(parent: Instance,p: any)
+    local id,name,x,y,w,d,kind=p[1],p[2],p[3],p[4],p[5],p[6],p[7]
+    local at=point(x,y)
+    local model: Model
+    if kind=="Square" or kind=="Market" then
+        model=Instance.new("Model");model.Name=name;model.Parent=parent
+        part(model,"Paving",Vector3.new(w*4,1,d*4),at,stone,true).Material=Enum.Material.Cobblestone
+        if id==16 then
+            for gx=-3,3 do for gz=-3,3 do
+                part(model,"Headstone",Vector3.new(2,4,1),at+Vector3.new(gx*9,2,gz*9),stone,true)
+            end end
+        elseif kind=="Market" then
+            for gx=-2,2 do for gz=-1,1 do
+                local center=at+Vector3.new(gx*10,0,gz*13)
+                part(model,"Market stall",Vector3.new(7,3,4),center+Vector3.yAxis*1.5,brick,true)
+                part(model,"Canvas canopy",Vector3.new(8,.3,6),center+Vector3.yAxis*8,Color3.fromRGB(146,123,88),false)
             end end
         end
-        label(floor,spec.Name);return
+    else
+        model=Architecture.Build(parent,{Id=id,Name=name,Kind=kind,Position=at,Width=w*4,Depth=d*4,Seed=id})
     end
-    local cathedral=spec.Kind=="Cathedral"
-    local factory=spec.Kind=="Factory"
-    local width=if cathedral then 52 elseif factory then 45 elseif spec.Kind=="College" then 48 else 28
-    local depth=if cathedral then 65 else 30
-    local height=if cathedral then 50 elseif factory then 22 else 24
-    local color=if cathedral then stone elseif factory then brick else Color3.fromRGB(112+(spec.Id%4)*9,102+(spec.Id%3)*8,91)
-    local function b(name: string,s: Vector3,p: Vector3,c: Color3,solid: boolean?): Part
-        return part(model,name,s,at+p,c,solid)
-    end
-    b("Foundation",Vector3.new(width+4,1,depth+4),Vector3.zero,stone,true)
-    for _,side in ipairs({-1,1}) do
-        b("Brick wall",Vector3.new(1,height,depth),Vector3.new(side*width/2,height/2,0),color,true).Material=Enum.Material.Brick
-        local front=(width-10)/2
-        b("Entrance wall",Vector3.new(front,height,1),Vector3.new(side*(5+front/2),height/2,-depth/2),color,true).Material=Enum.Material.Brick
-        for floor=0,1 do
-            b("Window",Vector3.new(5,6,0.3),Vector3.new(side*(width/2-6),7+floor*11,-depth/2-0.6),Color3.fromRGB(207,180,120),false).Material=Enum.Material.Glass
-        end
-    end
-    b("Door lintel",Vector3.new(10,height-12,1),Vector3.new(0,(height+12)/2,-depth/2),color,true)
-    b("Rear wall",Vector3.new(width,height,1),Vector3.new(0,height/2,depth/2),color,true).Material=Enum.Material.Brick
-    b("Cornice",Vector3.new(width+3,1,depth+3),Vector3.new(0,height,0),stone,true)
-    b("Slate roof",Vector3.new(width+2,3,depth+2),Vector3.new(0,height+2,0),slate,true).Material=Enum.Material.Slate
-    if cathedral then
-        for _,side in ipairs({-1,1}) do
-            b("Bell tower",Vector3.new(10,70,12),Vector3.new(side*(width/2-4),35,-depth/2+6),stone,true)
-            b("Tower crown",Vector3.new(12,4,14),Vector3.new(side*(width/2-4),72,-depth/2+6),slate,true)
-        end
-    elseif factory then
-        b("Chimney",Vector3.new(5,43,5),Vector3.new(width/2-4,22,depth/2-4),brick,true).Material=Enum.Material.Brick
-    end
-    local sign=b("Address",Vector3.new(8,2,0.4),Vector3.new(0,13,-depth/2-1),slate,false)
-    label(sign,tostring(spec.Id).." · "..spec.Name..(if spec.Approximate then " (approximate site)" else ""))
+    model:SetAttribute("MapId",id);model:SetAttribute("ApproximateLocation",id==68)
+    model:SetAttribute("MapX",x);model:SetAttribute("MapY",y)
 end
 function City.Build(world: any)
     local parent=world.Folder
     parent:SetAttribute("Map","Tingen");parent:SetAttribute("North","-Z")
-    for x=0,3 do for z=0,3 do
-        local ground=part(parent,"Tingen ground",Vector3.new(1000,8,800),point(540,340,-5)+Vector3.new((x-1.5)*1000,0,(z-1.5)*800),Color3.fromRGB(100,110,84),true)
-        ground.Material=Enum.Material.Grass
-    end end
-    -- Navigable flat river surfaces are visual water; no Terrain mutation outside this world folder.
-    local function river(name: string,points: {{number}},width: number)
-        for i=2,#points do
-            local a,b=points[i-1],points[i]
-            local p=line(parent,name,point(a[1],a[2],-0.3),point(b[1],b[2],-0.3),width,0.4,water)
-            p.Material=Enum.Material.Glass;p.Reflectance=0.12
-        end
+    parent:SetAttribute("UnnamedBuildingCount",#Plan.Buildings)
+    for _,r in ipairs(Plan.Ground) do
+        local ground=part(parent,"Riverbank ground",Vector3.new(r[3]*4,12,r[4]*4),point(r[1],r[2],-6.5),Color3.fromRGB(107,110,90),true)
+        ground.Material=Enum.Material.Ground
     end
-    river("66 · Tussock River",{{25,267},{130,320},{220,410},{355,451},{445,500},{530,578},{650,580},{770,609},{860,700},{900,785}},120)
-    river("67 · Khoy River",{{900,0},{880,75},{850,150},{843,193},{900,243},{953,324},{951,405},{887,450},{797,470},{766,560},{770,609}},36)
-    local roads={
-        {{345,110},{360,260},{425,325},{540,340},{655,310},{820,280},{934,314}},
-        {{580,15},{578,130},{555,250},{550,390},{550,570}},
-        {{360,355},{450,300},{520,265},{650,215},{790,210},{865,237}},
-        {{390,405},{520,418},{680,430},{780,457},{923,420}},
-        {{460,90},{485,230},{500,310},{530,490}},
-        {{735,80},{730,200},{748,315},{775,390},{760,545}},
-        {{340,180},{500,150},{650,160},{810,165}},
-        {{600,520},{730,530},{775,545}},
-    }
-    for _,road in ipairs(roads) do for i=2,#road do
-        local a,b=road[i-1],road[i]
-        line(parent,"Pavement",point(a[1],a[2],0),point(b[1],b[2],0),32,0.5,stone)
-        line(parent,"Carriageway",point(a[1],a[2],0.35),point(b[1],b[2],0.35),22,0.3,slate).Material=Enum.Material.Cobblestone
-    end end
-    -- Every plotted site has a walkable spur to the nearest road segment.
-    for _,spec in ipairs(Layout.Landmarks) do
-        if spec.Kind~="River" and spec.Id~=47 then
-            local entry=point(spec.X,spec.Y-10,0.4)
-            local best=Vector3.zero;local distance=math.huge
-            for _,road in ipairs(roads) do for i=2,#road do
-                local a,b=point(road[i-1][1],road[i-1][2],0.4),point(road[i][1],road[i][2],0.4)
-                local d=b-a;local closest=a+d*math.clamp((entry-a):Dot(d)/d:Dot(d),0,1)
-                if (entry-closest).Magnitude<distance then best=closest;distance=(entry-closest).Magnitude end
-            end end
-            if distance>1 then line(parent,"Access lane",entry,best,10,0.3,stone) end
-        end
-        if spec.Id==5 then
-            for index,name in ipairs({"Veterans Club","Divination Club","Harrods Department Store"}) do
-                local club=table.clone(spec);club.Name=name;club.Y=spec.Y+(index-2)*10
-                landmark(parent,club)
-            end
-        else landmark(parent,spec) end
+    for _,r in ipairs(Plan.Water) do
+        local surface=part(parent,"River surface",Vector3.new(r[3]*4,.2,r[4]*4),point(r[1],r[2],-3),water,false)
+        surface.Material=Enum.Material.Glass;surface.Transparency=.25;surface.Reflectance=.1
+        part(parent,"Riverbed",Vector3.new(r[3]*4,1,r[4]*4),point(r[1],r[2],-10),slate,true)
+    end
+    for _,r in ipairs(Plan.Roads) do
+        local a,b=point(r[1],r[2],0),point(r[3],r[4],0)
+        line(parent,r[6].." pavement",a,b,(r[5]+1.2)*4,.6,stone)
+        line(parent,r[6].." carriageway",a+Vector3.yAxis*.35,b+Vector3.yAxis*.35,r[5]*4,.25,slate).Material=Enum.Material.Cobblestone
+    end
+    local neighborhoods=Instance.new("Folder");neighborhoods.Name="Unnamed street frontage";neighborhoods.Parent=parent
+    for index,r in ipairs(Plan.Buildings) do
+        Architecture.Build(neighborhoods,{Name=r[6].." "..index,Kind=r[6],Position=point(r[1],r[2]),
+            Width=r[3]*4,Depth=r[4]*4,Angle=r[5],Floors=r[7],Seed=index})
+        if index%100==0 then task.wait() end
+    end
+    for _,p in ipairs(Plan.Plots) do landmark(parent,p) end
+    for _,id in ipairs({66,67}) do
+        local spec=Layout.Landmarks[id]
+        local marker=part(parent,spec.Name,Vector3.one,point(spec.X,spec.Y),water,false)
+        marker.Transparency=1;marker:SetAttribute("MapId",id);label(marker,spec.Name)
     end
     local spawn=Instance.new("SpawnLocation");spawn.Name="CivicSquareSpawn";spawn.Size=Vector3.new(8,1,8)
     spawn.Position=Vector3.new(0,1,0);spawn.Neutral=true;spawn.Duration=0;spawn.Transparency=1;spawn.Parent=parent
@@ -139,7 +95,8 @@ function City.Build(world: any)
     end
     -- Combat remains in reserved open yards; positions are gameplay additions, not canon.
     for index,tier in ipairs(world.Data.Runtime.EnemyTiers) do
-        local at=point(365+index*60,540,0)
+        local yard=Plan.Yards[index]
+        local at=point(yard[1],yard[2],0)
         part(parent,"Encounter yard",Vector3.new(80,1,70),at,stone,true)
         for offset=1,3 do table.insert(world.Spawns,{Position=at+Vector3.new((offset-2)*12,4,8),Tier=tier,Entity=nil,NextSpawn=0}) end
         if tier<=4 then
@@ -155,7 +112,10 @@ function City.Build(world: any)
         local z=part(parent,spec.Name,Vector3.one,point(spec.X,spec.Y),stone,false);z.Transparency=1
         z:SetAttribute("VisualName",spec.Name);z:SetAttribute("Radius",100);Collection:AddTag(z,"MysteriesZone")
     end
-    for _,road in ipairs(roads) do for _,p in ipairs(road) do Art.Lamp(parent,point(p[1]+5,p[2])) end end
+    -- Bounded lamps along primary roads; infill has no individual point lights.
+    for index,r in ipairs(Plan.Roads) do
+        if r[6]=="Avenue" and index%2==0 then Art.Lamp(parent,point(r[1],r[2])) end
+    end
     -- Railway runs north from the mapped station, away from city streets.
     for _,offset in ipairs({-3,3}) do line(parent,"Rail",point(581,29)+Vector3.new(offset,0.8,0),point(581,-45)+Vector3.new(offset,0.8,0),0.5,0.5,slate) end
     for y=-45,29,3 do part(parent,"Sleeper",Vector3.new(9,0.5,1),point(581,y,0.5),brick,true) end

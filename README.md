@@ -1,6 +1,6 @@
 # Tingen map update
 
-The default world is now the Tingen landmark blockout. See [scope, sources and Studio instructions](docs/TINGEN_MAP.md). Training-arena descriptions below describe the previous layout.
+The default world is now a Tingen city reconstruction with 1,204 unnamed street-front buildings surrounding the reference landmarks. See [scope, sources and Studio instructions](docs/TINGEN_MAP.md). Training-arena descriptions below describe the previous layout.
 
 # Mysteries — playable Roblox foundation
 

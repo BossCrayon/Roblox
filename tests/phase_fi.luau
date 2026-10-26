@@ -36,7 +36,9 @@ return function(data: any,load: any,shared: any,e: any)
     function cm:Lerp(other,t) return setmetatable({R=self.R+(other.R-self.R)*t,G=self.G+(other.G-self.G)*t,B=self.B+(other.B-self.B)*t},{__index=cm}) end
     env.Color3={fromRGB=function(r,g,b) return setmetatable({R=r/255,G=g/255,B=b/255},{__index=cm}) end}
     local T=load("Theme",env);load("Client/UI/Kit",env)
+    env.task.wait=function() end
     load("Server/Services/WorldArt",env)
+    load("Server/Services/TingenArchitecture",env)
     local world={Folder=instance("Folder"),Spawns={},Data=data}
     load("Server/Services/TingenWorld",env).Build(world)
     check(#world.Spawns==18,"Expanded world retains eighteen real spawn records")
@@ -50,18 +52,31 @@ return function(data: any,load: any,shared: any,e: any)
     end
     for i=1,68 do check(seen[i]==(if i==5 then 3 else 1),"Every landmark is built once; entry 5 includes three businesses") end
     check(layout.Landmarks[68].Approximate and layout.Landmarks[68].Y<layout.OriginY,"Missing cathedral remains explicitly approximate and northern")
+    local plan=load("TingenPlan",env)
+    check(#plan.Buildings>=1000,"Known locations are embedded in a populated city, not isolated on empty ground")
+    check(world.Folder:GetAttribute("UnnamedBuildingCount")==#plan.Buildings,"Runtime builds every planned street-front parcel")
+    local cathedral,daffodil,blackthorn
+    for _,model in ipairs(world.Folder:GetDescendants()) do
+        if model:GetAttribute("MapId")==18 then cathedral=model end
+        if model:GetAttribute("MapId")==11 then daffodil=model end
+        if model:GetAttribute("MapId")==20 then blackthorn=model end
+    end
+    check(cathedral and cathedral:FindFirstChild("Black clock tower") and cathedral:FindFirstChild("Stained glass"),"Saint Selena has its documented central dark tower and stained glass")
+    check(daffodil and daffodil:FindFirstChild("Balcony rail") and daffodil:FindFirstChild("Upper floor"),"Daffodil terrace retains two storeys and balcony")
+    check(blackthorn and blackthorn:FindFirstChild("Reception desk") and blackthorn:FindFirstChild("Arched window frame"),"Earlier Blackthorn office has paired arch frames and upstairs reception")
     local parts=0;local prompts=0
     for _,object in ipairs(world.Folder:GetDescendants()) do
         if object:IsA("BillboardGui") then check(object.MaxDistance<=110,"Landmark labels are distance bounded") end
         if object:IsA("BasePart") then
             parts+=1
+            check(object.Size.X>0 and object.Size.Y>0 and object.Size.Z>0,"Construction has positive finite dimensions")
             check(object.Size.X<=2048 and object.Size.Y<=2048 and object.Size.Z<=2048,"Parts respect Roblox size limits")
         end
         if object:IsA("ProximityPrompt") then prompts+=1 end
         if object:IsA("PointLight") then check(not object.Enabled and not object.Shadows,"Practical lights start disabled/unshadowed for local bounded selection") end
     end
     print("Tingen parts:",parts,"prompts:",prompts)
-    check(parts<2500 and prompts==4,"Procedural original world kit is bounded and retains all four server prompts")
+    check(parts<60000 and prompts==4,"City geometry is bounded and retains all four server prompts")
     for _,spec in ipairs(T.World.Services) do
         local object=world.Folder:FindFirstChild(spec.Name)
         check(object and object.CanCollide and object:GetAttribute("VisualName")==spec.Name,"Services retain exact authoritative lookup names")

@@ -22,6 +22,14 @@
     "StarterGui": {
       "$className": "StarterGui",
       "$path": "src/StarterGui"
+    },
+    "Workspace": {
+      "$className": "Workspace",
+      "$properties": {
+        "StreamingEnabled": true,
+        "StreamingMinRadius": 128,
+        "StreamingTargetRadius": 512
+      }
     }
   }
 }
