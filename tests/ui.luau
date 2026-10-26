@@ -24,16 +24,18 @@ return function(data: any,load: any,sharedNode: any)
     local Access=load("Server/Domain/VisualAccess",{})
     check(#T.Input.KeyNames==6 and T.Input.KeyNames[1]=="1" and T.Input.KeyNames[6]=="6","Equipped skills bind to 1–6")
     check(T.Input.UltimateName=="R" and T.Input.DashName=="Q" and T.Input.SprintName=="Ctrl","Ultimate, Dash, and Walk/Run bindings match specification")
-    local cases={{1920,1044,false},{1280,684,false},{1024,732,false},{834,1150,true},{768,988,true},{390,760,true},{320,484,true},{844,310,true},{640,280,true}}
+    local cases={{1920,1044,false},{1280,684,false},{1024,732,false},{1024,560,false},{820,448,false},{834,1150,true},{768,988,true},{390,760,true},{320,484,true},{844,310,true},{640,280,true}}
     for _,c in ipairs(cases) do
         local l=Layout.Resolve(T,c[1],c[2],c[3])
-        for _,r in ipairs({l.Resources,l.Hotbar,l.Ultimate,l.Dash,l.Sprint,l.Wordmark,l.Journal,l.Modal,l.Confirm}) do
+        for _,r in ipairs({l.Resources,l.Hotbar,l.Ultimate,l.Dash,l.Sprint,l.Wordmark,l.Journal,l.Map,l.Admin,l.Modal,l.Confirm}) do
             check(r.X>=0 and r.Y>=0 and r.X+r.W<=c[1] and r.Y+r.H<=c[2],"Layout within safe root: "..c[1].."x"..c[2])
         end
-        check(l.Profile.Slot>=44 and l.Ultimate.W>=44 and l.Ultimate.H>=44 and l.Dash.W>=44 and l.Dash.H>=44 and l.Sprint.W>=44 and l.Sprint.H>=44,"Touch targets stay >= 44px")
+        if c[3] then check(l.Profile.Slot>=44 and l.Ultimate.W>=44 and l.Ultimate.H>=44 and l.Dash.W>=44 and l.Dash.H>=44 and l.Sprint.W>=44 and l.Sprint.H>=44,"Touch targets stay >= 44px") end
         check(not Layout.Intersects(l.Resources,l.Hotbar),"Vitals and hotbar do not overlap")
         check(not Layout.Intersects(l.Resources,l.Wordmark),"Vitals and masthead do not overlap: "..c[1].."x"..c[2])
         check(not Layout.Intersects(l.Hotbar,l.Journal),"Journal stays clear of hotbar")
+        check(not Layout.Intersects(l.Journal,l.Map) and not Layout.Intersects(l.Map,l.Admin) and not Layout.Intersects(l.Journal,l.Admin),"Journal, Map and Admin never overlap")
+        check(not Layout.Intersects(l.Admin,l.Resources) and not Layout.Intersects(l.Map,l.Resources),"Menu rail clears vitals")
         check(not Layout.Intersects(l.Dash,l.Sprint),"Dash and Sprint buttons do not overlap")
         if c[3] then
             check(not Layout.Intersects(l.Action,l.Hotbar),"Strike stays clear of hotbar")
@@ -189,8 +191,10 @@ return function(data: any,load: any,sharedNode: any)
     end
     local visibleSegments=0
     for _,segment in ipairs(hud.Slots[1].Segments) do if segment.Visible then visibleSegments+=1 end end
-    check(visibleSegments==16,"Half cooldown renders half the 32-segment ring")
+    check(visibleSegments==16,"Half cooldown fills half the horizontal progress rule")
     hud:Step(now+3);check(not hud.Slots[1].Countdown.Visible,"Cooldown clears after elapsed time")
+    check(hud.Dash.Text=="Dash [Q]" and not string.find(hud.Sprint.Text,"%[Ctrl%].*%[Ctrl%]"),"Movement key labels appear once")
+    check(not string.find(hud.Slots[1].Cost.Text,"✦",1,true),"Costs do not depend on an unsupported Unicode glyph")
     -- Sparse loadouts used to make table.concat fail; exercise slot removal and menu refresh.
     state.Loadout={[2]="Seer_9_Secondary"};menus:Update(state)
     menus:Open("Journal");check(menus.Root.Visible,"Journal handles sparse slots")

@@ -9,6 +9,7 @@ function Hud.new(parent: Instance,data: any,callbacks: any): any
     self.Root=Kit.New("Frame",parent,{Name="HUD",Size=UDim2.fromScale(1,1),BackgroundTransparency=1,ZIndex=T.Layers.HUD})
     Kit.New("UIScale",self.Root,{Scale=T.Layout.Scale})
     self.Resources=Kit.Panel(self.Root,"Vitals")
+    self.Resources.BackgroundTransparency=.18
     self.ResourceInner=Kit.New("Frame",self.Resources,{Size=UDim2.fromScale(1,1),BackgroundTransparency=1})
     self.ResourcePadding=Kit.Padding(self.ResourceInner,T.Layout.Desktop.PanelPad)
     self.ResourceList=Kit.List(self.ResourceInner,T.Layout.Desktop.ResourceGap)
@@ -25,7 +26,7 @@ function Hud.new(parent: Instance,data: any,callbacks: any): any
     self.Wordmark=Kit.Text(self.Root,"M Y S T E R I E S",T.Type.Heading,T.Fonts.Title);self.Wordmark.TextXAlignment=Enum.TextXAlignment.Center
     self.Pathway=Kit.Panel(self.Root,"Pathway")
     self.PathTitle=Kit.Text(self.Pathway,"Uninitiated",T.Type.Heading,T.Fonts.Heading)
-    self.PathTitle.TextScaled=true
+    self.PathTitle.TextScaled=false;self.PathTitle.Font=T.Fonts.Number;self.PathTitle.TextSize=14
     Kit.New("UITextSizeConstraint",self.PathTitle,{MinTextSize=T.Type.Micro,MaxTextSize=T.Type.Heading})
     self.Digestion=Kit.Text(self.Pathway,"Digestion 0%",T.Type.Small,T.Fonts.Number)
     self.DigestionTrack=Kit.New("Frame",self.Pathway,{BorderSizePixel=0,BackgroundColor3=T.Colors.Slate})
@@ -39,6 +40,7 @@ function Hud.new(parent: Instance,data: any,callbacks: any): any
         self.Collapsed=not self.Collapsed;self:Resize(self.Layout)
     end)
     self.Collapse.BackgroundTransparency=1
+    for _,child in ipairs(self.Collapse:GetChildren()) do if child:IsA("UIStroke") then child.Transparency=1 end end
     self.Journal=Kit.Button(self.Root,"Journal [B]",function() callbacks.Journal("Journal") end)
     self.Strike=Kit.Button(self.Root,"Strike",function() callbacks.Melee() end)
     self.Dash=Kit.Button(self.Root,"Dash [Q]",function() if callbacks.Dash then callbacks.Dash() end end)
@@ -46,6 +48,7 @@ function Hud.new(parent: Instance,data: any,callbacks: any): any
     self.Sprint=Kit.Button(self.Root,"Run [Ctrl]",function() if callbacks.ToggleRun then callbacks.ToggleRun() end end)
     self.Sprint.Name="SprintButton"
     self.Hotbar=Kit.Panel(self.Root,"AbilityHotbar")
+    self.Hotbar.BackgroundTransparency=.3
     self.Cards=Kit.New("Frame",self.Hotbar,{BackgroundTransparency=1,Size=UDim2.fromScale(1,1)})
     self.CardPadding=Kit.Padding(self.Cards,T.Layout.Desktop.BarPad)
     self.CardList=Kit.List(self.Cards,T.Layout.Desktop.SlotGap,true)
@@ -65,10 +68,9 @@ function Hud.new(parent: Instance,data: any,callbacks: any): any
     self.UltimateCountdown=Kit.Text(self.UltimateFace,"",T.Type.Number,T.Fonts.Number);self.UltimateCountdown.AnchorPoint=Vector2.new(0.5,0.5);self.UltimateCountdown.Position=UDim2.fromScale(0.5,0.5);self.UltimateCountdown.BackgroundColor3=T.Colors.Ink;self.UltimateCountdown.BackgroundTransparency=T.Style.PanelFade;self.UltimateCountdown.Visible=false
     self.UltimateSegments={}
     for segment=1,T.Layout.Hotbar.Segments do
-        local angle=(segment-1)/T.Layout.Hotbar.Segments*math.pi*2-math.pi/2
         table.insert(self.UltimateSegments,Kit.New("Frame",self.UltimateFace,{Name="CooldownSegment",BorderSizePixel=0,BackgroundColor3=T.Colors.Gold,
-            AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromScale(0.5+math.cos(angle)*T.Layout.Hotbar.RingRadius,0.5+math.sin(angle)*T.Layout.Hotbar.RingRadius),
-            Size=UDim2.fromOffset(T.Layout.Hotbar.SegmentWidth,T.Layout.Hotbar.SegmentHeight),Rotation=math.deg(angle)+90,Visible=false}))
+            AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromScale(.08+(segment-.5)/T.Layout.Hotbar.Segments*.84,.95),
+            Size=UDim2.new(.84/T.Layout.Hotbar.Segments,0,0,2),Rotation=0,Visible=false}))
     end
     local function showUltimateTooltip()
         if callbacks.Touch or not self.State then return end
@@ -119,10 +121,9 @@ function Hud.new(parent: Instance,data: any,callbacks: any): any
         recorded.Size=stored.Size;recorded.Position=stored.Position;recorded.TextXAlignment=Enum.TextXAlignment.Center
         Kit.Corner(recorded,T.Style.FillCorner);Kit.Stroke(recorded,T.Colors.Teal,T.Style.BorderAlpha)
         for segment=1,T.Layout.Hotbar.Segments do
-            local angle=(segment-1)/T.Layout.Hotbar.Segments*math.pi*2-math.pi/2
-            table.insert(segments,Kit.New("Frame",face,{Name="CooldownSegment",BorderSizePixel=0,BackgroundColor3=T.Colors.Gold,
-                AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromScale(0.5+math.cos(angle)*T.Layout.Hotbar.RingRadius,0.5+math.sin(angle)*T.Layout.Hotbar.RingRadius),
-                Size=UDim2.fromOffset(T.Layout.Hotbar.SegmentWidth,T.Layout.Hotbar.SegmentHeight),Rotation=math.deg(angle)+90,Visible=false}))
+                table.insert(segments,Kit.New("Frame",face,{Name="CooldownSegment",BorderSizePixel=0,BackgroundColor3=T.Colors.Gold,
+                AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromScale(.08+(segment-.5)/T.Layout.Hotbar.Segments*.84,.95),
+                Size=UDim2.new(.84/T.Layout.Hotbar.Segments,0,0,2),Rotation=0,Visible=false}))
         end
         self.Slots[i]={Card=card,Face=face,Glyph=glyph,Seal=seal,EmptyGlyph=emptyGlyph,KeyBadge=badge,Key=key,Cost=cost,Countdown=countdown,Segments=segments,Stored=stored,Recorded=recorded,Id=false}
         local function show()
@@ -159,6 +160,7 @@ function Hud.Resize(self: any,layout: any)
     Kit.Rect(self.UltimateCard,layout.Ultimate);Kit.Rect(self.Dash,layout.Dash);Kit.Rect(self.Sprint,layout.Sprint)
     self.Wordmark.TextSize=p.HeadingSize
     self.Journal.Text=if layout.Name=="Phone" or layout.Name=="Landscape" then "B" else "Journal [B]"
+    self.Dash.TextSize=12;self.Sprint.TextSize=12;self.Journal.TextSize=12
     self.ResourcePadding.PaddingTop=UDim.new(0,p.PanelPad);self.ResourcePadding.PaddingBottom=UDim.new(0,p.PanelPad)
     self.ResourcePadding.PaddingLeft=UDim.new(0,p.PanelPad);self.ResourcePadding.PaddingRight=UDim.new(0,p.PanelPad)
     self.ResourceList.Padding=UDim.new(0,p.ResourceGap)
@@ -167,7 +169,7 @@ function Hud.Resize(self: any,layout: any)
         bar.Row.Size=UDim2.new(1,0,0,rowHeight)
         bar.Icon.Size=UDim2.fromOffset(p.ResourceIcon,p.ResourceIcon);bar.Icon.Position=UDim2.fromOffset(0,0)
         bar.Text.Position=UDim2.fromOffset(p.ResourceIcon+p.ResourceGap,0);bar.Text.Size=UDim2.new(1,-l.Resource.NumberWidth-p.ResourceIcon,0,rowHeight-l.Resource.TrackHeight)
-        bar.Text.TextSize=T.Type.Micro;bar.Text.Visible=layout.Name=="Desktop"
+        bar.Text.TextSize=10;bar.Text.Visible=layout.Name=="Desktop"
         bar.Number.Size=UDim2.new(1,-p.ResourceIcon-p.ResourceGap,0,rowHeight-l.Resource.TrackHeight);bar.Number.Position=UDim2.fromOffset(p.ResourceIcon+p.ResourceGap,0);bar.Number.TextSize=p.NumberSize
         bar.Track.Position=UDim2.new(0,p.ResourceIcon+p.ResourceGap,1,-l.Resource.TrackHeight);bar.Track.Size=UDim2.new(1,-p.ResourceIcon-p.ResourceGap,0,l.Resource.TrackHeight)
     end
@@ -176,6 +178,7 @@ function Hud.Resize(self: any,layout: any)
     Kit.Tween(self.Pathway,T.Timing.Collapse,{Size=UDim2.fromOffset(layout.Pathway.W,height)})
     self.PathTitle.Position=UDim2.fromOffset(l.Pathway.Pad,0);self.PathTitle.Size=UDim2.new(1,-l.Pathway.Pad-l.Pathway.Toggle,0,p.PathwayCollapsed)
     self.Collapse.Size=UDim2.fromOffset(l.Pathway.Toggle,l.Pathway.Toggle);self.Collapse.AnchorPoint=Vector2.new(1,0.5);self.Collapse.Position=UDim2.new(1,0,0,p.PathwayCollapsed/2)
+    self.PathTitle.TextSize=if layout.Name=="Phone" or layout.Name=="Landscape" then 12 else 14
     self.Collapse.Text=if self.Collapsed or not layout.CanExpand then T.Style.DisclosureClosed else T.Style.DisclosureOpen
     local expanded=not self.Collapsed and layout.CanExpand
     self.Digestion.Visible=expanded;self.DigestionTrack.Visible=expanded;self.Objective.Visible=expanded
@@ -238,7 +241,7 @@ function Hud.Render(self: any,state: any,receivedAt: number)
     end
     if state.PathwayId then
         local path=self.Data.Pathways[state.PathwayId];local seq=path.Sequences[state.Sequence]
-        self.PathTitle.Text=path.Alias.." · "..tostring(state.Sequence).."  |  "..math.floor(state.Digestion).."%"
+        self.PathTitle.Text=path.Alias.."  ·  Seq "..tostring(state.Sequence).."  ·  "..math.floor(state.Digestion).."%"
         self.Objective.Text=seq.ActingObjectives[1].Label
         self.Digestion.Text=seq.Name.." · digestion "..string.format("%.1f%%",state.Digestion)
         self.DigestionFill.BackgroundColor3=Kit.PathColor(state.PathwayId)
@@ -273,7 +276,7 @@ function Hud.Render(self: any,state: any,receivedAt: number)
         end
         if slot.Id~=id then
             slot.Id=id;Kit.Clear(slot.Glyph)
-            slot.Seal.Visible=not a;slot.KeyBadge.Visible=a~=nil;slot.Cost.Text=if a then "✦ "..tostring(a.SpiritualityCost) else ""
+            slot.Seal.Visible=not a;slot.KeyBadge.Visible=a~=nil;slot.Cost.Text=if a then tostring(a.SpiritualityCost) else ""
             for _,child in ipairs(slot.Face:GetChildren()) do if child:IsA("UIStroke") then child.Transparency=if a then T.Style.BorderAlpha else 1 end end
             if a and self.Layout then
                 local icon=Kit.Glyph(slot.Glyph,Kit.AbilityGlyph(a),self.Layout.Profile.Slot*T.Layout.Hotbar.GlyphFraction,Kit.PathColor(a.PathwayId))

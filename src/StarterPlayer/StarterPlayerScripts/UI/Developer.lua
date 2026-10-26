@@ -80,16 +80,14 @@ end
 function Developer.Resize(self: any,layout: any)
     local D=T.Layout.Developer
     local width=math.min(D.Width,layout.Width-layout.Profile.Margin*2)
-    local buttonY=layout.Journal.Y+layout.Journal.H+D.ButtonGap
-    local buttonX=layout.Width-layout.Profile.Margin-D.ButtonWidth
-    if buttonX<layout.Resources.X+layout.Resources.W+D.ButtonGap and buttonY<layout.Resources.Y+layout.Resources.H+D.ButtonGap then
-        buttonY=layout.Resources.Y+layout.Resources.H+D.ButtonGap
-    end
-    local panelY=buttonY+D.ButtonHeight+D.ButtonGap
+    local rect=layout.Admin
+    local panelY=rect.Y+rect.H+D.ButtonGap
     self.Root.Size=UDim2.fromOffset(width,math.min(D.Height,math.max(D.Row,layout.Height-panelY-layout.Profile.Margin)))
     self.Root.Position=UDim2.fromOffset(layout.Width-layout.Profile.Margin-width,panelY)
-    self.ToggleButton.Size=UDim2.fromOffset(D.ButtonWidth,D.ButtonHeight)
-    self.ToggleButton.Position=UDim2.fromOffset(buttonX,buttonY)
+    Kit.Rect(self.ToggleButton,rect)
+    self.ToggleButton.TextSize=12
+    self.ToggleButton.Text=if rect.W<70 then "Dev" else "Admin"
+
 end
 function Developer.Update(self: any,state: any)
     self.State=state;self.Allowed=state~=nil and state.Developer==true

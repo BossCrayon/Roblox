@@ -331,7 +331,7 @@ return function(data: any,load: any,shared: any,e: any)
     local guiEnv=table.clone(env)
     guiEnv.Instance={new=function(class)
         local object=instance(class);object.AbsoluteSize={X=900,Y=600}
-        for _,key in ipairs({"Activated","MouseEnter","MouseLeave","InputBegan"}) do object[key]=event() end
+        for _,key in ipairs({"Activated","MouseEnter","MouseLeave","InputBegan","SelectionGained","SelectionLost"}) do object[key]=event() end
         object.GetPropertyChangedSignal=function() return event() end
         return object
     end}

@@ -1123,7 +1123,7 @@ return freeze({
     Interaction={ServerDistance=12},
     Fonts={Title=Enum.Font.Antique,Heading=Enum.Font.Merriweather,Body=Enum.Font.Gotham,Number=Enum.Font.GothamMedium},
     Type={Title=32,Heading=22,Body=16,Number=14,Small=13,Micro=12,Damage=18},
-    Style={Corner=6,ModalCorner=10,Stroke=1,IconStroke=2,PanelGradient=90,PanelFade=0,
+    Style={Corner=8,ModalCorner=10,Stroke=1,IconStroke=2,PanelGradient=90,PanelFade=0.16,
         DisabledAlpha=0.60,SealAlpha=0.52,TrackAlpha=0.05,BorderAlpha=0.46,ModalDim=0.25,
         SelectedBorderAlpha=0,FillCorner=3,GradientEnd=0.35,HoverBlend=0.18,ButtonPad=10,
         GoldHairlineAlpha=0.65,FocusAlpha=0.12,CloseSymbol="×",DisclosureOpen="−",DisclosureClosed="+"},
@@ -1149,7 +1149,7 @@ return freeze({
         LegacyLife=0.5,LegacyStart=1,LegacyEnd=7,LegacyAlpha=0.25,RevealPriority=3,
         GrayscaleSaturation=-1,AnimationViewDistance=120},
     AbilityUI={StoredSize=14,StoredPad=3,StoredSymbol="◆",StoredPrefix="Stored: ",CastGrace=1,PowerNames={ArcBolt="Arc Bolt"},
-        UltimateLocked="Seq 4",UltimatePartial="Saint",UltimateComplete="Angel",DashReady="Dash [Q]",WalkLabel="Walk [Ctrl]",RunLabel="Run [Ctrl]"},
+        UltimateLocked="Seq 4",UltimatePartial="Saint",UltimateComplete="Angel",DashReady="Dash",WalkLabel="Walk",RunLabel="Run"},
     StatusUI={Width=160,Height=28,TextSize=13,Max=4,MobileMax=2,Distance=40,OffsetStuds=3.8,BackgroundAlpha=0.1,
         Priorities={Controlled=100,Threaded=95,Parasite=90,Payload=85,Stasis=80,Grafted=75,MythicalForm=72,Substitute=70},RequiredThreads=3},
     TestRoom={Width=420,Height=540,Margin=12,Header=48,Row=44,Gap=8,Pad=12,StatusHeight=54,
@@ -1163,13 +1163,13 @@ return freeze({
         Journal=Enum.KeyCode.B,Developer=Enum.KeyCode.F8,
         RayLength=500,FallbackAim=50,ConfirmGamepad=Enum.KeyCode.ButtonA},
     Layout={DesktopWidth=1024,TabletWidth=720,CompactHeight=450,MinimumWidth=320,
-        Desktop={Margin=20,Resources={280,124},ResourceTop=20,PathwayTop=156,PathwayWidth=280,PathwayHeight=142,
-            PathwayCollapsed=36,Slot=64,SlotGap=8,BarPad=12,HotbarHeight=96,HotbarBottom=20,
-            Wordmark={320,28},WordmarkTop=20,JournalButton={112,44},BodySize=16,HeadingSize=22,NumberSize=14,
+        Desktop={Margin=20,Resources={232,100},ResourceTop=16,PathwayTop=124,PathwayWidth=232,PathwayHeight=142,
+            PathwayCollapsed=30,Slot=52,SlotGap=6,BarPad=8,HotbarHeight=78,HotbarBottom=16,
+            Wordmark={200,26},WordmarkTop=20,JournalButton={104,36},BodySize=16,HeadingSize=22,NumberSize=14,
             Modal={920,640},ModalMargin=48,PanelPad=12,ResourceRow=32,ResourceGap=4,ResourceIcon=20},
-        Tablet={Margin=16,Resources={252,116},ResourceTop=16,PathwayTop=144,PathwayWidth=252,PathwayHeight=136,
-            PathwayCollapsed=36,Slot=56,SlotGap=6,BarPad=10,HotbarHeight=86,HotbarBottom=24,
-            Wordmark={240,26},WordmarkTop=16,JournalButton={104,44},BodySize=15,HeadingSize=20,NumberSize=14,
+        Tablet={Margin=16,Resources={216,92},ResourceTop=16,PathwayTop=116,PathwayWidth=216,PathwayHeight=136,
+            PathwayCollapsed=30,Slot=48,SlotGap=6,BarPad=8,HotbarHeight=74,HotbarBottom=16,
+            Wordmark={180,26},WordmarkTop=16,JournalButton={104,36},BodySize=15,HeadingSize=20,NumberSize=14,
             Modal={720,600},ModalMargin=32,PanelPad=10,ResourceRow=30,ResourceGap=4,ResourceIcon=20},
         Phone={Margin=12,Resources={220,104},ResourceTop=44,PathwayTop=156,PathwayWidth=220,PathwayHeight=144,
             PathwayCollapsed=32,Slot=44,SlotGap=4,BarPad=6,HotbarHeight=72,HotbarBottom=168,
@@ -1179,16 +1179,16 @@ return freeze({
             PathwayCollapsed=28,Slot=44,SlotGap=4,BarPad=6,HotbarHeight=64,HotbarBottom=160,
             Wordmark={144,24},WordmarkTop=8,JournalButton={44,44},BodySize=14,HeadingSize=18,NumberSize=13,
             Modal={720,600},ModalMargin=24,PanelPad=8,ResourceRow=20,ResourceGap=2,ResourceIcon=16},
-        Resource={Pad=12,IconX=10,TextX=40,NumberWidth=138,TextHeight=20,TrackHeight=6,TrackBottom=2},
+        Resource={Pad=12,IconX=10,TextX=40,NumberWidth=138,TextHeight=20,TrackHeight=4,TrackBottom=2},
         Pathway={Pad=12,HeadingHeight=26,SummaryHeight=22,TrackHeight=6,ObjectiveTop=66,ObjectiveHeight=64,Toggle=44,PercentWidth=62},
-        Hotbar={Slots=6,Top=8,GlyphFraction=0.54,KeySize=18,KeyPhone=16,KeyPad=2,CostHeight=16,
+        Hotbar={Slots=6,Top=8,GlyphFraction=0.42,KeySize=18,KeyPhone=16,KeyPad=2,CostHeight=16,
             Segments=32,RingRadius=0.40,SegmentWidth=2,SegmentHeight=5,CountdownHeight=20,
             TooltipWidth=300,TooltipHeight=44,TooltipGap=10,DashedCount=3,DashInset=0.12,DashLength=0.16,DashThickness=1,
             SealSize=0.42,CostPad=2,UltimateGap=8,AuxWidth=84,AuxHeight=44,AuxGap=6},
         Modal={Header=54,Tabs=44,Footer=30,Gap=8,BodyPad=12,Close=44,NavGap=6,RowHeight=72,
             AbilityRow=84,SlotHeight=44,SectionGap=12,Icon=44,Bottle=80,PreviewHeight=152,
             ConfirmHeight=44,CardWidth=440,CardHeight=388,TitleHeight=36,TabMinimum=64},
-        Notice={Width=560,Height=48,CompactHeight=36,BottomGap=18},Advance={Width=560,Height=100,Top=84},
+        Notice={Width=300,Height=32,CompactHeight=30,BottomGap=64},Advance={Width=560,Height=100,Top=84},
         Cast={Width=236,Height=34,CenterOffset=66,Track=3,Reticle=14},
         Actions={Width=100,Height=44,Gap=8,Bottom=32,PhoneBottom=218,TouchSize=48},
         Developer={Width=400,Height=524,Top=72,Pad=12,Row=44,Gap=8,Columns=3,
@@ -5492,7 +5492,8 @@ function Layout.Resolve(theme: any,width: number,height: number,touch: boolean):
     local name=if touch and height<l.CompactHeight then "Landscape" elseif width<l.TabletWidth then "Phone" elseif width<l.DesktopWidth then "Tablet" else "Desktop"
     local p=l[name]
     local barW=l.Hotbar.Slots*p.Slot+(l.Hotbar.Slots-1)*p.SlotGap+p.BarPad*2
-    local bx=(width-barW)/2
+    local groupWidth=barW+p.Slot+p.BarPad*2+l.Hotbar.UltimateGap
+    local bx=if groupWidth<=width-p.Margin*2 then (width-groupWidth)/2 else (width-barW)/2
     local resources=rectangle(p.Margin,p.ResourceTop,p.Resources[1],p.Resources[2])
     if name=="Landscape" and bx<resources.X+resources.W+l.Modal.Gap then
         bx=math.min(width-p.Margin-barW,resources.X+resources.W+l.Modal.Gap)
@@ -5528,10 +5529,23 @@ function Layout.Resolve(theme: any,width: number,height: number,touch: boolean):
         dashRect=rectangle(bar.X,rowY,auxW,l.Hotbar.AuxHeight)
         sprintRect=rectangle(bar.X+auxW+l.Hotbar.AuxGap,rowY,auxW,l.Hotbar.AuxHeight)
     end
+    -- Menu launchers share one rail; no component invents its own screen position.
+    local railWidth=p.JournalButton[1]
+    local railHeight=if touch then 44 else 36
+    local railX=width-p.Margin-railWidth
+    local railY=p.Margin
+    if railX<resources.X+resources.W+8 then railY=resources.Y+resources.H+8 end
+    local journal=rectangle(railX,railY,railWidth,railHeight)
+    local mapButton=rectangle(railX,railY+railHeight+8,railWidth,railHeight)
+    local adminButton=rectangle(railX,railY+(railHeight+8)*2,railWidth,railHeight)
+    if not touch then
+        dashRect=rectangle(bar.X,bar.Y-46,88,36)
+        sprintRect=rectangle(bar.X+96,bar.Y-46,108,36)
+    end
     return {Name=name,Profile=p,Width=width,Height=height,Resources=resources,Hotbar=bar,Pathway=pathway,
-        CanExpand=expandedFits,DefaultCollapsed=touch or name=="Phone" or not expandedFits,
+        CanExpand=expandedFits,DefaultCollapsed=true,
         Wordmark=wordmark,
-        Journal=rectangle(width-p.Margin-p.JournalButton[1],p.Margin,p.JournalButton[1],p.JournalButton[2]),
+        Journal=journal,Map=mapButton,Admin=adminButton,
         Modal=rectangle((width-modalW)/2,(height-modalH)/2,modalW,modalH),
         Confirm=rectangle((width-confirmW)/2,(height-confirmH)/2,confirmW,confirmH),
         Notice=notice,Action=action,Ultimate=ultimate,Dash=dashRect,Sprint=sprintRect,
@@ -8229,7 +8243,7 @@ local function resize()
     local size=safeRoot.AbsoluteSize
     if size.X<=0 or size.Y<=0 then return end
     local layout=Layout.Resolve(T,size.X,size.Y,UserInputService.TouchEnabled)
-    hud:Resize(layout);menus:Resize(layout);feedback:Resize(layout);developer:Resize(layout);promptUI.Layout=layout
+    hud:Resize(layout);cityMap:Resize(layout);menus:Resize(layout);feedback:Resize(layout);developer:Resize(layout);promptUI.Layout=layout
     testRoom:Resize(size.X,size.Y);worldView:Resize(layout)
     hud.Wordmark.Visible=not cinematic and not promptUI.Root.Visible;hud.Pathway.Visible=not cinematic and not promptUI.Root.Visible and not zoneTitle
     if menus.Root.Visible then menus:Render() end
@@ -8376,7 +8390,7 @@ function Map.new(parent: Instance,send: any,modal: any): any
     button(self.Root,"−",UDim2.new(0,12,1,-53),UDim2.fromOffset(38,38),function() self:SetZoom(self.Zoom/1.5) end)
     button(self.Root,"+",UDim2.new(0,56,1,-53),UDim2.fromOffset(38,38),function() self:SetZoom(self.Zoom*1.5) end)
     button(self.Root,"Fit",UDim2.new(0,100,1,-53),UDim2.fromOffset(45,38),function() self:SetZoom(1);self.View.CanvasPosition=Vector2.zero end)
-    self.Launch=button(parent,"MAP [M]",UDim2.new(1,-116,0,54),UDim2.fromOffset(104,32),function() self:Toggle() end)
+    self.Launch=Kit.Button(parent,"Map [M]",function() self:Toggle() end)
     self.Search:GetPropertyChangedSignal("Text"):Connect(function() self:Filter() end)
     self.Root:GetPropertyChangedSignal("AbsoluteSize"):Connect(function() self:SetZoom(self.Zoom) end)
     self.View.InputBegan:Connect(function(input: InputObject)
@@ -8394,6 +8408,11 @@ function Map.new(parent: Instance,send: any,modal: any): any
         if input.UserInputType==Enum.UserInputType.MouseButton2 then self.DragStart=nil end
     end))
     self:Filter();return self
+end
+function Map.Resize(self: any,layout: any)
+    Kit.Rect(self.Launch,layout.Map)
+    self.Launch.TextSize=12
+    self.Launch.Text=if layout.Map.W<70 then "Map" else "Map [M]"
 end
 function Map.Filter(self: any)
     local query=string.lower(self.Search.Text);local n=0
@@ -8539,16 +8558,14 @@ end
 function Developer.Resize(self: any,layout: any)
     local D=T.Layout.Developer
     local width=math.min(D.Width,layout.Width-layout.Profile.Margin*2)
-    local buttonY=layout.Journal.Y+layout.Journal.H+D.ButtonGap
-    local buttonX=layout.Width-layout.Profile.Margin-D.ButtonWidth
-    if buttonX<layout.Resources.X+layout.Resources.W+D.ButtonGap and buttonY<layout.Resources.Y+layout.Resources.H+D.ButtonGap then
-        buttonY=layout.Resources.Y+layout.Resources.H+D.ButtonGap
-    end
-    local panelY=buttonY+D.ButtonHeight+D.ButtonGap
+    local rect=layout.Admin
+    local panelY=rect.Y+rect.H+D.ButtonGap
     self.Root.Size=UDim2.fromOffset(width,math.min(D.Height,math.max(D.Row,layout.Height-panelY-layout.Profile.Margin)))
     self.Root.Position=UDim2.fromOffset(layout.Width-layout.Profile.Margin-width,panelY)
-    self.ToggleButton.Size=UDim2.fromOffset(D.ButtonWidth,D.ButtonHeight)
-    self.ToggleButton.Position=UDim2.fromOffset(buttonX,buttonY)
+    Kit.Rect(self.ToggleButton,rect)
+    self.ToggleButton.TextSize=12
+    self.ToggleButton.Text=if rect.W<70 then "Dev" else "Admin"
+
 end
 function Developer.Update(self: any,state: any)
     self.State=state;self.Allowed=state~=nil and state.Developer==true
@@ -8591,7 +8608,7 @@ function Feedback.new(parent: GuiObject,data: any,cinematic: (boolean)->()): any
     local self: any={SafeRoot=parent,Data=data,Cinematic=cinematic,State=nil,ReducedMotion=false,FlashTweens={},NoticeSerial=0,AdvanceSerial=0,Numbers={},Pool={},Layout=nil}
     self.Root=Kit.New("Frame",parent,{Name="Feedback",Size=UDim2.fromScale(1,1),BackgroundTransparency=1,ZIndex=T.Layers.Feedback})
     self.Notice=Kit.New("CanvasGroup",self.Root,{Name="Notice",BackgroundColor3=T.Colors.Ink,BorderSizePixel=0,Visible=false});Kit.Corner(self.Notice);Kit.Stroke(self.Notice)
-    self.NoticeText=Kit.Text(self.Notice,"",T.Type.Number,T.Fonts.Number);self.NoticeText.Size=UDim2.new(1,-T.Layout.Modal.BodyPad*2,1,0);self.NoticeText.Position=UDim2.fromOffset(T.Layout.Modal.BodyPad,0);self.NoticeText.TextXAlignment=Enum.TextXAlignment.Center
+    self.NoticeText=Kit.Text(self.Notice,"",14,T.Fonts.Number);self.NoticeText.Size=UDim2.new(1,-T.Layout.Modal.BodyPad*2,1,0);self.NoticeText.Position=UDim2.fromOffset(T.Layout.Modal.BodyPad,0);self.NoticeText.TextXAlignment=Enum.TextXAlignment.Center
     self.Advance=Kit.New("CanvasGroup",self.Root,{Name="SequenceAdvance",BackgroundColor3=T.Colors.Ink,BorderSizePixel=0,Visible=false});Kit.Corner(self.Advance);Kit.Stroke(self.Advance)
     self.AdvanceSmall=Kit.Text(self.Advance,"",T.Type.Small,T.Fonts.Number);self.AdvanceSmall.Size=UDim2.new(1,0,0,T.Feedback.SubtitleHeight);self.AdvanceSmall.TextXAlignment=Enum.TextXAlignment.Center
     self.AdvanceTitle=Kit.Text(self.Advance,"",T.Type.Title,T.Fonts.Title);self.AdvanceTitle.Size=UDim2.new(1,-T.Layout.Modal.BodyPad*2,0,T.Feedback.AdvanceTitleHeight);self.AdvanceTitle.Position=UDim2.fromOffset(T.Layout.Modal.BodyPad,T.Feedback.SubtitleHeight);self.AdvanceTitle.TextXAlignment=Enum.TextXAlignment.Center
@@ -8632,6 +8649,8 @@ function Feedback.Resize(self: any,layout: any)
     self.AdvanceTitle.TextSize=if layout.Name=="Phone" or layout.Name=="Landscape" then T.Feedback.AdvanceMobileTitle elseif layout.Name=="Tablet" then T.Feedback.AdvanceTabletTitle else T.Type.Title
 end
 function Feedback.Tell(self: any,text: string,rejected: boolean?)
+    if text==self.LastNotice and os.clock()-(self.LastNoticeAt or 0)<1 then return end
+    self.LastNotice=text;self.LastNoticeAt=os.clock()
     self.NoticeUntil=os.clock()+T.Timing.Notice+T.Timing.NoticeFade
     self.NoticeSerial+=1;local serial=self.NoticeSerial
     self.NoticeText.Text=text;self.NoticeText.TextColor3=if rejected then T.Colors.Danger else T.Colors.Text
@@ -8755,6 +8774,7 @@ function Hud.new(parent: Instance,data: any,callbacks: any): any
     self.Root=Kit.New("Frame",parent,{Name="HUD",Size=UDim2.fromScale(1,1),BackgroundTransparency=1,ZIndex=T.Layers.HUD})
     Kit.New("UIScale",self.Root,{Scale=T.Layout.Scale})
     self.Resources=Kit.Panel(self.Root,"Vitals")
+    self.Resources.BackgroundTransparency=.18
     self.ResourceInner=Kit.New("Frame",self.Resources,{Size=UDim2.fromScale(1,1),BackgroundTransparency=1})
     self.ResourcePadding=Kit.Padding(self.ResourceInner,T.Layout.Desktop.PanelPad)
     self.ResourceList=Kit.List(self.ResourceInner,T.Layout.Desktop.ResourceGap)
@@ -8771,7 +8791,7 @@ function Hud.new(parent: Instance,data: any,callbacks: any): any
     self.Wordmark=Kit.Text(self.Root,"M Y S T E R I E S",T.Type.Heading,T.Fonts.Title);self.Wordmark.TextXAlignment=Enum.TextXAlignment.Center
     self.Pathway=Kit.Panel(self.Root,"Pathway")
     self.PathTitle=Kit.Text(self.Pathway,"Uninitiated",T.Type.Heading,T.Fonts.Heading)
-    self.PathTitle.TextScaled=true
+    self.PathTitle.TextScaled=false;self.PathTitle.Font=T.Fonts.Number;self.PathTitle.TextSize=14
     Kit.New("UITextSizeConstraint",self.PathTitle,{MinTextSize=T.Type.Micro,MaxTextSize=T.Type.Heading})
     self.Digestion=Kit.Text(self.Pathway,"Digestion 0%",T.Type.Small,T.Fonts.Number)
     self.DigestionTrack=Kit.New("Frame",self.Pathway,{BorderSizePixel=0,BackgroundColor3=T.Colors.Slate})
@@ -8785,6 +8805,7 @@ function Hud.new(parent: Instance,data: any,callbacks: any): any
         self.Collapsed=not self.Collapsed;self:Resize(self.Layout)
     end)
     self.Collapse.BackgroundTransparency=1
+    for _,child in ipairs(self.Collapse:GetChildren()) do if child:IsA("UIStroke") then child.Transparency=1 end end
     self.Journal=Kit.Button(self.Root,"Journal [B]",function() callbacks.Journal("Journal") end)
     self.Strike=Kit.Button(self.Root,"Strike",function() callbacks.Melee() end)
     self.Dash=Kit.Button(self.Root,"Dash [Q]",function() if callbacks.Dash then callbacks.Dash() end end)
@@ -8792,6 +8813,7 @@ function Hud.new(parent: Instance,data: any,callbacks: any): any
     self.Sprint=Kit.Button(self.Root,"Run [Ctrl]",function() if callbacks.ToggleRun then callbacks.ToggleRun() end end)
     self.Sprint.Name="SprintButton"
     self.Hotbar=Kit.Panel(self.Root,"AbilityHotbar")
+    self.Hotbar.BackgroundTransparency=.3
     self.Cards=Kit.New("Frame",self.Hotbar,{BackgroundTransparency=1,Size=UDim2.fromScale(1,1)})
     self.CardPadding=Kit.Padding(self.Cards,T.Layout.Desktop.BarPad)
     self.CardList=Kit.List(self.Cards,T.Layout.Desktop.SlotGap,true)
@@ -8811,10 +8833,9 @@ function Hud.new(parent: Instance,data: any,callbacks: any): any
     self.UltimateCountdown=Kit.Text(self.UltimateFace,"",T.Type.Number,T.Fonts.Number);self.UltimateCountdown.AnchorPoint=Vector2.new(0.5,0.5);self.UltimateCountdown.Position=UDim2.fromScale(0.5,0.5);self.UltimateCountdown.BackgroundColor3=T.Colors.Ink;self.UltimateCountdown.BackgroundTransparency=T.Style.PanelFade;self.UltimateCountdown.Visible=false
     self.UltimateSegments={}
     for segment=1,T.Layout.Hotbar.Segments do
-        local angle=(segment-1)/T.Layout.Hotbar.Segments*math.pi*2-math.pi/2
         table.insert(self.UltimateSegments,Kit.New("Frame",self.UltimateFace,{Name="CooldownSegment",BorderSizePixel=0,BackgroundColor3=T.Colors.Gold,
-            AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromScale(0.5+math.cos(angle)*T.Layout.Hotbar.RingRadius,0.5+math.sin(angle)*T.Layout.Hotbar.RingRadius),
-            Size=UDim2.fromOffset(T.Layout.Hotbar.SegmentWidth,T.Layout.Hotbar.SegmentHeight),Rotation=math.deg(angle)+90,Visible=false}))
+            AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromScale(.08+(segment-.5)/T.Layout.Hotbar.Segments*.84,.95),
+            Size=UDim2.new(.84/T.Layout.Hotbar.Segments,0,0,2),Rotation=0,Visible=false}))
     end
     local function showUltimateTooltip()
         if callbacks.Touch or not self.State then return end
@@ -8865,10 +8886,9 @@ function Hud.new(parent: Instance,data: any,callbacks: any): any
         recorded.Size=stored.Size;recorded.Position=stored.Position;recorded.TextXAlignment=Enum.TextXAlignment.Center
         Kit.Corner(recorded,T.Style.FillCorner);Kit.Stroke(recorded,T.Colors.Teal,T.Style.BorderAlpha)
         for segment=1,T.Layout.Hotbar.Segments do
-            local angle=(segment-1)/T.Layout.Hotbar.Segments*math.pi*2-math.pi/2
-            table.insert(segments,Kit.New("Frame",face,{Name="CooldownSegment",BorderSizePixel=0,BackgroundColor3=T.Colors.Gold,
-                AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromScale(0.5+math.cos(angle)*T.Layout.Hotbar.RingRadius,0.5+math.sin(angle)*T.Layout.Hotbar.RingRadius),
-                Size=UDim2.fromOffset(T.Layout.Hotbar.SegmentWidth,T.Layout.Hotbar.SegmentHeight),Rotation=math.deg(angle)+90,Visible=false}))
+                table.insert(segments,Kit.New("Frame",face,{Name="CooldownSegment",BorderSizePixel=0,BackgroundColor3=T.Colors.Gold,
+                AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromScale(.08+(segment-.5)/T.Layout.Hotbar.Segments*.84,.95),
+                Size=UDim2.new(.84/T.Layout.Hotbar.Segments,0,0,2),Rotation=0,Visible=false}))
         end
         self.Slots[i]={Card=card,Face=face,Glyph=glyph,Seal=seal,EmptyGlyph=emptyGlyph,KeyBadge=badge,Key=key,Cost=cost,Countdown=countdown,Segments=segments,Stored=stored,Recorded=recorded,Id=false}
         local function show()
@@ -8905,6 +8925,7 @@ function Hud.Resize(self: any,layout: any)
     Kit.Rect(self.UltimateCard,layout.Ultimate);Kit.Rect(self.Dash,layout.Dash);Kit.Rect(self.Sprint,layout.Sprint)
     self.Wordmark.TextSize=p.HeadingSize
     self.Journal.Text=if layout.Name=="Phone" or layout.Name=="Landscape" then "B" else "Journal [B]"
+    self.Dash.TextSize=12;self.Sprint.TextSize=12;self.Journal.TextSize=12
     self.ResourcePadding.PaddingTop=UDim.new(0,p.PanelPad);self.ResourcePadding.PaddingBottom=UDim.new(0,p.PanelPad)
     self.ResourcePadding.PaddingLeft=UDim.new(0,p.PanelPad);self.ResourcePadding.PaddingRight=UDim.new(0,p.PanelPad)
     self.ResourceList.Padding=UDim.new(0,p.ResourceGap)
@@ -8913,7 +8934,7 @@ function Hud.Resize(self: any,layout: any)
         bar.Row.Size=UDim2.new(1,0,0,rowHeight)
         bar.Icon.Size=UDim2.fromOffset(p.ResourceIcon,p.ResourceIcon);bar.Icon.Position=UDim2.fromOffset(0,0)
         bar.Text.Position=UDim2.fromOffset(p.ResourceIcon+p.ResourceGap,0);bar.Text.Size=UDim2.new(1,-l.Resource.NumberWidth-p.ResourceIcon,0,rowHeight-l.Resource.TrackHeight)
-        bar.Text.TextSize=T.Type.Micro;bar.Text.Visible=layout.Name=="Desktop"
+        bar.Text.TextSize=10;bar.Text.Visible=layout.Name=="Desktop"
         bar.Number.Size=UDim2.new(1,-p.ResourceIcon-p.ResourceGap,0,rowHeight-l.Resource.TrackHeight);bar.Number.Position=UDim2.fromOffset(p.ResourceIcon+p.ResourceGap,0);bar.Number.TextSize=p.NumberSize
         bar.Track.Position=UDim2.new(0,p.ResourceIcon+p.ResourceGap,1,-l.Resource.TrackHeight);bar.Track.Size=UDim2.new(1,-p.ResourceIcon-p.ResourceGap,0,l.Resource.TrackHeight)
     end
@@ -8922,6 +8943,7 @@ function Hud.Resize(self: any,layout: any)
     Kit.Tween(self.Pathway,T.Timing.Collapse,{Size=UDim2.fromOffset(layout.Pathway.W,height)})
     self.PathTitle.Position=UDim2.fromOffset(l.Pathway.Pad,0);self.PathTitle.Size=UDim2.new(1,-l.Pathway.Pad-l.Pathway.Toggle,0,p.PathwayCollapsed)
     self.Collapse.Size=UDim2.fromOffset(l.Pathway.Toggle,l.Pathway.Toggle);self.Collapse.AnchorPoint=Vector2.new(1,0.5);self.Collapse.Position=UDim2.new(1,0,0,p.PathwayCollapsed/2)
+    self.PathTitle.TextSize=if layout.Name=="Phone" or layout.Name=="Landscape" then 12 else 14
     self.Collapse.Text=if self.Collapsed or not layout.CanExpand then T.Style.DisclosureClosed else T.Style.DisclosureOpen
     local expanded=not self.Collapsed and layout.CanExpand
     self.Digestion.Visible=expanded;self.DigestionTrack.Visible=expanded;self.Objective.Visible=expanded
@@ -8984,7 +9006,7 @@ function Hud.Render(self: any,state: any,receivedAt: number)
     end
     if state.PathwayId then
         local path=self.Data.Pathways[state.PathwayId];local seq=path.Sequences[state.Sequence]
-        self.PathTitle.Text=path.Alias.." · "..tostring(state.Sequence).."  |  "..math.floor(state.Digestion).."%"
+        self.PathTitle.Text=path.Alias.."  ·  Seq "..tostring(state.Sequence).."  ·  "..math.floor(state.Digestion).."%"
         self.Objective.Text=seq.ActingObjectives[1].Label
         self.Digestion.Text=seq.Name.." · digestion "..string.format("%.1f%%",state.Digestion)
         self.DigestionFill.BackgroundColor3=Kit.PathColor(state.PathwayId)
@@ -9019,7 +9041,7 @@ function Hud.Render(self: any,state: any,receivedAt: number)
         end
         if slot.Id~=id then
             slot.Id=id;Kit.Clear(slot.Glyph)
-            slot.Seal.Visible=not a;slot.KeyBadge.Visible=a~=nil;slot.Cost.Text=if a then "✦ "..tostring(a.SpiritualityCost) else ""
+            slot.Seal.Visible=not a;slot.KeyBadge.Visible=a~=nil;slot.Cost.Text=if a then tostring(a.SpiritualityCost) else ""
             for _,child in ipairs(slot.Face:GetChildren()) do if child:IsA("UIStroke") then child.Transparency=if a then T.Style.BorderAlpha else 1 end end
             if a and self.Layout then
                 local icon=Kit.Glyph(slot.Glyph,Kit.AbilityGlyph(a),self.Layout.Profile.Slot*T.Layout.Hotbar.GlyphFraction,Kit.PathColor(a.PathwayId))
@@ -9131,7 +9153,7 @@ function Kit.Stroke(parent: Instance,color: Color3?,alpha: number?)
 end
 function Kit.Panel(parent: Instance,name: string): Frame
     local f=Kit.New("Frame",parent,{Name=name,BorderSizePixel=0,BackgroundColor3=T.Colors.Ink,BackgroundTransparency=T.Style.PanelFade})
-    Kit.Corner(f);Kit.Stroke(f)
+    Kit.Corner(f);Kit.Stroke(f,T.Colors.Silver,.82)
     Kit.New("UIGradient",f,{Rotation=T.Style.PanelGradient,Color=ColorSequence.new(T.Colors.Ink,T.Colors.Ink:Lerp(T.Colors.Slate,T.Style.GradientEnd))})
     return f
 end
@@ -9143,7 +9165,7 @@ end
 function Kit.Button(parent: Instance,text: string,callback: ()->()): TextButton
     local b=Kit.New("TextButton",parent,{Text=text,BackgroundColor3=T.Colors.Slate,BorderSizePixel=0,
         TextColor3=T.Colors.Text,TextSize=T.Type.Number,Font=T.Fonts.Number,TextWrapped=true,AutoButtonColor=false})
-    Kit.Corner(b);Kit.Stroke(b)
+    Kit.Corner(b);Kit.Stroke(b,T.Colors.Silver,.78)
     local function enter()
         Kit.Sound(b,"Hover")
         local base=b:GetAttribute("SkinBase") or T.Colors.Slate
@@ -9188,6 +9210,13 @@ function Kit.Skin(parent: Instance,pathway: any,small: boolean?): any
     local spec=T.Skins[pathway] or T.Skins.Seer
     if parent:IsA("TextButton") then parent:SetAttribute("SkinBase",spec.Backing);parent:SetAttribute("SkinAccent",spec.Accent) end
     local root=Kit.New("Frame",parent,{Name="PathwaySkin",BackgroundTransparency=1,Size=UDim2.fromScale(1,1),ZIndex=1})
+    -- Compact skins use a single accent edge, leaving text/icons unobstructed.
+    if small or parent.Name=="AbilityHotbar" or parent.Name=="Pathway" then
+        if parent:IsA("GuiObject") then parent.BackgroundColor3=T.Colors.Ink end
+        Kit.New("Frame",root,{Name="Accent",BorderSizePixel=0,BackgroundColor3=spec.Accent,BackgroundTransparency=.35,
+            Position=UDim2.new(0,8,1,-1),Size=UDim2.new(1,-16,0,1)})
+        return root
+    end
     local spine=Kit.New("Frame",root,{Name="Spine",BorderSizePixel=0,BackgroundColor3=spec.Accent,
         BackgroundTransparency=T.Skins.OrnamentAlpha,Size=UDim2.new(0,T.Skins.Spine,1,-T.Skins.Inset*2),Position=UDim2.fromOffset(T.Skins.Inset,T.Skins.Inset)})
     if small then
@@ -13017,7 +13046,7 @@ function WorldView.new(root: GuiObject,presentation: any,callbacks: any): any
     local self: any=setmetatable({Root=root,Presentation=presentation,Callbacks=callbacks,Labels={},Elapsed=0,AmbientAt=0,
         Lamps={},Zones={},Objects={},LastZone="",Exited={},Reduced=false,Low=false,ZoneSerial=0,NextScan=0},{__index=WorldView})
     self.Compass=Kit.Text(root,"Sanctuary Square",T.Type.Small,T.Fonts.Number);self.Compass.TextXAlignment=Enum.TextXAlignment.Center
-    self.Compass.BackgroundColor3=T.Colors.Ink;self.Compass.BackgroundTransparency=0
+    self.Compass.BackgroundColor3=T.Colors.Ink;self.Compass.BackgroundTransparency=.3
     self.Title=Kit.New("CanvasGroup",root,{Name="ZoneTitle",BackgroundColor3=T.Colors.Ink,BorderSizePixel=0,Visible=false,ZIndex=T.Layers.Feedback})
     Kit.Corner(self.Title);Kit.Stroke(self.Title)
     self.TitleText=Kit.Text(self.Title,"",T.Type.Heading,T.Fonts.Title);self.TitleText.Size=UDim2.fromScale(1,1);self.TitleText.TextXAlignment=Enum.TextXAlignment.Center

@@ -12,7 +12,7 @@ function WorldView.new(root: GuiObject,presentation: any,callbacks: any): any
     local self: any=setmetatable({Root=root,Presentation=presentation,Callbacks=callbacks,Labels={},Elapsed=0,AmbientAt=0,
         Lamps={},Zones={},Objects={},LastZone="",Exited={},Reduced=false,Low=false,ZoneSerial=0,NextScan=0},{__index=WorldView})
     self.Compass=Kit.Text(root,"Sanctuary Square",T.Type.Small,T.Fonts.Number);self.Compass.TextXAlignment=Enum.TextXAlignment.Center
-    self.Compass.BackgroundColor3=T.Colors.Ink;self.Compass.BackgroundTransparency=0
+    self.Compass.BackgroundColor3=T.Colors.Ink;self.Compass.BackgroundTransparency=.3
     self.Title=Kit.New("CanvasGroup",root,{Name="ZoneTitle",BackgroundColor3=T.Colors.Ink,BorderSizePixel=0,Visible=false,ZIndex=T.Layers.Feedback})
     Kit.Corner(self.Title);Kit.Stroke(self.Title)
     self.TitleText=Kit.Text(self.Title,"",T.Type.Heading,T.Fonts.Title);self.TitleText.Size=UDim2.fromScale(1,1);self.TitleText.TextXAlignment=Enum.TextXAlignment.Center

@@ -168,7 +168,7 @@ local function resize()
     local size=safeRoot.AbsoluteSize
     if size.X<=0 or size.Y<=0 then return end
     local layout=Layout.Resolve(T,size.X,size.Y,UserInputService.TouchEnabled)
-    hud:Resize(layout);menus:Resize(layout);feedback:Resize(layout);developer:Resize(layout);promptUI.Layout=layout
+    hud:Resize(layout);cityMap:Resize(layout);menus:Resize(layout);feedback:Resize(layout);developer:Resize(layout);promptUI.Layout=layout
     testRoom:Resize(size.X,size.Y);worldView:Resize(layout)
     hud.Wordmark.Visible=not cinematic and not promptUI.Root.Visible;hud.Pathway.Visible=not cinematic and not promptUI.Root.Visible and not zoneTitle
     if menus.Root.Visible then menus:Render() end

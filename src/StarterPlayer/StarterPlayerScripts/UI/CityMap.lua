@@ -55,7 +55,7 @@ function Map.new(parent: Instance,send: any,modal: any): any
     button(self.Root,"−",UDim2.new(0,12,1,-53),UDim2.fromOffset(38,38),function() self:SetZoom(self.Zoom/1.5) end)
     button(self.Root,"+",UDim2.new(0,56,1,-53),UDim2.fromOffset(38,38),function() self:SetZoom(self.Zoom*1.5) end)
     button(self.Root,"Fit",UDim2.new(0,100,1,-53),UDim2.fromOffset(45,38),function() self:SetZoom(1);self.View.CanvasPosition=Vector2.zero end)
-    self.Launch=button(parent,"MAP [M]",UDim2.new(1,-116,0,54),UDim2.fromOffset(104,32),function() self:Toggle() end)
+    self.Launch=Kit.Button(parent,"Map [M]",function() self:Toggle() end)
     self.Search:GetPropertyChangedSignal("Text"):Connect(function() self:Filter() end)
     self.Root:GetPropertyChangedSignal("AbsoluteSize"):Connect(function() self:SetZoom(self.Zoom) end)
     self.View.InputBegan:Connect(function(input: InputObject)
@@ -73,6 +73,11 @@ function Map.new(parent: Instance,send: any,modal: any): any
         if input.UserInputType==Enum.UserInputType.MouseButton2 then self.DragStart=nil end
     end))
     self:Filter();return self
+end
+function Map.Resize(self: any,layout: any)
+    Kit.Rect(self.Launch,layout.Map)
+    self.Launch.TextSize=12
+    self.Launch.Text=if layout.Map.W<70 then "Map" else "Map [M]"
 end
 function Map.Filter(self: any)
     local query=string.lower(self.Search.Text);local n=0

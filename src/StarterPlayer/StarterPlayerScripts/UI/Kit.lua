@@ -39,7 +39,7 @@ function Kit.Stroke(parent: Instance,color: Color3?,alpha: number?)
 end
 function Kit.Panel(parent: Instance,name: string): Frame
     local f=Kit.New("Frame",parent,{Name=name,BorderSizePixel=0,BackgroundColor3=T.Colors.Ink,BackgroundTransparency=T.Style.PanelFade})
-    Kit.Corner(f);Kit.Stroke(f)
+    Kit.Corner(f);Kit.Stroke(f,T.Colors.Silver,.82)
     Kit.New("UIGradient",f,{Rotation=T.Style.PanelGradient,Color=ColorSequence.new(T.Colors.Ink,T.Colors.Ink:Lerp(T.Colors.Slate,T.Style.GradientEnd))})
     return f
 end
@@ -51,7 +51,7 @@ end
 function Kit.Button(parent: Instance,text: string,callback: ()->()): TextButton
     local b=Kit.New("TextButton",parent,{Text=text,BackgroundColor3=T.Colors.Slate,BorderSizePixel=0,
         TextColor3=T.Colors.Text,TextSize=T.Type.Number,Font=T.Fonts.Number,TextWrapped=true,AutoButtonColor=false})
-    Kit.Corner(b);Kit.Stroke(b)
+    Kit.Corner(b);Kit.Stroke(b,T.Colors.Silver,.78)
     local function enter()
         Kit.Sound(b,"Hover")
         local base=b:GetAttribute("SkinBase") or T.Colors.Slate
@@ -96,6 +96,13 @@ function Kit.Skin(parent: Instance,pathway: any,small: boolean?): any
     local spec=T.Skins[pathway] or T.Skins.Seer
     if parent:IsA("TextButton") then parent:SetAttribute("SkinBase",spec.Backing);parent:SetAttribute("SkinAccent",spec.Accent) end
     local root=Kit.New("Frame",parent,{Name="PathwaySkin",BackgroundTransparency=1,Size=UDim2.fromScale(1,1),ZIndex=1})
+    -- Compact skins use a single accent edge, leaving text/icons unobstructed.
+    if small or parent.Name=="AbilityHotbar" or parent.Name=="Pathway" then
+        if parent:IsA("GuiObject") then parent.BackgroundColor3=T.Colors.Ink end
+        Kit.New("Frame",root,{Name="Accent",BorderSizePixel=0,BackgroundColor3=spec.Accent,BackgroundTransparency=.35,
+            Position=UDim2.new(0,8,1,-1),Size=UDim2.new(1,-16,0,1)})
+        return root
+    end
     local spine=Kit.New("Frame",root,{Name="Spine",BorderSizePixel=0,BackgroundColor3=spec.Accent,
         BackgroundTransparency=T.Skins.OrnamentAlpha,Size=UDim2.new(0,T.Skins.Spine,1,-T.Skins.Inset*2),Position=UDim2.fromOffset(T.Skins.Inset,T.Skins.Inset)})
     if small then
