@@ -32,7 +32,7 @@ return function(data: any,load: any,shared: any)
     local function instance(class)
         local props={ClassName=class,_kind="Instance",Parent=true,Name=class,CFrame=cf(),Size=v(7,9,1),Transparency=0,LocalTransparencyModifier=0,Color={R=0.5,G=0.5,B=0.5}}
         local children={};local methods={};local object
-        function methods:IsA(kind) return kind==class or (kind=="BasePart" and (class=="Part" or class=="SpawnLocation")) end
+        function methods:IsA(kind) return kind==class or (kind=="BasePart" and (class=="Part" or class=="WedgePart" or class=="SpawnLocation")) end
         function methods:SetAttribute(key,value) props["Attr_"..key]=value end
         function methods:GetAttribute(key) return props["Attr_"..key] end
         function methods:IsDescendantOf(parent)

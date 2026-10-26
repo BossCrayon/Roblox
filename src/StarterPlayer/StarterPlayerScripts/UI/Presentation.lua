@@ -157,7 +157,7 @@ function Presentation.Event(self: any,event: any)
         -- This is a cinematic interpretation, never a client-side damage or time-stop grant.
         local ultSpecs: {any}={
             {Name="RisingMotes",Position=gesture,Palette=palette,Options={Scale=C.Ultimate.IntakeScale,Intake=true,Life=C.Ultimate.Release}},
-            {Name="SigilStencil",Position=gesture,Palette=palette,Options={Scale=scale,Glyph=stencil,LowGlyph=stencil,Frame=CFrame.new(gesture)*frame.Rotation}},
+            {Name="SigilStencil",Position=gesture,Palette=palette,Options={Scale=scale,Glyph=if palette=="Seer" and event.Stage=="Complete" then "SpiritVortex" else stencil,LowGlyph=stencil,Frame=CFrame.new(gesture)*frame.Rotation}},
             {Name=motif,Position=ground,Palette=palette,Options={Scale=scale,Frame=CFrame.new(ground)*frame.Rotation,
                 Height=C.Ultimate.VeilHeight,Delay=C.Ultimate.Release}},
             {Name="GroundRune",Position=ground,Palette=palette,Options={Scale=scale,InnerRing=true,Delay=C.Ultimate.Release}},

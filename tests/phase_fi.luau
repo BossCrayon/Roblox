@@ -96,6 +96,9 @@ return function(data: any,load: any,shared: any,e: any)
                             if part:IsA("BasePart") then mythCount+=1;check(not part.CanCollide and not part.CanQuery and part.Massless,"Mythical Creature parts stay massless and non-colliding") end
                         end
                         check(mythCount<=T.CharacterArt.MaxParts and torso.Color==original,"Mythical Creature assembly respects MaxParts and preserves body color")
+                        if path=="Seer" and stage=="Complete" then
+                            check(torso.LocalTransparencyModifier==1,"Complete Fool hides the original body locally")
+                        end
                         local fixedCount=#mythRecord.Model:GetDescendants()
                         for _=1,8 do outfits:Step(0.08) end
                         check(#mythRecord.Model:GetDescendants()==fixedCount,"Idle transformation motion allocates no instances")
@@ -117,6 +120,7 @@ return function(data: any,load: any,shared: any,e: any)
 
                     end
                     character:SetAttribute("MysteriesMythicalForm","");outfits:Step(0.3)
+                    check(torso.LocalTransparencyModifier==0,"Form expiry restores original body visibility")
                     check(outfits.Records[character].Mythical=="","Expiring Mythical Creature Form restores base Victorian outfit")
                 end
                 character:SetAttribute("MysteriesDisguised",true);outfits:Step(0.3)
@@ -245,7 +249,7 @@ return function(data: any,load: any,shared: any,e: any)
                 for _,stage in ipairs({"Incomplete","Complete"}) do
                     local previousKicks=kicks;local previousHolds=holds
                     coordinator:Event({Kind="UltimateVisual",Position=v(10,4,0),Stage=stage,PathwayId=path,Owner=players.LocalPlayer.UserId})
-                    local expected=if path=="Seer" then "Worm" elseif path=="Marauder" then "Clock" else "Arch"
+                    local expected=if path=="Seer" and stage=="Complete" then "SpiritVortex" elseif path=="Seer" then "Worm" elseif path=="Marauder" then "Clock" else "Arch"
                     check(specs[2].Options.Glyph==expected,"Transformation selects its pathway glyph, never the fallback eye")
                     check(service:Stats().Active==1 and #specs<=C.Composition.MaxLayers,"Entire ultimate reserves one bounded composition")
                     check(kicks==previousKicks,"Ultimate camera cue waits for release")

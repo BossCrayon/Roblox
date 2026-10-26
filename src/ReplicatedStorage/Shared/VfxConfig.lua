@@ -107,7 +107,7 @@ return freeze({
         ShockwaveRing={Duration=0.8,Priority=2,Radius=4,Start=0.4},
         AfterimageTrail={Duration=1,Priority=2,Length=5,Height=2,Width=0.12,Head=0.18},
         SigilStencil={Duration=0.85,Priority=3,Size=1.5,IntakeCount=2,IntakeSize=0.09,Paths={
-            Eye=T.Glyphs.Eye,Split=T.Glyphs.Split,Door=T.Glyphs.Door,
+            SpiritVortex=T.Glyphs.SpiritVortex,Eye=T.Glyphs.Eye,Split=T.Glyphs.Split,Door=T.Glyphs.Door,
             Book=T.Glyphs.Book,Star=T.Glyphs.Star,Thread=T.Glyphs.Thread,Seal=T.Glyphs.Seal,
             Card=T.Glyphs.Card,Flame=T.Glyphs.Flame,Mask=T.Glyphs.Mask,Scale=T.Glyphs.Scale,
             Crown=T.Glyphs.Crown,Hourglass=T.Glyphs.Hourglass,Arch=T.Glyphs.Arch,Circle=T.Glyphs.Circle,

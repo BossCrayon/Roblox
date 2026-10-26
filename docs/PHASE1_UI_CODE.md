@@ -82,6 +82,7 @@ return freeze({
         CapeExtra=0.5,CapeDepth=0.2,CollarSeal={0.45,0.12,0.18},BodyScaleMin=0.8,BodyScaleMax=1.5,CoatClearance=0.1,
         Mythical={
             -- Original cinematic interpretations; these silhouettes do not assert Sequence 0 anatomy at Sequence 2.
+            FoolCloakAlpha=0.38,FoolEndLife=1.2,FoolAuraInterval=1.4,FoolAuraLife=1.6,
             SpiritAlpha=0.76,GlowAlpha=0.42,RevealTime=0.62,IdlePeriod=3.8,IdleRise=0.09,
             IdleDegrees=12,HaloSpeed=0.32,HandSpeed=0.55,WormSpeed=1.7,AlphaPulse=0.06,
             ClockDiameter=5.4,ClockDepth=0.16,ClockSegments=12,ClockCanvas=256,ClockRadius=0.43,
@@ -192,6 +193,7 @@ return freeze({
     LegacyFX={Max=48,StartSize=1,EndSize=7,Alpha=0.25,HighlightAlpha=0.6,Pitch=1,
         GlyphRadius=0.44,MinBarFraction=0.001},
     Glyphs={
+        SpiritVortex={{{0.5500,0.5000},{0.5529,0.5406},{0.5216,0.5805},{0.4617,0.5924},{0.3990,0.5583},{0.3678,0.4826},{0.3939,0.3939},{0.4782,0.3348},{0.5917,0.3412},{0.6848,0.4235},{0.7093,0.5561},{0.6420,0.6851},{0.5000,0.7500},{0.3377,0.7116},{0.2263,0.5733},{0.2228,0.3852},{0.3417,0.2258},{0.5435,0.1695},{0.7475,0.2525},{0.8635,0.4521},{0.8320,0.6917},{0.6531,0.8696},{0.3922,0.9025},{0.1562,0.7638},{0.0500,0.5000}}},
         Heart={{{0.5,0.87},{0.10,0.40},{0.14,0.18},{0.34,0.13},{0.5,0.29},{0.66,0.13},{0.86,0.18},{0.9,0.4},{0.5,0.87}}},
         Star={{{0.5,0.08},{0.61,0.38},{0.9,0.5},{0.61,0.61},{0.5,0.92},{0.38,0.61},{0.1,0.5},{0.38,0.38},{0.5,0.08}}},
         Eye={{{0.08,0.5},{0.27,0.28},{0.5,0.2},{0.73,0.28},{0.92,0.5},{0.73,0.72},{0.5,0.8},{0.27,0.72},{0.08,0.5}},{{0.5,0.34},{0.64,0.5},{0.5,0.66},{0.36,0.5},{0.5,0.34}}},
@@ -1958,7 +1960,7 @@ function Presentation.Event(self: any,event: any)
         -- This is a cinematic interpretation, never a client-side damage or time-stop grant.
         local ultSpecs: {any}={
             {Name="RisingMotes",Position=gesture,Palette=palette,Options={Scale=C.Ultimate.IntakeScale,Intake=true,Life=C.Ultimate.Release}},
-            {Name="SigilStencil",Position=gesture,Palette=palette,Options={Scale=scale,Glyph=stencil,LowGlyph=stencil,Frame=CFrame.new(gesture)*frame.Rotation}},
+            {Name="SigilStencil",Position=gesture,Palette=palette,Options={Scale=scale,Glyph=if palette=="Seer" and event.Stage=="Complete" then "SpiritVortex" else stencil,LowGlyph=stencil,Frame=CFrame.new(gesture)*frame.Rotation}},
             {Name=motif,Position=ground,Palette=palette,Options={Scale=scale,Frame=CFrame.new(ground)*frame.Rotation,
                 Height=C.Ultimate.VeilHeight,Delay=C.Ultimate.Release}},
             {Name="GroundRune",Position=ground,Palette=palette,Options={Scale=scale,InnerRing=true,Delay=C.Ultimate.Release}},
