@@ -67,5 +67,5 @@ return freeze({
     DivinationAccuracy={Base=0.55,Bonus=0.4,IntuitionScale=40},
     CopyableNPCPowers={ArcBolt={Power=1.7,Status="Burning",Duration=3}},
     EnemyTiers={9,7,5,4,2,1},
-    SanctuaryRadius=25, WorldRadius=380,
+    SanctuaryRadius=25, WorldRadius=3200,
 })

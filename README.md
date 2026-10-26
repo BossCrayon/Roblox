@@ -1,3 +1,7 @@
+# Tingen map update
+
+The default world is now the Tingen landmark blockout. See [scope, sources and Studio instructions](docs/TINGEN_MAP.md). Training-arena descriptions below describe the previous layout.
+
 # Mysteries — playable Roblox foundation
 
 > **[EXISTING] Through Phase I:** all **54** dedicated ability packages plus pathway HUD/Journal skins, confirmed potion/acting feedback, a larger Victorian sanctuary and six arenas, tiered R6/R15 outfits, six original enemy silhouettes/health widgets, scheduled threat cues, local atmosphere/lighting/labels and an authorized Studio stress harness. [Full source, classes and exact Explorer paths](docs/PHASE_FI_VISUALS_CODE.md) · [Phase F–I scope, Studio checklist and exact captures](docs/PHASE_FI_VISUALS.md). **[PROPOSED]** Rendered acceptance and measured device performance still need Studio; implementation is complete through I.

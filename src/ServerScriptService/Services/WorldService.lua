@@ -26,7 +26,7 @@ function World.new(data: any,domain: any,states: any,effects: RemoteEvent): Worl
 end
 function World.Build(self: World)
     if not self.Data.Runtime.GenerateDemoWorld then return end
-    require(script.Parent.WorldArt).Build(self)
+    require(script.Parent.TingenWorld).Build(self)
 end
 function World.Root(self: World, player: Player): BasePart?
     local c=player.Character

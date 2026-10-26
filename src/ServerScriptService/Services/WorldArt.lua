@@ -77,6 +77,7 @@ local function building(parent: Instance,spec: any): Part
     Art.Lamp(model,(f*CFrame.new(b.DoorWidth/2+2,0,-b.Depth/2-3)).Position)
     return desk
 end
+Art.ServiceBuilding=building
 function Art.Build(world: any)
     local parent=world.Folder
     local ground=block(parent,"TrainingGround",Vector3.new(W.Ground,K.GroundDepth,W.Ground),Vector3.new(0,-2,0),T.Colors.Stone,true)

@@ -959,7 +959,7 @@ return freeze({
     DivinationAccuracy={Base=0.55,Bonus=0.4,IntuitionScale=40},
     CopyableNPCPowers={ArcBolt={Power=1.7,Status="Burning",Duration=3}},
     EnemyTiers={9,7,5,4,2,1},
-    SanctuaryRadius=25, WorldRadius=380,
+    SanctuaryRadius=25, WorldRadius=3200,
 })
 ]]></string>
         </Properties>
@@ -1230,6 +1230,86 @@ return freeze({
       </Item>
       <Item class="ModuleScript" referent="19">
         <Properties>
+          <string name="Name">TingenLayout</string>
+          <string name="Source"><![CDATA[--!strict
+-- Coordinates digitized from the user-supplied 1080x809 settings-book photograph.
+-- North is -Z. Four studs per image pixel is a gameplay scale, not a canon scale.
+local Layout={Scale=4,OriginX=655,OriginY=310,Landmarks={
+{Id=1,Name="Old Neil's Residence",X=345,Y=126,Kind="House",Approximate=false},
+{Id=2,Name="Greenhill Asylum",X=308,Y=230,Kind="House",Approximate=false},
+{Id=3,Name="West District Poorhouse",X=373,Y=350,Kind="House",Approximate=false},
+{Id=4,Name="Welch's Residence",X=426,Y=170,Kind="House",Approximate=false},
+{Id=5,Name="Veterans Club / Divination Club / Harrods Department Store",X=443,Y=217,Kind="House",Approximate=false},
+{Id=6,Name="Tingen City Housing Improvement Company",X=445,Y=306,Kind="House",Approximate=false},
+{Id=7,Name="Silver Crown Restaurant",X=426,Y=326,Kind="House",Approximate=false},
+{Id=8,Name="Greens & Butchers' Market",X=477,Y=332,Kind="House",Approximate=false},
+{Id=9,Name="Smyrin Bakery",X=467,Y=361,Kind="House",Approximate=false},
+{Id=10,Name="Moretti Residence (Old)",X=441,Y=375,Kind="House",Approximate=false},
+{Id=11,Name="Moretti Residence (New)",X=518,Y=331,Kind="House",Approximate=false},
+{Id=12,Name="Schott's Residence",X=512,Y=357,Kind="House",Approximate=false},
+{Id=13,Name="Bravehearts Bar",X=480,Y=392,Kind="House",Approximate=false},
+{Id=14,Name="Mr. Franky's Apartment",X=507,Y=397,Kind="House",Approximate=false},
+{Id=15,Name="Trissy's Hideout",X=441,Y=447,Kind="House",Approximate=false},
+{Id=16,Name="Raphael Cemetery",X=471,Y=44,Kind="Square",Approximate=false},
+{Id=17,Name="Tingen Steam Railway Station",X=581,Y=35,Kind="House",Approximate=false},
+{Id=18,Name="Saint Selena Cathedral",X=538,Y=122,Kind="Cathedral",Approximate=false},
+{Id=19,Name="Old Verne's Restaurant",X=590,Y=92,Kind="House",Approximate=false},
+{Id=20,Name="Blackthorn Security Company",X=587,Y=122,Kind="House",Approximate=false},
+{Id=21,Name="Wilkell Hat & Cloak Shop",X=593,Y=147,Kind="House",Approximate=false},
+{Id=22,Name="Shooting Club",X=572,Y=180,Kind="House",Approximate=false},
+{Id=23,Name="Hound's Tavern",X=533,Y=191,Kind="House",Approximate=false},
+{Id=24,Name="Henry Private Investigation Agency",X=568,Y=230,Kind="House",Approximate=false},
+{Id=25,Name="Bonaparte Restaurant",X=511,Y=242,Kind="House",Approximate=false},
+{Id=26,Name="Gusev's Residence",X=571,Y=268,Kind="House",Approximate=false},
+{Id=27,Name="Tingen Labor Class Housing Improvement Association",X=569,Y=326,Kind="House",Approximate=false},
+{Id=28,Name="Deweyville Ceramics Factory",X=584,Y=452,Kind="Factory",Approximate=false},
+{Id=29,Name="Printing Factory",X=579,Y=475,Kind="Factory",Approximate=false},
+{Id=30,Name="North District Grand Theatre",X=642,Y=135,Kind="House",Approximate=false},
+{Id=31,Name="Coastline Restaurant",X=638,Y=201,Kind="House",Approximate=false},
+{Id=32,Name="Deweyville Library",X=607,Y=334,Kind="House",Approximate=false},
+{Id=33,Name="Tingen Household Servants Assistance Association",X=589,Y=288,Kind="House",Approximate=false},
+{Id=34,Name="Backlund Bank Tingen Branch",X=634,Y=271,Kind="House",Approximate=false},
+{Id=35,Name="Sir Deweyville's Estate",X=707,Y=274,Kind="House",Approximate=false},
+{Id=36,Name="Councilor Maynard's Estate",X=625,Y=433,Kind="House",Approximate=false},
+{Id=37,Name="Deweyville Trust Company",X=615,Y=225,Kind="House",Approximate=false},
+{Id=38,Name="Machinery Manufacturing Plant",X=675,Y=462,Kind="Factory",Approximate=false},
+{Id=39,Name="Deweyville White Lead Factory",X=622,Y=468,Kind="Factory",Approximate=false},
+{Id=40,Name="Ivors Public School",X=695,Y=114,Kind="College",Approximate=false},
+{Id=41,Name="Tingen Opera House",X=697,Y=190,Kind="House",Approximate=false},
+{Id=42,Name="Tingen Theatre",X=660,Y=227,Kind="House",Approximate=false},
+{Id=43,Name="Tingen City Hospital",X=716,Y=257,Kind="House",Approximate=false},
+{Id=44,Name="Municipal Library",X=674,Y=261,Kind="House",Approximate=false},
+{Id=45,Name="Tingen Police Headquarters",X=608,Y=254,Kind="House",Approximate=false},
+{Id=46,Name="Tingen City Hall",X=663,Y=282,Kind="House",Approximate=false},
+{Id=47,Name="Civic Square",X=655,Y=310,Kind="Square",Approximate=false},
+{Id=48,Name="Tingen Technical College",X=674,Y=385,Kind="College",Approximate=false},
+{Id=49,Name="Tingen Iron & Steel Complex",X=614,Y=301,Kind="Factory",Approximate=false},
+{Id=50,Name="Evil Dragon Bar",X=669,Y=504,Kind="House",Approximate=false},
+{Id=51,Name="Wood's Residence",X=760,Y=148,Kind="House",Approximate=false},
+{Id=52,Name="Madam Sharon's Residence",X=761,Y=277,Kind="House",Approximate=false},
+{Id=53,Name="Lawson Darkwade's Folk Herb Store",X=731,Y=356,Kind="House",Approximate=false},
+{Id=54,Name="Tingen Business School",X=762,Y=373,Kind="College",Approximate=false},
+{Id=55,Name="Ray Bieber's Residence",X=727,Y=414,Kind="House",Approximate=false},
+{Id=56,Name="Metalworks Factory",X=721,Y=451,Kind="Factory",Approximate=false},
+{Id=57,Name="Reynold Machinery Company",X=719,Y=473,Kind="Factory",Approximate=false},
+{Id=58,Name="Import & Export Company",X=735,Y=494,Kind="Factory",Approximate=false},
+{Id=59,Name="Tyreal Warehouse",X=728,Y=524,Kind="Factory",Approximate=false},
+{Id=60,Name="Joyce Meyer's Residence",X=802,Y=218,Kind="House",Approximate=false},
+{Id=61,Name="Azik's Residence",X=845,Y=273,Kind="House",Approximate=false},
+{Id=62,Name="Tingen Barrister College",X=794,Y=364,Kind="College",Approximate=false},
+{Id=63,Name="Khoy University",X=834,Y=367,Kind="College",Approximate=false},
+{Id=64,Name="Tingen University",X=923,Y=354,Kind="College",Approximate=false},
+{Id=65,Name="Holy Numerics Cathedral",X=966,Y=297,Kind="Cathedral",Approximate=false},
+{Id=66,Name="Tussock River",X=569,Y=582,Kind="River",Approximate=false},
+{Id=67,Name="Khoy River",X=869,Y=133,Kind="River",Approximate=false},
+{Id=68,Name="River and Sea Cathedral",X=730,Y=65,Kind="Cathedral",Approximate=true}
+}}
+return require(script.Parent.Freeze)(Layout)
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="20">
+        <Properties>
           <string name="Name">Types</string>
           <string name="Source"><![CDATA[--!strict
 -- Luau has no numeric singleton types; validate integer bounds at runtime.
@@ -1266,7 +1346,7 @@ return table.freeze({})
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="20">
+      <Item class="ModuleScript" referent="21">
         <Properties>
           <string name="Name">VfxConfig</string>
           <string name="Source"><![CDATA[--!strict
@@ -1408,7 +1488,7 @@ return freeze({
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="21">
+      <Item class="ModuleScript" referent="22">
         <Properties>
           <string name="Name">VisualBudget</string>
           <string name="Source"><![CDATA[--!strict
@@ -1484,7 +1564,7 @@ return Budget
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="22">
+      <Item class="ModuleScript" referent="23">
         <Properties>
           <string name="Name">VisualLayout</string>
           <string name="Source"><![CDATA[--!strict
@@ -1550,7 +1630,7 @@ return table.freeze(Layout)
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="23">
+      <Item class="ModuleScript" referent="24">
         <Properties>
           <string name="Name">VisualModel</string>
           <string name="Source"><![CDATA[--!strict
@@ -1628,11 +1708,11 @@ return table.freeze(Model)
       </Item>
     </Item>
   </Item>
-  <Item class="ServerScriptService" referent="24">
+  <Item class="ServerScriptService" referent="25">
     <Properties>
       <string name="Name">ServerScriptService</string>
     </Properties>
-    <Item class="ModuleScript" referent="25">
+    <Item class="ModuleScript" referent="26">
       <Properties>
         <string name="Name">AdminConfig</string>
         <string name="Source"><![CDATA[--!strict
@@ -1643,7 +1723,7 @@ return table.freeze({AdminUserIds=table.freeze({}),AdminUsernames=table.freeze({
 ]]></string>
       </Properties>
     </Item>
-    <Item class="Script" referent="26">
+    <Item class="Script" referent="27">
       <Properties>
         <string name="Name">Bootstrap</string>
         <token name="RunContext">0</token>
@@ -2070,11 +2150,11 @@ end)
 ]]></string>
       </Properties>
     </Item>
-    <Item class="Folder" referent="27">
+    <Item class="Folder" referent="28">
       <Properties>
         <string name="Name">Domain</string>
       </Properties>
-      <Item class="ModuleScript" referent="28">
+      <Item class="ModuleScript" referent="29">
         <Properties>
           <string name="Name">AdminProgression</string>
           <string name="Source"><![CDATA[--!strict
@@ -2109,7 +2189,7 @@ return table.freeze(Admin)
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="29">
+      <Item class="ModuleScript" referent="30">
         <Properties>
           <string name="Name">PlayerDomain</string>
           <string name="Source"><![CDATA[--!strict
@@ -2454,7 +2534,7 @@ return Domain
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="30">
+      <Item class="ModuleScript" referent="31">
         <Properties>
           <string name="Name">RateLimiter</string>
           <string name="Source"><![CDATA[--!strict
@@ -2477,7 +2557,7 @@ return RateLimiter
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="31">
+      <Item class="ModuleScript" referent="32">
         <Properties>
           <string name="Name">SessionStore</string>
           <string name="Source"><![CDATA[--!strict
@@ -2552,7 +2632,7 @@ return SessionStore
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="32">
+      <Item class="ModuleScript" referent="33">
         <Properties>
           <string name="Name">VisualAccess</string>
           <string name="Source"><![CDATA[--!strict
@@ -2572,11 +2652,11 @@ return table.freeze(Access)
         </Properties>
       </Item>
     </Item>
-    <Item class="Folder" referent="33">
+    <Item class="Folder" referent="34">
       <Properties>
         <string name="Name">Services</string>
       </Properties>
-      <Item class="ModuleScript" referent="34">
+      <Item class="ModuleScript" referent="35">
         <Properties>
           <string name="Name">EffectService</string>
           <string name="Source"><![CDATA[--!strict
@@ -3000,7 +3080,184 @@ return Effects
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="35">
+      <Item class="ModuleScript" referent="36">
+        <Properties>
+          <string name="Name">TingenWorld</string>
+          <string name="Source"><![CDATA[--!strict
+-- Geography follows the supplied settings-book plate; architecture/roads are interpretive.
+local Shared=game:GetService("ReplicatedStorage").Shared
+local Layout=require(Shared.TingenLayout)
+local Theme=require(Shared.Theme)
+local Art=require(script.Parent.WorldArt)
+local Collection=game:GetService("CollectionService")
+local City={}
+local stone=Color3.fromRGB(139,132,116)
+local brick=Color3.fromRGB(113,80,69)
+local slate=Color3.fromRGB(49,57,65)
+local water=Color3.fromRGB(49,91,108)
+local function point(x: number,y: number,h: number?): Vector3
+    return Vector3.new((x-Layout.OriginX)*Layout.Scale,h or 0,(y-Layout.OriginY)*Layout.Scale)
+end
+local function part(parent: Instance,name: string,dimensions: Vector3,at: Vector3,color: Color3,solid: boolean?): Part
+    return Art.Part(parent,name,dimensions,CFrame.new(at),color,solid)
+end
+local function line(parent: Instance,name: string,a: Vector3,b: Vector3,width: number,depth: number,color: Color3): Part
+    return Art.Part(parent,name,Vector3.new(width,depth,(b-a).Magnitude+1),CFrame.lookAt((a+b)/2,b),color,true)
+end
+local function label(p: BasePart,text: string)
+    p:SetAttribute("VisualName",text)
+    local gui=Instance.new("BillboardGui");gui.Name="LandmarkName";gui.Size=UDim2.fromOffset(260,52)
+    gui.StudsOffset=Vector3.new(0,4,0);gui.MaxDistance=110;gui.AlwaysOnTop=false;gui.Parent=p
+    local t=Instance.new("TextLabel");t.Size=UDim2.fromScale(1,1);t.BackgroundColor3=slate;t.BackgroundTransparency=0.15
+    t.TextColor3=Color3.fromRGB(244,229,193);t.TextSize=15;t.TextWrapped=true;t.Font=Enum.Font.Garamond;t.Text=text;t.Parent=gui
+end
+local function landmark(parent: Instance,spec: any)
+    local model=Instance.new("Model");model.Name=string.format("%02d · %s",spec.Id,spec.Name);model.Parent=parent
+    model:SetAttribute("MapId",spec.Id);model:SetAttribute("ApproximateLocation",spec.Approximate)
+    local at=point(spec.X,spec.Y)
+    if spec.Kind=="River" then
+        local marker=part(model,spec.Name,Vector3.one,at+Vector3.yAxis*4,water,false);marker.Transparency=1;label(marker,spec.Name);return
+    end
+    if spec.Kind=="Square" then
+        local floor=part(model,spec.Name,Vector3.new(95,1,85),at,stone,true);floor.Material=Enum.Material.Cobblestone
+        if spec.Id==16 then
+            for x=-3,3 do for z=-2,2 do
+                part(model,"Headstone",Vector3.new(3,5,1),at+Vector3.new(x*10,3,z*12),stone,true)
+            end end
+        end
+        label(floor,spec.Name);return
+    end
+    local cathedral=spec.Kind=="Cathedral"
+    local factory=spec.Kind=="Factory"
+    local width=if cathedral then 52 elseif factory then 45 elseif spec.Kind=="College" then 48 else 28
+    local depth=if cathedral then 65 else 30
+    local height=if cathedral then 50 elseif factory then 22 else 24
+    local color=if cathedral then stone elseif factory then brick else Color3.fromRGB(112+(spec.Id%4)*9,102+(spec.Id%3)*8,91)
+    local function b(name: string,s: Vector3,p: Vector3,c: Color3,solid: boolean?): Part
+        return part(model,name,s,at+p,c,solid)
+    end
+    b("Foundation",Vector3.new(width+4,1,depth+4),Vector3.zero,stone,true)
+    for _,side in ipairs({-1,1}) do
+        b("Brick wall",Vector3.new(1,height,depth),Vector3.new(side*width/2,height/2,0),color,true).Material=Enum.Material.Brick
+        local front=(width-10)/2
+        b("Entrance wall",Vector3.new(front,height,1),Vector3.new(side*(5+front/2),height/2,-depth/2),color,true).Material=Enum.Material.Brick
+        for floor=0,1 do
+            b("Window",Vector3.new(5,6,0.3),Vector3.new(side*(width/2-6),7+floor*11,-depth/2-0.6),Color3.fromRGB(207,180,120),false).Material=Enum.Material.Glass
+        end
+    end
+    b("Door lintel",Vector3.new(10,height-12,1),Vector3.new(0,(height+12)/2,-depth/2),color,true)
+    b("Rear wall",Vector3.new(width,height,1),Vector3.new(0,height/2,depth/2),color,true).Material=Enum.Material.Brick
+    b("Cornice",Vector3.new(width+3,1,depth+3),Vector3.new(0,height,0),stone,true)
+    b("Slate roof",Vector3.new(width+2,3,depth+2),Vector3.new(0,height+2,0),slate,true).Material=Enum.Material.Slate
+    if cathedral then
+        for _,side in ipairs({-1,1}) do
+            b("Bell tower",Vector3.new(10,70,12),Vector3.new(side*(width/2-4),35,-depth/2+6),stone,true)
+            b("Tower crown",Vector3.new(12,4,14),Vector3.new(side*(width/2-4),72,-depth/2+6),slate,true)
+        end
+    elseif factory then
+        b("Chimney",Vector3.new(5,43,5),Vector3.new(width/2-4,22,depth/2-4),brick,true).Material=Enum.Material.Brick
+    end
+    local sign=b("Address",Vector3.new(8,2,0.4),Vector3.new(0,13,-depth/2-1),slate,false)
+    label(sign,tostring(spec.Id).." · "..spec.Name..(if spec.Approximate then " (approximate site)" else ""))
+end
+function City.Build(world: any)
+    local parent=world.Folder
+    parent:SetAttribute("Map","Tingen");parent:SetAttribute("North","-Z")
+    for x=0,3 do for z=0,3 do
+        local ground=part(parent,"Tingen ground",Vector3.new(1000,8,800),point(540,340,-5)+Vector3.new((x-1.5)*1000,0,(z-1.5)*800),Color3.fromRGB(100,110,84),true)
+        ground.Material=Enum.Material.Grass
+    end end
+    -- Navigable flat river surfaces are visual water; no Terrain mutation outside this world folder.
+    local function river(name: string,points: {{number}},width: number)
+        for i=2,#points do
+            local a,b=points[i-1],points[i]
+            local p=line(parent,name,point(a[1],a[2],-0.3),point(b[1],b[2],-0.3),width,0.4,water)
+            p.Material=Enum.Material.Glass;p.Reflectance=0.12
+        end
+    end
+    river("66 · Tussock River",{{25,267},{130,320},{220,410},{355,451},{445,500},{530,578},{650,580},{770,609},{860,700},{900,785}},120)
+    river("67 · Khoy River",{{900,0},{880,75},{850,150},{843,193},{900,243},{953,324},{951,405},{887,450},{797,470},{766,560},{770,609}},36)
+    local roads={
+        {{345,110},{360,260},{425,325},{540,340},{655,310},{820,280},{934,314}},
+        {{580,15},{578,130},{555,250},{550,390},{550,570}},
+        {{360,355},{450,300},{520,265},{650,215},{790,210},{865,237}},
+        {{390,405},{520,418},{680,430},{780,457},{923,420}},
+        {{460,90},{485,230},{500,310},{530,490}},
+        {{735,80},{730,200},{748,315},{775,390},{760,545}},
+        {{340,180},{500,150},{650,160},{810,165}},
+        {{600,520},{730,530},{775,545}},
+    }
+    for _,road in ipairs(roads) do for i=2,#road do
+        local a,b=road[i-1],road[i]
+        line(parent,"Pavement",point(a[1],a[2],0),point(b[1],b[2],0),32,0.5,stone)
+        line(parent,"Carriageway",point(a[1],a[2],0.35),point(b[1],b[2],0.35),22,0.3,slate).Material=Enum.Material.Cobblestone
+    end end
+    -- Every plotted site has a walkable spur to the nearest road segment.
+    for _,spec in ipairs(Layout.Landmarks) do
+        if spec.Kind~="River" and spec.Id~=47 then
+            local entry=point(spec.X,spec.Y-10,0.4)
+            local best=Vector3.zero;local distance=math.huge
+            for _,road in ipairs(roads) do for i=2,#road do
+                local a,b=point(road[i-1][1],road[i-1][2],0.4),point(road[i][1],road[i][2],0.4)
+                local d=b-a;local closest=a+d*math.clamp((entry-a):Dot(d)/d:Dot(d),0,1)
+                if (entry-closest).Magnitude<distance then best=closest;distance=(entry-closest).Magnitude end
+            end end
+            if distance>1 then line(parent,"Access lane",entry,best,10,0.3,stone) end
+        end
+        if spec.Id==5 then
+            for index,name in ipairs({"Veterans Club","Divination Club","Harrods Department Store"}) do
+                local club=table.clone(spec);club.Name=name;club.Y=spec.Y+(index-2)*10
+                landmark(parent,club)
+            end
+        else landmark(parent,spec) end
+    end
+    local spawn=Instance.new("SpawnLocation");spawn.Name="CivicSquareSpawn";spawn.Size=Vector3.new(8,1,8)
+    spawn.Position=Vector3.new(0,1,0);spawn.Neutral=true;spawn.Duration=0;spawn.Transparency=1;spawn.Parent=parent
+    for _,spec in ipairs(Theme.World.Services) do
+        local desk=Art.ServiceBuilding(parent,spec)
+        local prompt=Instance.new("ProximityPrompt");prompt.ActionText=spec.Name;prompt.ObjectText="Civic Square services"
+        prompt.MaxActivationDistance=10;prompt.HoldDuration=0.4;prompt.RequiresLineOfSight=true;prompt:SetAttribute("InteractionId",spec.Action);prompt.Parent=desk
+        prompt.Triggered:Connect(function(player)
+            local root=world:Root(player)
+            if root and (root.Position-desk.Position).Magnitude<=Theme.Interaction.ServerDistance and world.OnInteraction then world.OnInteraction(player,spec.Action) end
+        end)
+    end
+    -- Combat remains in reserved open yards; positions are gameplay additions, not canon.
+    for index,tier in ipairs(world.Data.Runtime.EnemyTiers) do
+        local at=point(365+index*60,540,0)
+        part(parent,"Encounter yard",Vector3.new(80,1,70),at,stone,true)
+        for offset=1,3 do table.insert(world.Spawns,{Position=at+Vector3.new((offset-2)*12,4,8),Tier=tier,Entity=nil,NextSpawn=0}) end
+        if tier<=4 then
+            local exposure=part(parent,"WhisperZone",Vector3.one,at+Vector3.yAxis*6,slate,false);exposure.Transparency=1
+            Collection:AddTag(exposure,"MysticalExposure")
+        end
+    end
+    for i=1,4 do
+        local door=part(parent,"PracticeDoor",Vector3.new(4,7,1),Vector3.new(-35+i*14,3.5,35),brick,true)
+        Collection:AddTag(door,"MysticDoor");Collection:AddTag(door,"MysteriesInteractable")
+    end
+    for _,spec in ipairs({{Name="Civic Square",X=655,Y=310},{Name="North Tingen",X=620,Y=115},{Name="West District",X=420,Y=350},{Name="University District",X=850,Y=365},{Name="Industrial District",X=660,Y=470}}) do
+        local z=part(parent,spec.Name,Vector3.one,point(spec.X,spec.Y),stone,false);z.Transparency=1
+        z:SetAttribute("VisualName",spec.Name);z:SetAttribute("Radius",100);Collection:AddTag(z,"MysteriesZone")
+    end
+    for _,road in ipairs(roads) do for _,p in ipairs(road) do Art.Lamp(parent,point(p[1]+5,p[2])) end end
+    -- Railway runs north from the mapped station, away from city streets.
+    for _,offset in ipairs({-3,3}) do line(parent,"Rail",point(581,29)+Vector3.new(offset,0.8,0),point(581,-45)+Vector3.new(offset,0.8,0),0.5,0.5,slate) end
+    for y=-45,29,3 do part(parent,"Sleeper",Vector3.new(9,0.5,1),point(581,y,0.5),brick,true) end
+    local lighting=game:GetService("Lighting")
+    for _,spec in ipairs({{Class="Atmosphere",Name="MysteriesAtmosphere",Properties=Theme.World.Atmosphere},{Class="BloomEffect",Name="MysteriesBloom",Properties=Theme.World.Bloom}}) do
+        local old=lighting:FindFirstChild(spec.Name);if old then old:Destroy() end
+        local object=Instance.new(spec.Class :: any);object.Name=spec.Name
+        for key,value in pairs(spec.Properties) do (object :: any)[key]=value end
+        object.Parent=lighting
+    end
+    for key,value in pairs(Theme.World.Lighting) do (game:GetService("Lighting") :: any)[key]=value end
+end
+return City
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="37">
         <Properties>
           <string name="Name">VisualEventService</string>
           <string name="Source"><![CDATA[--!strict
@@ -3208,7 +3465,7 @@ return Visual
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="36">
+      <Item class="ModuleScript" referent="38">
         <Properties>
           <string name="Name">WorldArt</string>
           <string name="Source"><![CDATA[--!strict
@@ -3290,6 +3547,7 @@ local function building(parent: Instance,spec: any): Part
     Art.Lamp(model,(f*CFrame.new(b.DoorWidth/2+2,0,-b.Depth/2-3)).Position)
     return desk
 end
+Art.ServiceBuilding=building
 function Art.Build(world: any)
     local parent=world.Folder
     local ground=block(parent,"TrainingGround",Vector3.new(W.Ground,K.GroundDepth,W.Ground),Vector3.new(0,-2,0),T.Colors.Stone,true)
@@ -3370,7 +3628,7 @@ return Art
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="37">
+      <Item class="ModuleScript" referent="39">
         <Properties>
           <string name="Name">WorldService</string>
           <string name="Source"><![CDATA[--!strict
@@ -3401,7 +3659,7 @@ function World.new(data: any,domain: any,states: any,effects: RemoteEvent): Worl
 end
 function World.Build(self: World)
     if not self.Data.Runtime.GenerateDemoWorld then return end
-    require(script.Parent.WorldArt).Build(self)
+    require(script.Parent.TingenWorld).Build(self)
 end
 function World.Root(self: World, player: Player): BasePart?
     local c=player.Character
@@ -3679,20 +3937,20 @@ return World
       </Item>
     </Item>
   </Item>
-  <Item class="StarterGui" referent="38">
+  <Item class="StarterGui" referent="40">
     <Properties>
       <string name="Name">StarterGui</string>
     </Properties>
   </Item>
-  <Item class="StarterPlayer" referent="39">
+  <Item class="StarterPlayer" referent="41">
     <Properties>
       <string name="Name">StarterPlayer</string>
     </Properties>
-    <Item class="StarterPlayerScripts" referent="40">
+    <Item class="StarterPlayerScripts" referent="42">
       <Properties>
         <string name="Name">StarterPlayerScripts</string>
       </Properties>
-      <Item class="LocalScript" referent="41">
+      <Item class="LocalScript" referent="43">
         <Properties>
           <string name="Name">Mysteries</string>
           <string name="Source"><![CDATA[--!strict
@@ -3931,11 +4189,11 @@ script.Destroying:Connect(function() testRoom:Close();worldView:Destroy();presen
 ]]></string>
         </Properties>
       </Item>
-      <Item class="Folder" referent="42">
+      <Item class="Folder" referent="44">
         <Properties>
           <string name="Name">UI</string>
         </Properties>
-        <Item class="ModuleScript" referent="43">
+        <Item class="ModuleScript" referent="45">
           <Properties>
             <string name="Name">Developer</string>
             <string name="Source"><![CDATA[--!strict
@@ -4058,7 +4316,7 @@ return Developer
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="44">
+        <Item class="ModuleScript" referent="46">
           <Properties>
             <string name="Name">Feedback</string>
             <string name="Source"><![CDATA[--!strict
@@ -4222,7 +4480,7 @@ return Feedback
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="45">
+        <Item class="ModuleScript" referent="47">
           <Properties>
             <string name="Name">Hud</string>
             <string name="Source"><![CDATA[--!strict
@@ -4568,7 +4826,7 @@ return Hud
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="46">
+        <Item class="ModuleScript" referent="48">
           <Properties>
             <string name="Name">Kit</string>
             <string name="Source"><![CDATA[--!strict
@@ -4727,7 +4985,7 @@ return Kit
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="47">
+        <Item class="ModuleScript" referent="49">
           <Properties>
             <string name="Name">Menus</string>
             <string name="Source"><![CDATA[--!strict
@@ -5008,7 +5266,7 @@ return Menus
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="48">
+        <Item class="ModuleScript" referent="50">
           <Properties>
             <string name="Name">Presentation</string>
             <string name="Source"><![CDATA[--!strict
@@ -5265,7 +5523,7 @@ return Presentation
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="49">
+        <Item class="ModuleScript" referent="51">
           <Properties>
             <string name="Name">Prompts</string>
             <string name="Source"><![CDATA[--!strict
@@ -5413,11 +5671,11 @@ return Prompts
           </Properties>
         </Item>
       </Item>
-      <Item class="Folder" referent="50">
+      <Item class="Folder" referent="52">
         <Properties>
           <string name="Name">Visuals</string>
         </Properties>
-        <Item class="ModuleScript" referent="51">
+        <Item class="ModuleScript" referent="53">
           <Properties>
             <string name="Name">AbilityPresentation</string>
             <string name="Source"><![CDATA[--!strict
@@ -5654,7 +5912,7 @@ return Ability
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="52">
+        <Item class="ModuleScript" referent="54">
           <Properties>
             <string name="Name">AnimationController</string>
             <string name="Source"><![CDATA[--!strict
@@ -5904,7 +6162,7 @@ return AnimationController
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="53">
+        <Item class="ModuleScript" referent="55">
           <Properties>
             <string name="Name">CameraFeel</string>
             <string name="Source"><![CDATA[--!strict
@@ -6030,7 +6288,7 @@ return CameraFeel
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="54">
+        <Item class="ModuleScript" referent="56">
           <Properties>
             <string name="Name">CharacterArt</string>
             <string name="Source"><![CDATA[--!strict
@@ -6323,7 +6581,7 @@ return Outfit
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="55">
+        <Item class="ModuleScript" referent="57">
           <Properties>
             <string name="Name">Choreography</string>
             <string name="Source"><![CDATA[--!strict
@@ -6452,7 +6710,7 @@ return Choreography
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="56">
+        <Item class="ModuleScript" referent="58">
           <Properties>
             <string name="Name">EffectBlocks</string>
             <string name="Source"><![CDATA[--!strict
@@ -6889,7 +7147,7 @@ return Blocks
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="57">
+        <Item class="ModuleScript" referent="59">
           <Properties>
             <string name="Name">EnemyPresentation</string>
             <string name="Source"><![CDATA[--!strict
@@ -7066,7 +7324,7 @@ return Enemies
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="58">
+        <Item class="ModuleScript" referent="60">
           <Properties>
             <string name="Name">HitPresentation</string>
             <string name="Source"><![CDATA[--!strict
@@ -7141,7 +7399,7 @@ return HitPresentation
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="59">
+        <Item class="ModuleScript" referent="61">
           <Properties>
             <string name="Name">MotionSpring</string>
             <string name="Source"><![CDATA[--!strict
@@ -7177,11 +7435,11 @@ return MotionSpring
 ]]></string>
           </Properties>
         </Item>
-        <Item class="Folder" referent="60">
+        <Item class="Folder" referent="62">
           <Properties>
             <string name="Name">PathwayEffects</string>
           </Properties>
-          <Item class="ModuleScript" referent="61">
+          <Item class="ModuleScript" referent="63">
             <Properties>
               <string name="Name">Apprentice</string>
               <string name="Source"><![CDATA[--!strict
@@ -7394,7 +7652,7 @@ return Apprentice
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="62">
+          <Item class="ModuleScript" referent="64">
             <Properties>
               <string name="Name">Marauder</string>
               <string name="Source"><![CDATA[--!strict
@@ -7579,7 +7837,7 @@ return Marauder
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="63">
+          <Item class="ModuleScript" referent="65">
             <Properties>
               <string name="Name">Seer</string>
               <string name="Source"><![CDATA[--!strict
@@ -7771,7 +8029,7 @@ return Seer
             </Properties>
           </Item>
         </Item>
-        <Item class="ModuleScript" referent="64">
+        <Item class="ModuleScript" referent="66">
           <Properties>
             <string name="Name">PerformanceProbe</string>
             <string name="Source"><![CDATA[--!strict
@@ -7833,7 +8091,7 @@ return Probe
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="65">
+        <Item class="ModuleScript" referent="67">
           <Properties>
             <string name="Name">StatusPresentation</string>
             <string name="Source"><![CDATA[--!strict
@@ -8042,7 +8300,7 @@ return Status
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="66">
+        <Item class="ModuleScript" referent="68">
           <Properties>
             <string name="Name">VfxService</string>
             <string name="Source"><![CDATA[--!strict
@@ -8275,7 +8533,7 @@ return Service
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="67">
+        <Item class="ModuleScript" referent="69">
           <Properties>
             <string name="Name">VfxTestRoom</string>
             <string name="Source"><![CDATA[--!strict
@@ -8481,7 +8739,7 @@ return TestRoom
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="68">
+        <Item class="ModuleScript" referent="70">
           <Properties>
             <string name="Name">WorldPresentation</string>
             <string name="Source"><![CDATA[--!strict

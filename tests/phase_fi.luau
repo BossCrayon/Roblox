@@ -36,19 +36,32 @@ return function(data: any,load: any,shared: any,e: any)
     function cm:Lerp(other,t) return setmetatable({R=self.R+(other.R-self.R)*t,G=self.G+(other.G-self.G)*t,B=self.B+(other.B-self.B)*t},{__index=cm}) end
     env.Color3={fromRGB=function(r,g,b) return setmetatable({R=r/255,G=g/255,B=b/255},{__index=cm}) end}
     local T=load("Theme",env);load("Client/UI/Kit",env)
-    local Art=load("Server/Services/WorldArt",env)
+    load("Server/Services/WorldArt",env)
     local world={Folder=instance("Folder"),Spawns={},Data=data}
-    Art.Build(world)
+    load("Server/Services/TingenWorld",env).Build(world)
     check(#world.Spawns==18,"Expanded world retains eighteen real spawn records")
-    check(world.Folder:FindFirstChild("SanctuarySpawn").Position.Magnitude<1,"Sanctuary spawn retains the original origin")
+    check(world.Folder:FindFirstChild("CivicSquareSpawn").Position.Magnitude<=1,"Sanctuary spawn retains the original origin")
+    local layout=load("TingenLayout",env)
+    check(#layout.Landmarks==68,"All 67 reference entries and missing cathedral are included")
+    local seen={}
+    for _,item in ipairs(world.Folder:GetDescendants()) do
+        local id=item:GetAttribute("MapId")
+        if id then seen[id]=(seen[id] or 0)+1 end
+    end
+    for i=1,68 do check(seen[i]==(if i==5 then 3 else 1),"Every landmark is built once; entry 5 includes three businesses") end
+    check(layout.Landmarks[68].Approximate and layout.Landmarks[68].Y<layout.OriginY,"Missing cathedral remains explicitly approximate and northern")
     local parts=0;local prompts=0
     for _,object in ipairs(world.Folder:GetDescendants()) do
-        check(not object:IsA("BillboardGui"),"World construction has no permanent floating zone/debug names")
-        if object:IsA("BasePart") then parts+=1 end
+        if object:IsA("BillboardGui") then check(object.MaxDistance<=110,"Landmark labels are distance bounded") end
+        if object:IsA("BasePart") then
+            parts+=1
+            check(object.Size.X<=2048 and object.Size.Y<=2048 and object.Size.Z<=2048,"Parts respect Roblox size limits")
+        end
         if object:IsA("ProximityPrompt") then prompts+=1 end
         if object:IsA("PointLight") then check(not object.Enabled and not object.Shadows,"Practical lights start disabled/unshadowed for local bounded selection") end
     end
-    check(parts<1500 and prompts==4,"Procedural original world kit is bounded and retains all four server prompts")
+    print("Tingen parts:",parts,"prompts:",prompts)
+    check(parts<2500 and prompts==4,"Procedural original world kit is bounded and retains all four server prompts")
     for _,spec in ipairs(T.World.Services) do
         local object=world.Folder:FindFirstChild(spec.Name)
         check(object and object.CanCollide and object:GetAttribute("VisualName")==spec.Name,"Services retain exact authoritative lookup names")
