@@ -99,6 +99,9 @@ return function(data: any,load: any,shared: any,e: any)
                         if path=="Seer" and stage=="Complete" then
                             check(torso.LocalTransparencyModifier==1,"Complete Fool hides the original body locally")
                         end
+                        check(mythRecord.Scale==(if stage=="Complete" then T.CharacterArt.Mythical.CompleteScale else T.CharacterArt.Mythical.IncompleteScale),"Mythical scale follows stage tuning")
+                        check(mythRecord.Lift>0,"Mythical presentation floats above the physical rig")
+                        check(player.Character.PrimaryPart.Position.Y==4,"Giant form never levitates the authoritative root")
                         local fixedCount=#mythRecord.Model:GetDescendants()
                         for _=1,8 do outfits:Step(0.08) end
                         check(#mythRecord.Model:GetDescendants()==fixedCount,"Idle transformation motion allocates no instances")

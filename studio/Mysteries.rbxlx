@@ -1067,6 +1067,7 @@ return freeze({
         CapeExtra=0.5,CapeDepth=0.2,CollarSeal={0.45,0.12,0.18},BodyScaleMin=0.8,BodyScaleMax=1.5,CoatClearance=0.1,
         Mythical={
             -- Original cinematic interpretations; these silhouettes do not assert Sequence 0 anatomy at Sequence 2.
+            CompleteScale=4,IncompleteScale=2,CompleteLift=14,IncompleteLift=5,FloatHeight=0.65,
             FoolCloakAlpha=0.38,FoolEndLife=1.2,FoolAuraInterval=1.4,FoolAuraLife=1.6,
             SpiritAlpha=0.76,GlowAlpha=0.42,RevealTime=0.62,IdlePeriod=3.8,IdleRise=0.09,
             IdleDegrees=12,HaloSpeed=0.32,HandSpeed=0.55,WormSpeed=1.7,AlphaPulse=0.06,
@@ -1304,7 +1305,7 @@ return freeze({
     Melee={TrailLife=0.34,ImpactLife=0.32,ArcSpan=2.4,ArcForward=2.6,ArcHeight=0.45,SlashScale=0.42,ImpactScale=0.48,
         Windup=0.06,ArcEndForward=3.6,ArcCurve=1.7,TrailScale=0.38,MotifScale=0.48,MotifDelay=0.12},
     Dash={Life=0.42,Scale=0.42},
-    Ultimate={Life=1.8,IncompleteScale=0.85,CompleteScale=1.3,Release=0.18,Aftermath=0.46,
+    Ultimate={Life=1.8,IncompleteScale=1.3,CompleteScale=2.6,Release=0.18,Aftermath=0.46,
         GestureHeight=1.8,GroundOffset=-2.7,IntakeScale=0.65,DomainScale=1.45,VeilHeight=5.4},
     Cinematic={Intake=0.16,Release=0.08,Aftermath=0.24,SigilSpin=0.45,RuneSpin=0.18,
         VeilSway=0.22,DoorDepth=0.30,DoorOpen=0.16,BeamDraw=0.09,TrailTravel=0.16,
@@ -5164,7 +5165,7 @@ function Presentation.Event(self: any,event: any)
         local facing=if character then character:FindFirstChild("HumanoidRootPart") else nil
         local frame=CFrame.new(event.Position)*(if facing and facing:IsA("BasePart") then facing.CFrame.Rotation else CFrame.identity)
         local ground=event.Position+Vector3.yAxis*C.Ultimate.GroundOffset
-        local gesture=event.Position+Vector3.yAxis*C.Ultimate.GestureHeight
+        local gesture=event.Position+Vector3.yAxis*(C.Ultimate.GestureHeight+(if event.Stage=="Complete" then T.CharacterArt.Mythical.CompleteLift else T.CharacterArt.Mythical.IncompleteLift))
         -- Six layers, one reservation: intake -> unfold -> domain/aftermath.
         -- This is a cinematic interpretation, never a client-side damage or time-stop grant.
         local ultSpecs: {any}={
@@ -6055,15 +6056,18 @@ end
 function Outfit.Build(self: any,character: Model,path: string,sequence: number,torso: BasePart,head: BasePart,myth: string?)
     local previous=self.Records[character]
     if previous and previous.Mythical~="" and (not myth or myth=="") and self.Service:Visible(torso.Position) then
+        local endingPosition=torso.Position+Vector3.yAxis*(previous.Lift or 0)
         local ending: {any}={
-            {Name="VeilRibbon",Position=torso.Position,Palette=previous.Path,Options={Scale=M.AuraScale,Coil=true}},
-            {Name="RisingMotes",Position=torso.Position,Palette=previous.Path,Options={Scale=M.AuraScale,Intake=true}},
-            {Name="SigilStencil",Position=torso.Position,Palette=previous.Path,Options={Glyph="Worm",LowGlyph="WormLow",Scale=M.AuraScale}},
+            {Name="VeilRibbon",Position=endingPosition,Palette=previous.Path,Options={Scale=M.AuraScale*(previous.Scale or 1),Coil=true}},
+            {Name="RisingMotes",Position=endingPosition,Palette=previous.Path,Options={Scale=M.AuraScale*(previous.Scale or 1),Intake=true}},
+            {Name="SigilStencil",Position=endingPosition,Palette=previous.Path,Options={Glyph="Worm",LowGlyph="WormLow",Scale=M.AuraScale*(previous.Scale or 1)}},
         }
         self.Blocks:Compose(ending,1,2,M.FoolEndLife)
     end
     self:Clear(character)
     local stage=if myth=="Incomplete" or myth=="Complete" then myth else ""
+    local formScale=if stage=="Complete" then M.CompleteScale elseif stage=="Incomplete" then M.IncompleteScale else 1
+    local lift=if stage=="Complete" then M.CompleteLift elseif stage=="Incomplete" then M.IncompleteLift else 0
     local model=Instance.new("Model");model.Name="LocalMysteriesOutfit";model.Parent=character
     local count=0;local cloth=A.Cloth[path];local trim=A.Trim[path]
     local motions: {any}={};local faces: {any}={};local ornaments: {any}={}
@@ -6118,9 +6122,16 @@ function Outfit.Build(self: any,character: Model,path: string,sequence: number,t
         elseif stage~="" and worm then
             part.Shape=Enum.PartType.Ball
         end
+        local rootPiece=not base:IsDescendantOf(model)
+        if stage~="" then
+            part.Size*=formScale
+            local position=pose.Position*formScale
+            if rootPiece then position-=base.CFrame:PointToObjectSpace(torso.Position)*(formScale-1);position+=Vector3.yAxis*lift end
+            pose=CFrame.new(position)*pose.Rotation
+        end
         local weld=Instance.new("Weld");weld.Part0=base;weld.Part1=part;weld.C0=pose;weld.Parent=part
         table.insert(motions,{Part=part,Weld=weld,Base=pose,Alpha=part.Transparency,
-            Phase=count,Kind=if hand then "Hand" elseif halo then "Halo" elseif worm then "Worm" else "Float",
+            RootPiece=rootPiece,Phase=count,Kind=if hand then "Hand" elseif halo then "Halo" elseif worm then "Worm" else "Float",
             Sign=if string.find(lower,"minute") then -1 else 1})
         if stage~="" and not self.Service.ReducedMotion and not self.Service.LowGraphics then part.Transparency=1 end
         return part
@@ -6214,7 +6225,7 @@ function Outfit.Build(self: any,character: Model,path: string,sequence: number,t
         if sequence<=2 then piece("Silvered collar seal",torso,A.CollarSeal,CFrame.new(0,coat[2]/2,-coat[3]/2-0.08),trim) end
     end
     local hidden={}
-    if path=="Seer" and stage=="Complete" then
+    if stage=="Complete" then
         for _,part in ipairs(character:GetDescendants()) do
             if part:IsA("BasePart") and not part:IsDescendantOf(model) then
                 table.insert(hidden,{Part=part,Previous=part.LocalTransparencyModifier})
@@ -6223,7 +6234,7 @@ function Outfit.Build(self: any,character: Model,path: string,sequence: number,t
         end
     end
     self.Records[character]={Hidden=hidden,Model=model,Path=path,Sequence=sequence,Mythical=stage,Torso=torso,Head=head,
-        Motions=motions,Faces=faces,Ornaments=ornaments,Age=0,Time=0}
+        Motions=motions,Faces=faces,Ornaments=ornaments,Scale=formScale,Lift=lift,Age=0,Time=0}
 end
 function Outfit.Step(self: any,dt: number)
     local profile=self.Service:Profile()
@@ -6242,7 +6253,7 @@ function Outfit.Step(self: any,dt: number)
                 local offset=CFrame.identity
                 if motion.Kind=="Hand" then
                     -- Rotate around the clock hub, not the hand's midpoint.
-                    local center=Vector3.new(0,0.45,motion.Base.Position.Z)
+                    local center=Vector3.new(0,record.Lift+0.45*record.Scale,motion.Base.Position.Z)
                     offset=CFrame.new(center)*CFrame.Angles(0,0,spin*M.HandSpeed*motion.Sign)*CFrame.new(-center)
                     motion.Weld.C0=offset*motion.Base
                 else
@@ -6252,6 +6263,9 @@ function Outfit.Step(self: any,dt: number)
                         if motion.Kind=="Worm" then math.sin(spin*M.WormSpeed+motion.Phase)*math.rad(M.IdleDegrees) else 0)
                     if reduced or low then offset=CFrame.identity end
                     motion.Weld.C0=motion.Base*offset
+                end
+                if motion.RootPiece and not reduced and not low then
+                    motion.Weld.C0=CFrame.new(0,math.sin(record.Time*math.pi*2/M.IdlePeriod)*M.FloatHeight,0)*motion.Weld.C0
                 end
                 motion.Part.Transparency=math.clamp(1-(1-motion.Alpha)*reveal+math.abs(wave)*M.AlphaPulse,0,1)
             end
@@ -6291,10 +6305,10 @@ function Outfit.Step(self: any,dt: number)
             local blockName=if myth=="Complete" then "SigilStencil" elseif myth=="Incomplete" or seq<=3 then "VeilRibbon" else "RisingMotes"
             local stencil=if path=="Seer" and myth=="Complete" then "SpiritVortex" elseif path=="Seer" then "Worm" elseif path=="Marauder" then "Clock" else "Arch"
             local layers: {any}={{Name=blockName,Position=torso.Position,Palette=path,
-                Options={Scale=if myth~="" then M.AuraScale else A.AuraScale,Glyph=stencil,LowGlyph=if path=="Seer" then "WormLow" else stencil,Follow=torso,Offset=Vector3.new(0,0,-0.8)}}}
+                Options={Scale=if myth=="Complete" then M.AuraScale*M.CompleteScale elseif myth~="" then M.AuraScale*M.IncompleteScale else A.AuraScale,Glyph=stencil,LowGlyph=if path=="Seer" then "WormLow" else stencil,Follow=torso,Offset=Vector3.new(0,if myth=="Complete" then M.CompleteLift elseif myth~="" then M.IncompleteLift else 0,-0.8)}}}
             if myth~="" then
                 table.insert(layers,{Name="VeilRibbon",Position=torso.Position,Palette=path,
-                    Options={Scale=M.AuraScale,Height=M.ApprenticeJamb[2],Coil=true,Follow=torso}})
+                    Options={Scale=M.AuraScale*(if myth=="Complete" then M.CompleteScale else M.IncompleteScale),Height=M.ApprenticeJamb[2],Coil=true,Follow=torso,Offset=Vector3.yAxis*(if myth=="Complete" then M.CompleteLift else M.IncompleteLift)}})
             end
             self.Blocks:Compose(layers,1,0,if myth~="" then M.FoolAuraLife else A.AuraLife)
             aura=false -- one subtle nearby aura per interval; it shares the global effect cap.

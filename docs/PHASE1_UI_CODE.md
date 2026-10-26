@@ -82,6 +82,7 @@ return freeze({
         CapeExtra=0.5,CapeDepth=0.2,CollarSeal={0.45,0.12,0.18},BodyScaleMin=0.8,BodyScaleMax=1.5,CoatClearance=0.1,
         Mythical={
             -- Original cinematic interpretations; these silhouettes do not assert Sequence 0 anatomy at Sequence 2.
+            CompleteScale=4,IncompleteScale=2,CompleteLift=14,IncompleteLift=5,FloatHeight=0.65,
             FoolCloakAlpha=0.38,FoolEndLife=1.2,FoolAuraInterval=1.4,FoolAuraLife=1.6,
             SpiritAlpha=0.76,GlowAlpha=0.42,RevealTime=0.62,IdlePeriod=3.8,IdleRise=0.09,
             IdleDegrees=12,HaloSpeed=0.32,HandSpeed=0.55,WormSpeed=1.7,AlphaPulse=0.06,
@@ -1955,7 +1956,7 @@ function Presentation.Event(self: any,event: any)
         local facing=if character then character:FindFirstChild("HumanoidRootPart") else nil
         local frame=CFrame.new(event.Position)*(if facing and facing:IsA("BasePart") then facing.CFrame.Rotation else CFrame.identity)
         local ground=event.Position+Vector3.yAxis*C.Ultimate.GroundOffset
-        local gesture=event.Position+Vector3.yAxis*C.Ultimate.GestureHeight
+        local gesture=event.Position+Vector3.yAxis*(C.Ultimate.GestureHeight+(if event.Stage=="Complete" then T.CharacterArt.Mythical.CompleteLift else T.CharacterArt.Mythical.IncompleteLift))
         -- Six layers, one reservation: intake -> unfold -> domain/aftermath.
         -- This is a cinematic interpretation, never a client-side damage or time-stop grant.
         local ultSpecs: {any}={

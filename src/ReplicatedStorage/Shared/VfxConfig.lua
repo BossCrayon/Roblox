@@ -34,7 +34,7 @@ return freeze({
     Melee={TrailLife=0.34,ImpactLife=0.32,ArcSpan=2.4,ArcForward=2.6,ArcHeight=0.45,SlashScale=0.42,ImpactScale=0.48,
         Windup=0.06,ArcEndForward=3.6,ArcCurve=1.7,TrailScale=0.38,MotifScale=0.48,MotifDelay=0.12},
     Dash={Life=0.42,Scale=0.42},
-    Ultimate={Life=1.8,IncompleteScale=0.85,CompleteScale=1.3,Release=0.18,Aftermath=0.46,
+    Ultimate={Life=1.8,IncompleteScale=1.3,CompleteScale=2.6,Release=0.18,Aftermath=0.46,
         GestureHeight=1.8,GroundOffset=-2.7,IntakeScale=0.65,DomainScale=1.45,VeilHeight=5.4},
     Cinematic={Intake=0.16,Release=0.08,Aftermath=0.24,SigilSpin=0.45,RuneSpin=0.18,
         VeilSway=0.22,DoorDepth=0.30,DoorOpen=0.16,BeamDraw=0.09,TrailTravel=0.16,

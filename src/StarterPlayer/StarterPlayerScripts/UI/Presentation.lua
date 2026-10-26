@@ -152,7 +152,7 @@ function Presentation.Event(self: any,event: any)
         local facing=if character then character:FindFirstChild("HumanoidRootPart") else nil
         local frame=CFrame.new(event.Position)*(if facing and facing:IsA("BasePart") then facing.CFrame.Rotation else CFrame.identity)
         local ground=event.Position+Vector3.yAxis*C.Ultimate.GroundOffset
-        local gesture=event.Position+Vector3.yAxis*C.Ultimate.GestureHeight
+        local gesture=event.Position+Vector3.yAxis*(C.Ultimate.GestureHeight+(if event.Stage=="Complete" then T.CharacterArt.Mythical.CompleteLift else T.CharacterArt.Mythical.IncompleteLift))
         -- Six layers, one reservation: intake -> unfold -> domain/aftermath.
         -- This is a cinematic interpretation, never a client-side damage or time-stop grant.
         local ultSpecs: {any}={
