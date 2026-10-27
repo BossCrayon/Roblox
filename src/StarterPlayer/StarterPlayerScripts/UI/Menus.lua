@@ -186,9 +186,13 @@ function Menus.Render(self: any)
         local race=self.Data.Races.ById[state.RaceId or "Human"]
         self:TextRow(race.Name.." · Ancestry",true)
         self:TextRow(race.Description)
-        self:TextRow("Sequence, pathway and ancestry determine these stats. Numerical bonuses are game balance.")
+        self:TextRow("Pathway + Sequence set your base stats. Ancestry and active bonuses modify the final values.")
         for _,stat in ipairs({"Health","Spirituality","Sanity","Strength","Agility","Perception","Intuition","Resistance","SpiritualityRegen"}) do
-            self:TextRow(stat..": "..tostring(state.Stats and state.Stats[stat] or "—"))
+            local detail=state.StatBreakdown and state.StatBreakdown[stat]
+            self:TextRow(stat..": "..tostring(state.Stats and state.Stats[stat] or "—")..(if detail then "  ·  Base "..detail.Base else ""))
+            if detail and (detail.Flat~=0 or detail.Percent~=0 or detail.Multiplier~=1) then
+                self:TextRow(string.format("  Bonus %+.2f  ·  %+.0f%%  ·  ×%.2f",detail.Flat,detail.Percent*100,detail.Multiplier))
+            end
         end
         self:TextRow("Ancestry passives",true)
         local keys={};for stat in pairs(race.Multipliers) do table.insert(keys,stat) end;table.sort(keys)
@@ -280,6 +284,11 @@ function Menus.Update(self: any,state: any)
     local keys={tostring(state.PathwayId),tostring(state.Sequence),table.concat(inventory,","),table.concat(loadout,"|"),
         tostring(state.RecordedPowerId),tostring(state.RecordedCharges),tostring(state.StolenPower),tostring(state.Digestion),tostring(state.ActingProgress),
         tostring(state.UltimateStage),tostring(state.RaceId),tostring(state.RaceChosen),if self.Tab=="Character" then tostring(math.ceil((state.Cooldowns or {}).RacialSkill or 0)) else ""}
+    if self.Tab=="Character" then
+        for _,stat in ipairs({"Health","Spirituality","Strength","Agility","Perception","Intuition","Resistance","SpiritualityRegen"}) do
+            table.insert(keys,tostring(state.Stats and state.Stats[stat]))
+        end
+    end
     local key=table.concat(keys,";")
     if self.Root.Visible then
         if self.View=="Preview" then

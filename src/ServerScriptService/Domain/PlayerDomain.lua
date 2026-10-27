@@ -28,12 +28,32 @@ function Domain.Default(self: Domain): any
     end
     return p
 end
-function Domain.Stats(self: Domain, profile: any): any
-    local stats=if profile.PathwayId then copy(self.Data.Pathways[profile.PathwayId].Sequences[profile.Sequence].BaseStats)
-        else {Health=100,Spirituality=50,Sanity=100,Strength=8,Agility=10,Perception=20,Intuition=8,Resistance=8,SpiritualityRegen=2}
+function Domain.Stats(self: Domain,profile: any,modifiers: any?): (any,any)
     local race=self.Data.Races.ById[profile.RaceId or "Human"] or self.Data.Races.ById.Human
-    for key,mult in pairs(race.Multipliers) do stats[key]=math.round(stats[key]*mult*100)/100 end
-    return stats
+    local sources={{Id="Ancestry",Multiply=race.Multipliers}}
+    for _,modifier in pairs(modifiers or {}) do table.insert(sources,modifier) end
+    return self.Data.Stats.Resolve(profile.PathwayId,profile.Sequence,sources)
+end
+function Domain.RefreshStats(self: Domain,s: any)
+    s.Stats,s.StatBreakdown=self:Stats(s.Profile,s.StatModifiers)
+    s.Health=math.min(s.Health,s.Stats.Health)
+    s.Spirituality=math.min(s.Spirituality,s.Stats.Spirituality)
+    s.Profile.Stats=copy(s.Stats)
+end
+-- Future equipment/potion services call this after validating ownership/consumption.
+-- Reusing an ID replaces that source; removing it never compounds or refills stats.
+function Domain.SetStatModifier(self: Domain,s: any,id: string,definition: any)
+    assert(type(id)=="string" and id~="" and id~="Ancestry","Invalid modifier source")
+    assert(type(definition)=="table","Invalid modifier definition")
+    if definition.ExpiresAt~=nil then assert(finite(definition.ExpiresAt),"Invalid modifier expiry") end
+    local nextModifiers=copy(s.StatModifiers or {})
+    nextModifiers[id]=copy(definition);nextModifiers[id].Id=id
+    self:Stats(s.Profile,nextModifiers) -- validate before committing anything
+    s.StatModifiers=nextModifiers;self:RefreshStats(s)
+end
+function Domain.RemoveStatModifier(self: Domain,s: any,id: string)
+    if s.StatModifiers then s.StatModifiers[id]=nil end
+    self:RefreshStats(s)
 end
 function Domain.Unlocked(self: Domain, p: any, id: any): boolean
     local a=self.Data.Abilities[id]
@@ -93,7 +113,7 @@ function Domain.NewState(self: Domain, profile: any, now: number): any
     assert(p,err)
     return {Profile=p,Stats=self:Stats(p),Health=p.Stats.Health,Spirituality=p.Stats.Spirituality,
         Sanity=p.Sanity,Mode=if p.Sanity==0 then "Madness" else "Normal",MadnessUntil=now+10,
-        Cooldowns={},GlobalUntil=0,LastCast=-100,LastCombat=-100,Pending=nil,CastSerial=0,
+        StatModifiers={},Cooldowns={},GlobalUntil=0,LastCast=-100,LastCombat=-100,Pending=nil,CastSerial=0,
         ObjectiveLast={},SeenEvents={},SeenOrder={},Statuses={},Dead=false,Ready=true,
         RecordedPower=nil,StolenPower=nil,LastMelee=-100,LastRitual=-100,
         Running=true,MeleeCombo=0,UltimateStage=false}
@@ -250,7 +270,7 @@ function Domain.Drink(self: Domain, s: any, id: any, now: number): (boolean,stri
     end
     p.Inventory[id]-=1; p.PathwayId=potion.PathwayId; p.Sequence=potion.TargetSequence
     p.Digestion=0; p.ActingProgress=0; p.ObjectiveProgress={}
-    s.Stats=self:Stats(p); p.Stats=copy(s.Stats)
+    s.StatModifiers={};s.Stats,s.StatBreakdown=self:Stats(p); p.Stats=copy(s.Stats)
     s.Health=s.Stats.Health; s.Spirituality=s.Stats.Spirituality
     s.ObjectiveLast={}; s.SeenEvents={}; s.SeenOrder={}; s.Statuses={}; s.UltimateStage=false
     self:AutoEquip(s)
@@ -299,6 +319,11 @@ end
 function Domain.Tick(self: Domain, s: any, dt: number, now: number)
     if not s.Ready then return end
     dt=math.clamp(dt,0,2)
+    local changed=false
+    for id,modifier in pairs(s.StatModifiers or {}) do
+        if modifier.ExpiresAt and modifier.ExpiresAt<=now then s.StatModifiers[id]=nil;changed=true end
+    end
+    if changed then self:RefreshStats(s) end
     for key,status in pairs(s.Statuses) do if status.ExpiresAt<=now then s.Statuses[key]=nil end end
     local myth=s.Statuses.MythicalForm
     if myth and myth.ExpiresAt>now then
@@ -346,7 +371,7 @@ function Domain.ChooseRace(self: Domain,s: any,id: any,now: number): (boolean,st
     if s.Profile.RaceChosen then return false,"Ancestry has already been chosen" end
     if s.Dead or s.Mode~="Normal" or s.Pending or next(s.Statuses) or now-s.LastCombat<10 then return false,"Choose ancestry outside combat" end
     local health=s.Health/s.Stats.Health;local spirit=s.Spirituality/s.Stats.Spirituality
-    s.Profile.RaceId=id;s.Profile.RaceChosen=true;s.Stats=self:Stats(s.Profile)
+    s.Profile.RaceId=id;s.Profile.RaceChosen=true;s.Stats=self:Stats(s.Profile,s.StatModifiers)
     s.Health=s.Stats.Health*health;s.Spirituality=s.Stats.Spirituality*spirit
     return true,"Ancestry chosen: "..self.Data.Races.ById[id].Name
 end

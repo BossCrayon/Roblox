@@ -106,7 +106,7 @@ local function sendState(player: Player)
         Spirituality=s.Spirituality,MaxSpirituality=s.Stats.Spirituality,Sanity=s.Sanity,Mode=s.Mode,
         Gold=p.Gold,WishCredits=p.WishCredits,Inventory=Domain.Copy(p.Inventory),Loadout=Domain.Copy(p.AbilityLoadout),
         Cooldowns=cooldowns,Statuses=statuses,Dead=s.Dead,RecordedCharges=s.RecordedPower and s.RecordedPower.Charges or 0,RecordedPowerId=s.RecordedPower and s.RecordedPower.Id or false,StolenPower=s.StolenPower or false,
-        RaceId=p.RaceId,RaceChosen=p.RaceChosen,Stats=Domain.Copy(s.Stats),
+        RaceId=p.RaceId,RaceChosen=p.RaceChosen,Stats=Domain.Copy(s.Stats),StatBreakdown=select(2,domain:Stats(p,s.StatModifiers)),
         Running=s.Running~=false,UltimateStage=mythStage,UltimateRemaining=mythRemaining,
         Casting=s.Pending and s.Pending.Id or false,CastRemaining=s.Pending and math.max(0,s.Pending.EndsAt-now) or 0,CastSerial=s.CastSerial,VisualToken=s.VisualToken or 0})
 end
@@ -120,6 +120,7 @@ local function bindCharacter(player: Player,character: Model)
         while player.Parent and character==player.Character and states[player] and not states[player].Ready do task.wait(0.1) end
         local s=states[player]
         if not s or not s.Ready or player.Character~=character then return end
+        s.StatModifiers={};domain:RefreshStats(s)
         s.Dead=false;s.Pending=nil;s.Statuses={};s.RecordedPower=nil;s.StolenPower=nil;s.DisguiseUntil=nil;s.OriginalDisplayName=nil;s.UltimateStage=false
         character:SetAttribute("MysteriesMythicalForm","")
         s.Health=s.Stats.Health;s.Spirituality=s.Stats.Spirituality
@@ -379,6 +380,8 @@ task.spawn(function()
             domain:Tick(s,dt,now)
             local root=world:Root(player);local hum=world:Humanoid(player)
             if root and hum and hum.Health>0 then
+                hum.MaxHealth=s.Stats.Health
+                hum.Health=math.min(hum.Health,s.Stats.Health)
                 local racial=s.Statuses.RacialSkill
                 if racial and racial.ExpiresAt>now and s.Mode=="Normal" then
                     hum.Health=math.min(hum.MaxHealth,hum.Health+(racial.HealPerSecond or 0)*math.min(dt,1))

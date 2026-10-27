@@ -1053,7 +1053,43 @@ end
 local function calculate(pathwayId: string, sequence: number): Stats
     return scale(assert(bases[pathwayId], "Unknown pathway"), sequence)
 end
-return freeze({BaseStats=bases, TierMultipliers=tiers, GetMultipliers=multipliers, Calculate=calculate, Scale=scale,
+-- Modifiers are server-authored definitions, never client-supplied stat totals.
+-- Flat bonuses sum; percentage bonuses sum; multipliers multiply in stable ID order.
+local uninitiated: Stats={Health=100,Spirituality=50,Sanity=100,Strength=8,Agility=10,Perception=20,Intuition=8,Resistance=8,SpiritualityRegen=2}
+local function resolve(pathwayId: any,sequence: any,modifiers: {any}?): (Stats,any)
+    local base=if pathwayId then calculate(pathwayId,sequence) else table.clone(uninitiated)
+    local ordered=table.clone(modifiers or {})
+    local seen={}
+    for _,modifier in ipairs(ordered) do
+        assert(type(modifier.Id)=="string" and modifier.Id~="" and not seen[modifier.Id],"Modifier IDs must be unique")
+        seen[modifier.Id]=true
+        for _,operation in ipairs({"Flat","Percent","Multiply"}) do
+            for stat,value in pairs(modifier[operation] or {}) do
+                assert((base :: any)[stat]~=nil,"Unknown stat: "..tostring(stat))
+                assert(type(value)=="number" and value==value and math.abs(value)<math.huge,"Invalid modifier value")
+                assert(operation~="Multiply" or value>=0,"Negative stat multiplier")
+            end
+        end
+    end
+    table.sort(ordered,function(a: any,b: any) return a.Id<b.Id end)
+    local result: any={};local breakdown: any={}
+    for stat,value in pairs(base :: any) do
+        local flat,percent,multiply=0,0,1
+        for _,modifier in ipairs(ordered) do
+            flat+=(modifier.Flat or {})[stat] or 0
+            percent+=(modifier.Percent or {})[stat] or 0
+            multiply*=(modifier.Multiply or {})[stat] or 1
+        end
+        local final=(value+flat)*math.max(0,1+percent)*multiply
+        assert(final==final and math.abs(final)<math.huge,"Stat modifier overflow")
+        -- Sanity stays on the existing 0–100 resource scale.
+        final=if stat=="Sanity" then 100 else math.clamp(final,if stat=="Health" then 1 else 0,10000000)
+        result[stat]=math.round(final*100)/100
+        breakdown[stat]={Base=value,Flat=flat,Percent=percent,Multiplier=multiply,Final=result[stat]}
+    end
+    return result :: Stats,breakdown
+end
+return freeze({BaseStats=bases, TierMultipliers=tiers, GetMultipliers=multipliers, Calculate=calculate, Scale=scale, Resolve=resolve,Uninitiated=uninitiated,
     Digestion={Min=0, Max=100, StartingValue=0}, Sanity={Min=0, Max=100}})
 ]]></string>
         </Properties>
@@ -5791,7 +5827,7 @@ local function sendState(player: Player)
         Spirituality=s.Spirituality,MaxSpirituality=s.Stats.Spirituality,Sanity=s.Sanity,Mode=s.Mode,
         Gold=p.Gold,WishCredits=p.WishCredits,Inventory=Domain.Copy(p.Inventory),Loadout=Domain.Copy(p.AbilityLoadout),
         Cooldowns=cooldowns,Statuses=statuses,Dead=s.Dead,RecordedCharges=s.RecordedPower and s.RecordedPower.Charges or 0,RecordedPowerId=s.RecordedPower and s.RecordedPower.Id or false,StolenPower=s.StolenPower or false,
-        RaceId=p.RaceId,RaceChosen=p.RaceChosen,Stats=Domain.Copy(s.Stats),
+        RaceId=p.RaceId,RaceChosen=p.RaceChosen,Stats=Domain.Copy(s.Stats),StatBreakdown=select(2,domain:Stats(p,s.StatModifiers)),
         Running=s.Running~=false,UltimateStage=mythStage,UltimateRemaining=mythRemaining,
         Casting=s.Pending and s.Pending.Id or false,CastRemaining=s.Pending and math.max(0,s.Pending.EndsAt-now) or 0,CastSerial=s.CastSerial,VisualToken=s.VisualToken or 0})
 end
@@ -5805,6 +5841,7 @@ local function bindCharacter(player: Player,character: Model)
         while player.Parent and character==player.Character and states[player] and not states[player].Ready do task.wait(0.1) end
         local s=states[player]
         if not s or not s.Ready or player.Character~=character then return end
+        s.StatModifiers={};domain:RefreshStats(s)
         s.Dead=false;s.Pending=nil;s.Statuses={};s.RecordedPower=nil;s.StolenPower=nil;s.DisguiseUntil=nil;s.OriginalDisplayName=nil;s.UltimateStage=false
         character:SetAttribute("MysteriesMythicalForm","")
         s.Health=s.Stats.Health;s.Spirituality=s.Stats.Spirituality
@@ -6064,6 +6101,8 @@ task.spawn(function()
             domain:Tick(s,dt,now)
             local root=world:Root(player);local hum=world:Humanoid(player)
             if root and hum and hum.Health>0 then
+                hum.MaxHealth=s.Stats.Health
+                hum.Health=math.min(hum.Health,s.Stats.Health)
                 local racial=s.Statuses.RacialSkill
                 if racial and racial.ExpiresAt>now and s.Mode=="Normal" then
                     hum.Health=math.min(hum.MaxHealth,hum.Health+(racial.HealPerSecond or 0)*math.min(dt,1))
@@ -6204,12 +6243,32 @@ function Domain.Default(self: Domain): any
     end
     return p
 end
-function Domain.Stats(self: Domain, profile: any): any
-    local stats=if profile.PathwayId then copy(self.Data.Pathways[profile.PathwayId].Sequences[profile.Sequence].BaseStats)
-        else {Health=100,Spirituality=50,Sanity=100,Strength=8,Agility=10,Perception=20,Intuition=8,Resistance=8,SpiritualityRegen=2}
+function Domain.Stats(self: Domain,profile: any,modifiers: any?): (any,any)
     local race=self.Data.Races.ById[profile.RaceId or "Human"] or self.Data.Races.ById.Human
-    for key,mult in pairs(race.Multipliers) do stats[key]=math.round(stats[key]*mult*100)/100 end
-    return stats
+    local sources={{Id="Ancestry",Multiply=race.Multipliers}}
+    for _,modifier in pairs(modifiers or {}) do table.insert(sources,modifier) end
+    return self.Data.Stats.Resolve(profile.PathwayId,profile.Sequence,sources)
+end
+function Domain.RefreshStats(self: Domain,s: any)
+    s.Stats,s.StatBreakdown=self:Stats(s.Profile,s.StatModifiers)
+    s.Health=math.min(s.Health,s.Stats.Health)
+    s.Spirituality=math.min(s.Spirituality,s.Stats.Spirituality)
+    s.Profile.Stats=copy(s.Stats)
+end
+-- Future equipment/potion services call this after validating ownership/consumption.
+-- Reusing an ID replaces that source; removing it never compounds or refills stats.
+function Domain.SetStatModifier(self: Domain,s: any,id: string,definition: any)
+    assert(type(id)=="string" and id~="" and id~="Ancestry","Invalid modifier source")
+    assert(type(definition)=="table","Invalid modifier definition")
+    if definition.ExpiresAt~=nil then assert(finite(definition.ExpiresAt),"Invalid modifier expiry") end
+    local nextModifiers=copy(s.StatModifiers or {})
+    nextModifiers[id]=copy(definition);nextModifiers[id].Id=id
+    self:Stats(s.Profile,nextModifiers) -- validate before committing anything
+    s.StatModifiers=nextModifiers;self:RefreshStats(s)
+end
+function Domain.RemoveStatModifier(self: Domain,s: any,id: string)
+    if s.StatModifiers then s.StatModifiers[id]=nil end
+    self:RefreshStats(s)
 end
 function Domain.Unlocked(self: Domain, p: any, id: any): boolean
     local a=self.Data.Abilities[id]
@@ -6269,7 +6328,7 @@ function Domain.NewState(self: Domain, profile: any, now: number): any
     assert(p,err)
     return {Profile=p,Stats=self:Stats(p),Health=p.Stats.Health,Spirituality=p.Stats.Spirituality,
         Sanity=p.Sanity,Mode=if p.Sanity==0 then "Madness" else "Normal",MadnessUntil=now+10,
-        Cooldowns={},GlobalUntil=0,LastCast=-100,LastCombat=-100,Pending=nil,CastSerial=0,
+        StatModifiers={},Cooldowns={},GlobalUntil=0,LastCast=-100,LastCombat=-100,Pending=nil,CastSerial=0,
         ObjectiveLast={},SeenEvents={},SeenOrder={},Statuses={},Dead=false,Ready=true,
         RecordedPower=nil,StolenPower=nil,LastMelee=-100,LastRitual=-100,
         Running=true,MeleeCombo=0,UltimateStage=false}
@@ -6426,7 +6485,7 @@ function Domain.Drink(self: Domain, s: any, id: any, now: number): (boolean,stri
     end
     p.Inventory[id]-=1; p.PathwayId=potion.PathwayId; p.Sequence=potion.TargetSequence
     p.Digestion=0; p.ActingProgress=0; p.ObjectiveProgress={}
-    s.Stats=self:Stats(p); p.Stats=copy(s.Stats)
+    s.StatModifiers={};s.Stats,s.StatBreakdown=self:Stats(p); p.Stats=copy(s.Stats)
     s.Health=s.Stats.Health; s.Spirituality=s.Stats.Spirituality
     s.ObjectiveLast={}; s.SeenEvents={}; s.SeenOrder={}; s.Statuses={}; s.UltimateStage=false
     self:AutoEquip(s)
@@ -6475,6 +6534,11 @@ end
 function Domain.Tick(self: Domain, s: any, dt: number, now: number)
     if not s.Ready then return end
     dt=math.clamp(dt,0,2)
+    local changed=false
+    for id,modifier in pairs(s.StatModifiers or {}) do
+        if modifier.ExpiresAt and modifier.ExpiresAt<=now then s.StatModifiers[id]=nil;changed=true end
+    end
+    if changed then self:RefreshStats(s) end
     for key,status in pairs(s.Statuses) do if status.ExpiresAt<=now then s.Statuses[key]=nil end end
     local myth=s.Statuses.MythicalForm
     if myth and myth.ExpiresAt>now then
@@ -6522,7 +6586,7 @@ function Domain.ChooseRace(self: Domain,s: any,id: any,now: number): (boolean,st
     if s.Profile.RaceChosen then return false,"Ancestry has already been chosen" end
     if s.Dead or s.Mode~="Normal" or s.Pending or next(s.Statuses) or now-s.LastCombat<10 then return false,"Choose ancestry outside combat" end
     local health=s.Health/s.Stats.Health;local spirit=s.Spirituality/s.Stats.Spirituality
-    s.Profile.RaceId=id;s.Profile.RaceChosen=true;s.Stats=self:Stats(s.Profile)
+    s.Profile.RaceId=id;s.Profile.RaceChosen=true;s.Stats=self:Stats(s.Profile,s.StatModifiers)
     s.Health=s.Stats.Health*health;s.Spirituality=s.Stats.Spirituality*spirit
     return true,"Ancestry chosen: "..self.Data.Races.ById[id].Name
 end
@@ -9701,9 +9765,13 @@ function Menus.Render(self: any)
         local race=self.Data.Races.ById[state.RaceId or "Human"]
         self:TextRow(race.Name.." · Ancestry",true)
         self:TextRow(race.Description)
-        self:TextRow("Sequence, pathway and ancestry determine these stats. Numerical bonuses are game balance.")
+        self:TextRow("Pathway + Sequence set your base stats. Ancestry and active bonuses modify the final values.")
         for _,stat in ipairs({"Health","Spirituality","Sanity","Strength","Agility","Perception","Intuition","Resistance","SpiritualityRegen"}) do
-            self:TextRow(stat..": "..tostring(state.Stats and state.Stats[stat] or "—"))
+            local detail=state.StatBreakdown and state.StatBreakdown[stat]
+            self:TextRow(stat..": "..tostring(state.Stats and state.Stats[stat] or "—")..(if detail then "  ·  Base "..detail.Base else ""))
+            if detail and (detail.Flat~=0 or detail.Percent~=0 or detail.Multiplier~=1) then
+                self:TextRow(string.format("  Bonus %+.2f  ·  %+.0f%%  ·  ×%.2f",detail.Flat,detail.Percent*100,detail.Multiplier))
+            end
         end
         self:TextRow("Ancestry passives",true)
         local keys={};for stat in pairs(race.Multipliers) do table.insert(keys,stat) end;table.sort(keys)
@@ -9795,6 +9863,11 @@ function Menus.Update(self: any,state: any)
     local keys={tostring(state.PathwayId),tostring(state.Sequence),table.concat(inventory,","),table.concat(loadout,"|"),
         tostring(state.RecordedPowerId),tostring(state.RecordedCharges),tostring(state.StolenPower),tostring(state.Digestion),tostring(state.ActingProgress),
         tostring(state.UltimateStage),tostring(state.RaceId),tostring(state.RaceChosen),if self.Tab=="Character" then tostring(math.ceil((state.Cooldowns or {}).RacialSkill or 0)) else ""}
+    if self.Tab=="Character" then
+        for _,stat in ipairs({"Health","Spirituality","Strength","Agility","Perception","Intuition","Resistance","SpiritualityRegen"}) do
+            table.insert(keys,tostring(state.Stats and state.Stats[stat]))
+        end
+    end
     local key=table.concat(keys,";")
     if self.Root.Visible then
         if self.View=="Preview" then

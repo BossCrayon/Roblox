@@ -228,5 +228,32 @@ return function(data: any,Domain: any,SessionStore: any,RateLimiter: any)
             check(not domain:ActivateUltimate(form,61),"Post-form recovery cooldown enforced")
         end
     end
+    do
+        local p=domain:Default();p.PathwayId="Seer";p.Sequence=9
+        local state=domain:NewState(p,0)
+        local original=state.Stats.Health
+        state.Health=original/2
+        domain:SetStatModifier(state,"Item:coat",{Flat={Health=20},Percent={Health=0.1}})
+        check(state.Stats.Health==132 and state.Health==50,"Modifiers combine from base without healing")
+        domain:SetStatModifier(state,"Potion:vitality",{Multiply={Health=1.5},ExpiresAt=10})
+        check(state.Stats.Health==198,"Independent item and potion sources compose")
+        domain:SetStatModifier(state,"Item:coat",{Flat={Health=20},Percent={Health=0.1}})
+        check(state.Stats.Health==198,"Same source replaces rather than stacks")
+        domain:Tick(state,0.25,10)
+        check(state.Stats.Health==132,"Potion bonus expires exactly on deadline")
+        domain:RemoveStatModifier(state,"Item:coat")
+        check(state.Stats.Health==original and state.Health==50,"Removing equipment restores base without healing")
+        local ok=pcall(function() domain:SetStatModifier(state,"Bad",{Flat={Health=0/0}}) end)
+        check(not ok and state.Stats.Health==original and state.StatModifiers.Bad==nil,"Malformed modifier rejected atomically")
+        local raw=domain:Snapshot(state);raw.StatModifiers={Bad={Flat={Health=99999}}};raw.Stats.Health=99999
+        check(domain:NewState(raw,20).Stats.Health==original,"Saved stat injection ignored")
+        for _,path in ipairs({"Seer","Marauder","Apprentice"}) do
+            for seq=1,9 do
+                local profile=domain:Default();profile.PathwayId=path;profile.Sequence=seq
+                local actual=domain:Stats(profile)
+                for stat,value in pairs(data.Stats.Calculate(path,seq)) do check(actual[stat]==value,"Runtime uses pathway/sequence calculator") end
+            end
+        end
+    end
     print("PASS: "..checks.." server-domain assertions (all pathways 9→1, resources, cast rules, movement, ultimates, locks, retries, corrupt saves)")
 end

@@ -30,5 +30,41 @@ end
 local function calculate(pathwayId: string, sequence: number): Stats
     return scale(assert(bases[pathwayId], "Unknown pathway"), sequence)
 end
-return freeze({BaseStats=bases, TierMultipliers=tiers, GetMultipliers=multipliers, Calculate=calculate, Scale=scale,
+-- Modifiers are server-authored definitions, never client-supplied stat totals.
+-- Flat bonuses sum; percentage bonuses sum; multipliers multiply in stable ID order.
+local uninitiated: Stats={Health=100,Spirituality=50,Sanity=100,Strength=8,Agility=10,Perception=20,Intuition=8,Resistance=8,SpiritualityRegen=2}
+local function resolve(pathwayId: any,sequence: any,modifiers: {any}?): (Stats,any)
+    local base=if pathwayId then calculate(pathwayId,sequence) else table.clone(uninitiated)
+    local ordered=table.clone(modifiers or {})
+    local seen={}
+    for _,modifier in ipairs(ordered) do
+        assert(type(modifier.Id)=="string" and modifier.Id~="" and not seen[modifier.Id],"Modifier IDs must be unique")
+        seen[modifier.Id]=true
+        for _,operation in ipairs({"Flat","Percent","Multiply"}) do
+            for stat,value in pairs(modifier[operation] or {}) do
+                assert((base :: any)[stat]~=nil,"Unknown stat: "..tostring(stat))
+                assert(type(value)=="number" and value==value and math.abs(value)<math.huge,"Invalid modifier value")
+                assert(operation~="Multiply" or value>=0,"Negative stat multiplier")
+            end
+        end
+    end
+    table.sort(ordered,function(a: any,b: any) return a.Id<b.Id end)
+    local result: any={};local breakdown: any={}
+    for stat,value in pairs(base :: any) do
+        local flat,percent,multiply=0,0,1
+        for _,modifier in ipairs(ordered) do
+            flat+=(modifier.Flat or {})[stat] or 0
+            percent+=(modifier.Percent or {})[stat] or 0
+            multiply*=(modifier.Multiply or {})[stat] or 1
+        end
+        local final=(value+flat)*math.max(0,1+percent)*multiply
+        assert(final==final and math.abs(final)<math.huge,"Stat modifier overflow")
+        -- Sanity stays on the existing 0–100 resource scale.
+        final=if stat=="Sanity" then 100 else math.clamp(final,if stat=="Health" then 1 else 0,10000000)
+        result[stat]=math.round(final*100)/100
+        breakdown[stat]={Base=value,Flat=flat,Percent=percent,Multiplier=multiply,Final=result[stat]}
+    end
+    return result :: Stats,breakdown
+end
+return freeze({BaseStats=bases, TierMultipliers=tiers, GetMultipliers=multipliers, Calculate=calculate, Scale=scale, Resolve=resolve,Uninitiated=uninitiated,
     Digestion={Min=0, Max=100, StartingValue=0}, Sanity={Min=0, Max=100}})
