@@ -2,6 +2,7 @@
 -- Additive presentation only. No physics, player input, simulation time or default
 -- camera updates are paused. The prior contribution is removed before Camera.
 local RunService=game:GetService("RunService")
+local Players=game:GetService("Players")
 local T=require(game:GetService("ReplicatedStorage").Shared.Theme)
 local C=T.CameraFeel
 local CameraFeel={}
@@ -31,13 +32,34 @@ end
 function CameraFeel.Step(self: any,delta: number)
     if self.Destroyed then return end
     self.SinceKick+=delta
+    local camera=workspace.CurrentCamera
+    if not camera then return end
+    local base=camera.CFrame
+    local character=Players.LocalPlayer and Players.LocalPlayer.Character
+    local stage=character and character:GetAttribute("MysteriesMythicalForm")
+    local outfit=character and character:FindFirstChild("LocalMysteriesOutfit")
+    if camera.CameraType==Enum.CameraType.Custom and (stage=="Incomplete" or stage=="Complete") and outfit and outfit:IsA("Model") then
+        local center,size=outfit:GetBoundingBox()
+        local viewport=camera.ViewportSize
+        if viewport.X>0 and viewport.Y>0 then
+            local vertical=math.rad(camera.FieldOfView)
+            local horizontal=2*math.atan(math.tan(vertical/2)*viewport.X/viewport.Y)
+            local halfAngle=math.min(vertical,horizontal)/2
+            local radius=size.Magnitude/2
+            local distance=math.max(radius/math.tan(halfAngle)*1.4,12)
+            -- Preserve the player's orbit angle while raising the target to the
+            -- form's center; using the old camera position can push it underground.
+            local direction=-base.LookVector
+            camera.CFrame=CFrame.lookAt(center.Position+direction.Unit*distance,center.Position)
+            self.LastCamera=camera;self.LastBase=base;self.LastOutput=camera.CFrame
+            self.LastBaseFov=camera.FieldOfView;self.LastOutputFov=camera.FieldOfView
+        end
+    end
     if self.ReducedMotion or self.Life<=0 then return end
     local dt=math.clamp(delta,0,C.StepCap)
     local held=math.min(self.Hold,dt)
     self.Hold-=held;self.Elapsed+=dt-held
     if self.Elapsed>=self.Life then self.Life=0;return end
-    local camera=workspace.CurrentCamera
-    if not camera then return end
     local remaining=1-self.Elapsed/self.Life
     -- A short attack and a firm settle, with the existing displacement/FOV caps.
     local attack=math.clamp((self.Elapsed+self.Hold)/C.Attack,0,1)
@@ -54,9 +76,8 @@ function CameraFeel.Step(self: any,delta: number)
     -- share this single envelope, so vector magnitude cannot add past the cap.
     local translation=unitOrZero(x*axis.X,y*axis.Y,z*axis.Z)*self.Studs*envelope
     local angles=unitOrZero(y*rotation.X,z*rotation.Y,x*rotation.Z)*math.rad(self.Degrees)*envelope
-    local base=camera.CFrame
     local baseFov=camera.FieldOfView
-    local output=base*CFrame.new(translation)*CFrame.Angles(angles.X,angles.Y,angles.Z)
+    local output=camera.CFrame*CFrame.new(translation)*CFrame.Angles(angles.X,angles.Y,angles.Z)
     local outputFov=math.clamp(baseFov+self.Fov*envelope,C.FovMin,C.FovMax)
     self.LastCamera=camera;self.LastBase=base;self.LastOutput=output
     self.LastBaseFov=baseFov;self.LastOutputFov=outputFov

@@ -64,7 +64,8 @@ function Hud.new(parent: Instance,data: any,callbacks: any): any
     self.UltimateEmptyGlyph.AnchorPoint=Vector2.new(0.5,0.5);self.UltimateEmptyGlyph.Position=UDim2.fromScale(0.5,0.5)
     self.UltimateBadge=Kit.Panel(self.UltimateFace,"KeyBadge")
     self.UltimateKey=Kit.Text(self.UltimateBadge,T.Input.UltimateName,T.Type.Micro,T.Fonts.Number);self.UltimateKey.Size=UDim2.fromScale(1,1);self.UltimateKey.TextXAlignment=Enum.TextXAlignment.Center
-    self.UltimateCost=Kit.Text(self.UltimateCard,T.AbilityUI.UltimateLocked,T.Type.Micro,T.Fonts.Number);self.UltimateCost.TextColor3=T.Colors.Muted;self.UltimateCost.TextXAlignment=Enum.TextXAlignment.Center
+    self.UltimateCost=Kit.Text(self.UltimateCard,T.AbilityUI.UltimateLocked,T.Type.Micro,T.Fonts.Number);self.UltimateCost.TextColor3=T.Colors.Muted;self.UltimateCost.TextXAlignment=Enum.TextXAlignment.Center;self.UltimateCost.TextWrapped=false;self.UltimateCost.TextScaled=true
+    Kit.New("UITextSizeConstraint",self.UltimateCost,{MinTextSize=8,MaxTextSize=11})
     self.UltimateCountdown=Kit.Text(self.UltimateFace,"",T.Type.Number,T.Fonts.Number);self.UltimateCountdown.AnchorPoint=Vector2.new(0.5,0.5);self.UltimateCountdown.Position=UDim2.fromScale(0.5,0.5);self.UltimateCountdown.BackgroundColor3=T.Colors.Ink;self.UltimateCountdown.BackgroundTransparency=T.Style.PanelFade;self.UltimateCountdown.Visible=false
     self.UltimateSegments={}
     for segment=1,T.Layout.Hotbar.Segments do
@@ -206,8 +207,9 @@ function Hud.Resize(self: any,layout: any)
     self.UltimateBadge.Position=UDim2.fromOffset(l.Hotbar.KeyPad,l.Hotbar.KeyPad)
     self.UltimateBadge.Size=UDim2.fromOffset(badge,badge)
     self.UltimateCost.Position=UDim2.fromOffset(0,l.Hotbar.Top+p.Slot+l.Hotbar.CostPad)
-    self.UltimateCost.Size=UDim2.fromOffset(p.Slot,l.Hotbar.CostHeight)
+    self.UltimateCost.Size=UDim2.fromOffset(layout.Ultimate.W,l.Hotbar.CostHeight)
     self.UltimateCountdown.Size=UDim2.fromOffset(p.Slot-l.Modal.Gap,l.Hotbar.CountdownHeight)
+    self.UltimateCountdown.TextSize=math.min(14,p.Slot*.25)
     self.UltimateSkinKey=nil
     self.Tooltip.Size=UDim2.fromOffset(math.min(l.Hotbar.TooltipWidth,layout.Width-p.Margin*2),l.Hotbar.TooltipHeight)
     self.Tooltip.AnchorPoint=Vector2.new(0.5,1);self.Tooltip.Position=UDim2.fromOffset(layout.Hotbar.X+layout.Hotbar.W/2,layout.Hotbar.Y-l.Hotbar.TooltipGap)
