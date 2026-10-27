@@ -22,17 +22,18 @@ function Domain.new(data: any, random: (() -> number)?): Domain
 end
 function Domain.Default(self: Domain): any
     local p=copy(self.Data.Progression.DefaultPlayer)
-    p.Sanity=100; p.Gold=0; p.WishCredits=0
+    p.Sanity=100; p.Gold=0; p.WishCredits=0;p.RaceId="Human";p.RaceChosen=false
     for id,potion in pairs(self.Data.Potions.ById) do
         if potion.TargetSequence==9 then p.Inventory[id]=1 end
     end
     return p
 end
 function Domain.Stats(self: Domain, profile: any): any
-    if profile.PathwayId then
-        return copy(self.Data.Pathways[profile.PathwayId].Sequences[profile.Sequence].BaseStats)
-    end
-    return {Health=100,Spirituality=50,Sanity=100,Strength=8,Agility=10,Perception=20,Intuition=8,Resistance=8,SpiritualityRegen=2}
+    local stats=if profile.PathwayId then copy(self.Data.Pathways[profile.PathwayId].Sequences[profile.Sequence].BaseStats)
+        else {Health=100,Spirituality=50,Sanity=100,Strength=8,Agility=10,Perception=20,Intuition=8,Resistance=8,SpiritualityRegen=2}
+    local race=self.Data.Races.ById[profile.RaceId or "Human"] or self.Data.Races.ById.Human
+    for key,mult in pairs(race.Multipliers) do stats[key]=math.round(stats[key]*mult*100)/100 end
+    return stats
 end
 function Domain.Unlocked(self: Domain, p: any, id: any): boolean
     local a=self.Data.Abilities[id]
@@ -79,6 +80,10 @@ function Domain.Validate(self: Domain, raw: any): (any?, string?)
             p.AbilityLoadout[slot]=id; seen[id]=true
         end
     end
+    local raceId=raw.RaceId or "Human"
+    if type(raceId)~="string" or not self.Data.Races.ById[raceId] then return nil,"Invalid ancestry" end
+    if raw.RaceChosen~=nil and type(raw.RaceChosen)~="boolean" then return nil,"Invalid ancestry selection" end
+    p.RaceId=raceId;p.RaceChosen=raw.RaceChosen==true
     -- Never trust persisted maxima: rebalance/migration derives these from the sequence.
     p.Stats=self:Stats(p)
     return p,nil
@@ -142,6 +147,8 @@ function Domain.MoveSpeed(self: Domain, s: any, now: number): number
     if myth and myth.ExpiresAt>now and r.Ultimate then
         base=math.min(r.MaxRunSpeed or 42,base+(r.Ultimate.SpeedBonus or 4))
     end
+    local racial=s.Statuses.RacialSkill
+    if racial and racial.ExpiresAt>now then base=math.min(r.MaxRunSpeed,base+(racial.Speed or 0)) end
     local mult=1
     for id,st in pairs(s.Statuses or {}) do
         if st.ExpiresAt>now then
@@ -205,7 +212,7 @@ function Domain.ActivateUltimate(self: Domain, s: any, now: number): (boolean,st
     if s.Mode~="Normal" then
         return false,"Mythical manifestation overwhelmed your sanity",nil
     end
-    s.Cooldowns.Ultimate=now+u.CooldownSeconds
+    s.Cooldowns.Ultimate=now+duration+u.CooldownSeconds
     s.Statuses.MythicalForm={ExpiresAt=now+duration,Stage=stage,PathwayId=p.PathwayId}
     s.UltimateStage=stage
     local form=u.Forms[p.PathwayId] or u.Forms.Seer
@@ -333,6 +340,33 @@ function Domain.BuyNextPotion(self: Domain, s: any): (boolean,string)
     if p.Gold<self.Data.Runtime.NextPotionGoldCost then return false,"Requires 100 gold from enemies" end
     p.Gold-=self.Data.Runtime.NextPotionGoldCost; p.Inventory[id]=1
     return true,"Next potion acquired"
+end
+function Domain.ChooseRace(self: Domain,s: any,id: any,now: number): (boolean,string)
+    if type(id)~="string" or not self.Data.Races.ById[id] then return false,"Unknown ancestry" end
+    if s.Profile.RaceChosen then return false,"Ancestry has already been chosen" end
+    if s.Dead or s.Mode~="Normal" or s.Pending or next(s.Statuses) or now-s.LastCombat<10 then return false,"Choose ancestry outside combat" end
+    local health=s.Health/s.Stats.Health;local spirit=s.Spirituality/s.Stats.Spirituality
+    s.Profile.RaceId=id;s.Profile.RaceChosen=true;s.Stats=self:Stats(s.Profile)
+    s.Health=s.Stats.Health*health;s.Spirituality=s.Stats.Spirituality*spirit
+    return true,"Ancestry chosen: "..self.Data.Races.ById[id].Name
+end
+function Domain.RacialSkill(self: Domain,s: any,now: number): (boolean,string)
+    local race=self.Data.Races.ById[s.Profile.RaceId or "Human"]
+    if not s.Ready or s.Dead or s.Mode~="Normal" or s.Pending then return false,"Cannot use ancestry skill now" end
+    if now<(s.Cooldowns.RacialSkill or 0) then return false,"Ancestry skill is cooling down" end
+    if s.Spirituality<race.Cost then return false,"Not enough spirituality" end
+    s.Spirituality-=race.Cost;s.LastCast=now;s.Cooldowns.RacialSkill=now+race.Cooldown
+    s.Statuses.RacialSkill={ExpiresAt=now+race.Duration,Speed=race.Speed or 0,HealPerSecond=(race.HealFraction or 0)*s.Stats.Health/race.Duration}
+    if race.Status then s.Statuses[race.Status]={ExpiresAt=now+race.Duration} end
+    s.Sanity=math.min(100,s.Sanity+(race.Sanity or 0))
+    return true,race.Skill
+end
+-- Sequence 9 is weaker than 1. Equal/stronger observers are not damaged by this mechanic.
+function Domain.MythicalExposure(self: Domain,sourceSequence: number,targetSequence: number,maxHealth: number,dt: number,complete: boolean): (number,number)
+    local gap=math.max(0,targetSequence-sourceSequence)
+    local scale=gap*(if complete then 1 else 0.5)*math.clamp(dt,0,1)
+    local u=self.Data.Runtime.Ultimate
+    return maxHealth*u.ExposureHealthFraction*scale,u.ExposureSanityPerSecond*scale
 end
 Domain.Copy=copy
 Domain.Finite=finite

@@ -17,7 +17,7 @@ function Menus.new(parent: Instance,data: any,callbacks: any): any
     self.Navigation=Kit.New("Frame",self.Card,{BackgroundTransparency=1})
     self.NavLayout=Kit.List(self.Navigation,T.Layout.Modal.NavGap,true)
     self.Tabs={}
-    for index,tab in ipairs({"Journal","Pathway","Inventory"}) do
+    for index,tab in ipairs({"Journal","Pathway","Inventory","Character"}) do
         local b=Kit.Button(self.Navigation,tab,function() self.Tab=tab;self.View="Page";self:Render() end);b.LayoutOrder=index
         self.Tabs[tab]=b
     end
@@ -51,7 +51,7 @@ function Menus.Resize(self: any,layout: any)
     self.Wallet.Position=UDim2.fromOffset(m.BodyPad,m.TitleHeight);self.Wallet.Size=UDim2.new(1,-m.BodyPad*2,0,m.Header-m.TitleHeight)
     self.CloseButton.Size=UDim2.fromOffset(m.Close,m.Close);self.CloseButton.Position=UDim2.new(1,-m.Close,0,0)
     self.Navigation.Position=UDim2.fromOffset(m.BodyPad,m.Header);self.Navigation.Size=UDim2.new(1,-m.BodyPad*2,0,m.Tabs)
-    for _,b in pairs(self.Tabs) do b.Size=UDim2.new(1/3,-m.NavGap,1,0);b.TextSize=layout.Profile.NumberSize end
+    for _,b in pairs(self.Tabs) do b.Size=UDim2.new(1/4,-m.NavGap,1,0);b.TextSize=layout.Profile.NumberSize end
     self.Navigation.Visible=self.View=="Page"
     self.PreviewActions.Visible=self.View=="Preview"
     self.PreviewActions.Size=UDim2.new(1,-m.BodyPad*2,0,m.ConfirmHeight);self.PreviewActions.Position=UDim2.new(0,m.BodyPad,1,-m.Footer-m.ConfirmHeight-m.Gap)
@@ -182,6 +182,34 @@ function Menus.Render(self: any)
             if self.Callbacks.LowGraphics then self.Callbacks.LowGraphics(self.LowGraphics) end
             self:Render()
         end)
+    elseif self.Tab=="Character" then
+        local race=self.Data.Races.ById[state.RaceId or "Human"]
+        self:TextRow(race.Name.." · Ancestry",true)
+        self:TextRow(race.Description)
+        self:TextRow("Sequence, pathway and ancestry determine these stats. Numerical bonuses are game balance.")
+        for _,stat in ipairs({"Health","Spirituality","Sanity","Strength","Agility","Perception","Intuition","Resistance","SpiritualityRegen"}) do
+            self:TextRow(stat..": "..tostring(state.Stats and state.Stats[stat] or "—"))
+        end
+        self:TextRow("Ancestry passives",true)
+        local keys={};for stat in pairs(race.Multipliers) do table.insert(keys,stat) end;table.sort(keys)
+        for _,stat in ipairs(keys) do self:TextRow(string.format("%s: %+.0f%%",stat,(race.Multipliers[stat]-1)*100)) end
+        if #keys==0 then self:TextRow("Balanced base attributes; no stat penalties.") end
+        self:TextRow(race.Skill.." [G]",true)
+        self:TextRow("Cooldown remaining: "..math.ceil((state.Cooldowns or {}).RacialSkill or 0).."s")
+        self:TextRow(race.Detail.." · "..race.Cost.." spirituality · "..race.Cooldown.."s cooldown")
+        self:ActionRow("Use "..race.Skill.." [G]",function() self.Callbacks.Intent("RacialSkill",{}) end)
+        if not state.RaceChosen then
+            self:TextRow("Choose ancestry once · permanent after confirmation",true)
+            for _,id in ipairs(self.Data.Races.Order) do
+                local option=self.Data.Races.ById[id]
+                self:TextRow(option.Name..": "..option.Description.." Special: "..option.Detail)
+                local label=if self.PendingRace==id then "Confirm permanent choice: "..option.Name else "Choose "..option.Name
+                self:ActionRow(label,function()
+                    if self.PendingRace==id then self.Callbacks.Intent("ChooseRace",{Id=id});self.PendingRace=nil
+                    else self.PendingRace=id;self:Render() end
+                end)
+            end
+        end
     elseif self.Tab=="Pathway" then
         if state.PathwayId then
             local path=self.Data.Pathways[state.PathwayId];local seq=path.Sequences[state.Sequence]
@@ -251,7 +279,7 @@ function Menus.Update(self: any,state: any)
     for i=1,T.Layout.Hotbar.Slots do loadout[i]=state.Loadout[i] or "-" end
     local keys={tostring(state.PathwayId),tostring(state.Sequence),table.concat(inventory,","),table.concat(loadout,"|"),
         tostring(state.RecordedPowerId),tostring(state.RecordedCharges),tostring(state.StolenPower),tostring(state.Digestion),tostring(state.ActingProgress),
-        tostring(state.UltimateStage)}
+        tostring(state.UltimateStage),tostring(state.RaceId),tostring(state.RaceChosen),if self.Tab=="Character" then tostring(math.ceil((state.Cooldowns or {}).RacialSkill or 0)) else ""}
     local key=table.concat(keys,";")
     if self.Root.Visible then
         if self.View=="Preview" then

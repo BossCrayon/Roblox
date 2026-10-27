@@ -226,6 +226,7 @@ UserInputService.InputBegan:Connect(function(input: InputObject,processed: boole
     if promptUI.Current and input.KeyCode==promptUI.Current.KeyboardKeyCode then return end
     if input.KeyCode==T.Input.SprintLeft or input.KeyCode==T.Input.SprintRight then toggleRun();return end
     if input.KeyCode==T.Input.Dash then dash();return end
+    if input.KeyCode==Enum.KeyCode.G then if not modal then send("RacialSkill",{}) end;return end
     if input.KeyCode==T.Input.Ultimate then ultimate();return end
     if input.UserInputType==Enum.UserInputType.MouseButton1 then melee();return end
     for i,key in ipairs(T.Input.Keys) do if input.KeyCode==key then cast(i);return end end

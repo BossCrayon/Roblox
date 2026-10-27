@@ -25,7 +25,7 @@ function Outfit.Build(self: any,character: Model,path: string,sequence: number,t
         local ending: {any}={
             {Name="VeilRibbon",Position=endingPosition,Palette=previous.Path,Options={Scale=M.AuraScale*(previous.Scale or 1),Coil=true}},
             {Name="RisingMotes",Position=endingPosition,Palette=previous.Path,Options={Scale=M.AuraScale*(previous.Scale or 1),Intake=true}},
-            {Name="SigilStencil",Position=endingPosition,Palette=previous.Path,Options={Glyph="Worm",LowGlyph="WormLow",Scale=M.AuraScale*(previous.Scale or 1)}},
+            {Name="SigilStencil",Position=endingPosition,Palette=previous.Path,Options={Glyph=if previous.Path=="Seer" then "Worm" elseif previous.Path=="Marauder" then "Clock" else "Arch",LowGlyph=if previous.Path=="Seer" then "WormLow" elseif previous.Path=="Marauder" then "Clock" else "Arch",Scale=M.AuraScale*(previous.Scale or 1)}},
         }
         self.Blocks:Compose(ending,1,2,M.FoolEndLife)
     end

@@ -103,7 +103,7 @@ return function(data: any,Domain: any,SessionStore: any,RateLimiter: any)
     local sanityAfterActivation=moveState.Sanity
     domain:Tick(moveState,2,42)
     check(moveState.Sanity<sanityAfterActivation,"Incomplete Saint form drains sanity continuously while active")
-    domain:Tick(moveState,1,60)
+    domain:Tick(moveState,1,100)
     check(moveState.UltimateStage==false and moveState.Statuses.MythicalForm==nil,"Ultimate clears stage on expiry")
     moveState.Profile.Sequence=2;moveState.Stats=domain:Stats(moveState.Profile);moveState.Spirituality=moveState.Stats.Spirituality;moveState.Sanity=100;moveState.Cooldowns.Ultimate=nil
     local angelUlt,_angelTitle,angelMeta=domain:ActivateUltimate(moveState,100)
@@ -189,5 +189,44 @@ return function(data: any,Domain: any,SessionStore: any,RateLimiter: any)
     local lowState=domain:NewState(domain:Default(),0)
     domain:DrainSanity(highState,50,0);domain:DrainSanity(lowState,50,0)
     check(highState.Sanity>lowState.Sanity,"Resistance reduces mental damage")
+    for _,raceId in ipairs(data.Races.Order) do
+        local r=domain:NewState(domain:Default(),0)
+        check(domain:ChooseRace(r,raceId,20),"Choose valid ancestry")
+        check(not domain:ChooseRace(r,"Human",21),"Cannot reroll ancestry for healing")
+        local saved=domain:Snapshot(r);saved.Stats.Health=999999
+        local restored=domain:NewState(saved,22)
+        check(restored.Profile.RaceId==raceId and restored.Stats.Health==r.Stats.Health,"Ancestry persists; maxima derived")
+        local before=r.Spirituality
+        check(domain:RacialSkill(r,30),"Every ancestry has a usable skill")
+        check(r.Spirituality==before-data.Races.ById[raceId].Cost,"Racial skill cost paid once")
+        check(not domain:RacialSkill(r,31),"Racial cooldown rejects replay")
+        r.Cooldowns.RacialSkill=nil;r.Spirituality=0
+        check(not domain:RacialSkill(r,100),"Insufficient spirituality rejects skill")
+    end
+    local legacy=domain:Default();legacy.RaceId=nil;legacy.RaceChosen=nil
+    check(domain:Validate(legacy).RaceId=="Human","Old profiles migrate to Human")
+    legacy.RaceId="Injected";check(domain:Validate(legacy)==nil,"Reject invalid saved ancestry")
+    for seq=1,9 do
+        local last=0
+        for observer=1,10 do
+            local health,sanity=domain:MythicalExposure(seq,observer,100,1,true)
+            check(health>=last and sanity>=0,"Weaker observers receive increasing exposure")
+            if observer<=seq then check(health==0 and sanity==0,"Equal and stronger sequences immune to exposure") end
+            local half=domain:MythicalExposure(seq,observer,100,0.5,true)
+            check(math.abs(half*2-health)<0.00001,"Exposure independent of tick frequency")
+            last=health
+        end
+    end
+    for _,path in ipairs({"Seer","Marauder","Apprentice"}) do
+        for _,seq in ipairs({4,3,2,1}) do
+            local p=domain:Default();p.PathwayId=path;p.Sequence=seq
+            local form=domain:NewState(p,0)
+            local ok,_,info=domain:ActivateUltimate(form,0)
+            check(ok and info.Duration==60,"Every form lasts up to one minute")
+            domain:Tick(form,1,59);check(form.Statuses.MythicalForm~=nil,"Form remains active before deadline")
+            domain:Tick(form,1,60);check(form.Statuses.MythicalForm==nil,"Form expires exactly at deadline")
+            check(not domain:ActivateUltimate(form,61),"Post-form recovery cooldown enforced")
+        end
+    end
     print("PASS: "..checks.." server-domain assertions (all pathways 9→1, resources, cast rules, movement, ultimates, locks, retries, corrupt saves)")
 end

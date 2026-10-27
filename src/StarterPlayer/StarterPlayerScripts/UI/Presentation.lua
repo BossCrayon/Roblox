@@ -140,6 +140,12 @@ function Presentation.Event(self: any,event: any)
             {Name="RingBurst",Position=origin,Palette=palette,Options={Scale=C.Dash.Scale*0.82}},
         }
         self.Blocks:Compose(dashSpecs,1,C.Composition.Priority,C.Dash.Life)
+    elseif event.Kind=="MythicalExposure" then
+        if self.Callbacks.Notice then self.Callbacks.Notice("Mythical corruption · turn away or break line of sight") end
+        if not self.Reduced and self.Callbacks.ScreenEdgePulse then self.Callbacks.ScreenEdgePulse() end
+    elseif event.Kind=="RacialSkill" then
+        self.Blocks:Compose({{Name="RisingMotes",Position=event.Position,Palette=event.PathwayId,Options={Scale=1}},
+            {Name="RingBurst",Position=event.Position,Palette=event.PathwayId,Options={Scale=1}}},1,1,1.5)
     elseif event.Kind=="UltimateVisual" then
         local ownerPlayer=if type(event.Owner)=="number" then Players:GetPlayerByUserId(event.Owner) else nil
         local character=if typeof(event.Character)=="Instance" and event.Character:IsA("Model") then event.Character elseif ownerPlayer then ownerPlayer.Character else nil

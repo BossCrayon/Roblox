@@ -33,6 +33,7 @@ local RateLimiter=require(script.Parent.Domain.RateLimiter)
 local World=require(script.Parent.Services.WorldService)
 local Effects=require(script.Parent.Services.EffectService)
 local CityTravel=require(script.Parent.Services.CityTravel)
+local MythicalExposure=require(script.Parent.Services.MythicalExposure)
 local VisualEvents=require(script.Parent.Services.VisualEventService)
 local VfxConfig=require(ReplicatedStorage.Shared.VfxConfig)
 local domain=Domain.new(data)
@@ -105,6 +106,7 @@ local function sendState(player: Player)
         Spirituality=s.Spirituality,MaxSpirituality=s.Stats.Spirituality,Sanity=s.Sanity,Mode=s.Mode,
         Gold=p.Gold,WishCredits=p.WishCredits,Inventory=Domain.Copy(p.Inventory),Loadout=Domain.Copy(p.AbilityLoadout),
         Cooldowns=cooldowns,Statuses=statuses,Dead=s.Dead,RecordedCharges=s.RecordedPower and s.RecordedPower.Charges or 0,RecordedPowerId=s.RecordedPower and s.RecordedPower.Id or false,StolenPower=s.StolenPower or false,
+        RaceId=p.RaceId,RaceChosen=p.RaceChosen,Stats=Domain.Copy(s.Stats),
         Running=s.Running~=false,UltimateStage=mythStage,UltimateRemaining=mythRemaining,
         Casting=s.Pending and s.Pending.Id or false,CastRemaining=s.Pending and math.max(0,s.Pending.EndsAt-now) or 0,CastSerial=s.CastSerial,VisualToken=s.VisualToken or 0})
 end
@@ -223,7 +225,22 @@ intent.OnServerEvent:Connect(function(player: Player,action: any,payload: any)
     local s=states[player]
     if not s or not s.Ready or s.Dead or type(payload)~="table" then return end
     local now=os.clock()
-    if action=="CityTravel" then
+    if action=="ChooseRace" then
+        local ok,message=domain:ChooseRace(s,payload.Id,now)
+        if ok then
+            local hum=world:Humanoid(player)
+            if hum then hum.MaxHealth=s.Stats.Health;hum.Health=s.Health end
+            applyStats(player,s,false)
+        end
+        notify(player,message)
+    elseif action=="RacialSkill" then
+        local ok,message=domain:RacialSkill(s,now)
+        if ok then
+            local root=world:Root(player)
+            if root then fx:FireAllClients({Kind="RacialSkill",Position=root.Position,PathwayId=s.Profile.PathwayId or "Seer"}) end
+        end
+        notify(player,message)
+    elseif action=="CityTravel" then
         local ok,message=CityTravel.Go(world,domain,player,s,payload.Id,now)
         stateEvent:FireClient(player,{CityTravel={Ok=ok,Message=message}})
     elseif action=="Buy" then
@@ -362,6 +379,10 @@ task.spawn(function()
             domain:Tick(s,dt,now)
             local root=world:Root(player);local hum=world:Humanoid(player)
             if root and hum and hum.Health>0 then
+                local racial=s.Statuses.RacialSkill
+                if racial and racial.ExpiresAt>now and s.Mode=="Normal" then
+                    hum.Health=math.min(hum.MaxHealth,hum.Health+(racial.HealPerSecond or 0)*math.min(dt,1))
+                end
                 hum.WalkSpeed=domain:MoveSpeed(s,now)
                 -- Horizontal movement guard; server-authorized travel has an explicit grace window.
                 if s.LastPosition and now>(s.TeleportGraceUntil or 0) then
@@ -405,6 +426,7 @@ task.spawn(function()
                 end)
             end
         end
+        MythicalExposure.Step(world,domain,math.min(dt,1),now)
         world:Step(math.min(dt,1),now);effects:Step(now);visualEvents:Step(now)
         if now>=nextState then
             nextState=now+data.Runtime.StateIntervalSeconds

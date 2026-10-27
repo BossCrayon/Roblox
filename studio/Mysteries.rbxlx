@@ -697,6 +697,7 @@ return freeze
 local freeze = require(script.Parent.Freeze)
 return freeze({
     Runtime=require(script.Parent.RuntimeConfig),
+    Races=require(script.Parent.RaceData),
     Pathways=require(script.Parent.PathwayData),
     Abilities=require(script.Parent.AbilityData),
     Potions=require(script.Parent.PotionData),
@@ -913,6 +914,32 @@ return freeze({
       </Item>
       <Item class="ModuleScript" referent="16">
         <Properties>
+          <string name="Name">RaceData</string>
+          <string name="Source"><![CDATA[--!strict
+-- Lore-inspired playable ancestry adaptations. Numbers and active skills are game balance,
+-- not canonical universal racial abilities. Ancestry grants no pathway or sequence.
+local freeze=require(script.Parent.Freeze)
+return freeze({
+    Order={"Human","Sanguine","Giant","Elf"},
+    ById={
+        Human={Name="Human",Description="Adaptable mortal ancestry. Balanced attributes and mental composure.",
+            Multipliers={},Skill="Resolve",Detail="Restore 15 sanity and resist mental strain for 8 seconds.",Cost=10,Cooldown=45,Duration=8,Status="Composed",Sanity=15},
+        Sanguine={Name="Sanguine",Description="Moon-associated ancestry; heightened vitality, agility and perception. Playable adaptation, not a free Moon sequence.",
+            Multipliers={Health=1.1,Agility=1.2,Perception=1.15,Strength=1.1,SpiritualityRegen=0.9},
+            Skill="Crimson Renewal",Detail="Regenerate 20% maximum health over 8 seconds.",Cost=25,Cooldown=60,Duration=8,HealFraction=0.2},
+        Giant={Name="Giant",Description="Ancestry associated with immense strength and endurance. Reduced agility balances its physical advantages.",
+            Multipliers={Health=1.3,Strength=1.3,Resistance=1.15,Agility=0.8,Spirituality=0.9},
+            Skill="Titan Guard",Detail="Reduce incoming damage by 65% for 6 seconds.",Cost=25,Cooldown=60,Duration=6,Status="Shielded"},
+        Elf={Name="Elf",Description="Ancestry associated with storms and keen senses. Increased agility and perception, with less physical endurance.",
+            Multipliers={Health=0.9,Agility=1.15,Perception=1.3,Spirituality=1.1,Intuition=1.1},
+            Skill="Stormstep",Detail="Gain 8 movement speed and spirit sight for 8 seconds.",Cost=20,Cooldown=45,Duration=8,Status="Vision",Speed=8},
+    },
+})
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="17">
+        <Properties>
           <string name="Name">RuntimeConfig</string>
           <string name="Source"><![CDATA[--!strict
 local freeze=require(script.Parent.Freeze)
@@ -929,8 +956,11 @@ return freeze({
         CompleteSequence=2,
         CooldownSeconds=45,
         SpiritualityCost=45,
-        IncompleteDuration=10,
-        CompleteDuration=14,
+        IncompleteDuration=60,
+        CompleteDuration=60,
+        ExposureRange=90,
+        ExposureHealthFraction=0.008,
+        ExposureSanityPerSecond=0.8,
         IncompleteSanityCost=12,
         IncompleteSanityDrainPerSecond=1.2,
         CompleteSanityCost=4,
@@ -944,7 +974,7 @@ return freeze({
                 Id="Seer_Ultimate",
                 Name="Worms of Spirit",
                 IncompleteTitle="Incomplete Saint Form · Vortex of Spirit Worms",
-                CompleteTitle="Complete Mythical Form · Cloak & Tentacles of the Fool",
+                CompleteTitle="Complete Mythical Form · Worms of Spirit",
                 Status="Confused",
                 StatusDuration=3.5,
             },
@@ -952,7 +982,7 @@ return freeze({
                 Id="Marauder_Ultimate",
                 Name="Worms of Time",
                 IncompleteTitle="Incomplete Saint Form · Ringed Swarm of Time Worms",
-                CompleteTitle="Complete Mythical Form · 12-Ringed Clock of Error",
+                CompleteTitle="Complete Mythical Form · Worms of Time",
                 Status="TimeSlow",
                 StatusDuration=5,
             },
@@ -960,7 +990,7 @@ return freeze({
                 Id="Apprentice_Ultimate",
                 Name="Worms of Star",
                 IncompleteTitle="Incomplete Saint Form · Cluster of Star-Door Worms",
-                CompleteTitle="Complete Mythical Form · Astral Door of All Doors",
+                CompleteTitle="Complete Mythical Form · Worms of Star",
                 Status="Stasis",
                 StatusDuration=3.5,
             },
@@ -988,7 +1018,7 @@ return freeze({
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="17">
+      <Item class="ModuleScript" referent="18">
         <Properties>
           <string name="Name">StatData</string>
           <string name="Source"><![CDATA[--!strict
@@ -1028,16 +1058,16 @@ return freeze({BaseStats=bases, TierMultipliers=tiers, GetMultipliers=multiplier
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="18">
+      <Item class="ModuleScript" referent="19">
         <Properties>
           <string name="Name">StatusEffectData</string>
           <string name="Source"><![CDATA[--!strict
 local freeze=require(script.Parent.Freeze)
-return freeze({Madness={Id="Madness", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, BlocksCasting=true, BlocksAdvancement=true}, LostControl={Id="LostControl", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, BlocksCasting=true, BlocksAdvancement=true}, Invulnerable={Id="Invulnerable", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, PreventsDamage=true}, Substitute={Id="Substitute", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, PreventsOneLethalHit=true}, Disguised={Id="Disguised", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, AggroMultiplier=0.2}, Concealed={Id="Concealed", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, AggroMultiplier=0}, Vision={Id="Vision", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, Reveal=true}, CipherSight={Id="CipherSight", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, Decode=true}, Composed={Id="Composed", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, MentalDamageMultiplier=0.5}, Shielded={Id="Shielded", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, DamageMultiplier=0.35}, MythicalForm={Id="MythicalForm", DurationSeconds=14, Stacking="Refresh", MaxStacks=1, DamageMultiplier=0.75}, Threaded={Id="Threaded", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, MoveMultiplier=0.4}, Controlled={Id="Controlled", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, Ally=true}, Confused={Id="Confused", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, BlocksAttacks=true}, Silenced={Id="Silenced", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, BlocksAbilities=true}, Sleep={Id="Sleep", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, BlocksAttacks=true, MoveMultiplier=0}, Parasite={Id="Parasite", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, DamageOverTime=true}, Deceived={Id="Deceived", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, BlocksAttacks=true}, Payload={Id="Payload", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, TriggeredOnAttack=true}, TimeSlow={Id="TimeSlow", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, MoveMultiplier=0.25}, Stasis={Id="Stasis", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, BlocksAttacks=true, MoveMultiplier=0}, Burning={Id="Burning", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, DamageOverTime=true}, Grafted={Id="Grafted", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, ReflectsDamage=true}})
+return freeze({Madness={Id="Madness", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, BlocksCasting=true, BlocksAdvancement=true}, LostControl={Id="LostControl", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, BlocksCasting=true, BlocksAdvancement=true}, Invulnerable={Id="Invulnerable", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, PreventsDamage=true}, Substitute={Id="Substitute", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, PreventsOneLethalHit=true}, Disguised={Id="Disguised", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, AggroMultiplier=0.2}, Concealed={Id="Concealed", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, AggroMultiplier=0}, Vision={Id="Vision", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, Reveal=true}, CipherSight={Id="CipherSight", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, Decode=true}, Composed={Id="Composed", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, MentalDamageMultiplier=0.5}, Shielded={Id="Shielded", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, DamageMultiplier=0.35}, MythicalForm={Id="MythicalForm", DurationSeconds=60, Stacking="Refresh", MaxStacks=1, DamageMultiplier=0.75}, Threaded={Id="Threaded", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, MoveMultiplier=0.4}, Controlled={Id="Controlled", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, Ally=true}, Confused={Id="Confused", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, BlocksAttacks=true}, Silenced={Id="Silenced", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, BlocksAbilities=true}, Sleep={Id="Sleep", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, BlocksAttacks=true, MoveMultiplier=0}, Parasite={Id="Parasite", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, DamageOverTime=true}, Deceived={Id="Deceived", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, BlocksAttacks=true}, Payload={Id="Payload", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, TriggeredOnAttack=true}, TimeSlow={Id="TimeSlow", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, MoveMultiplier=0.25}, Stasis={Id="Stasis", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, BlocksAttacks=true, MoveMultiplier=0}, Burning={Id="Burning", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, DamageOverTime=true}, Grafted={Id="Grafted", DurationSeconds=10, Stacking="Refresh", MaxStacks=1, ReflectsDamage=true}})
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="19">
+      <Item class="ModuleScript" referent="20">
         <Properties>
           <string name="Name">Theme</string>
           <string name="Source"><![CDATA[--!strict
@@ -1252,7 +1282,7 @@ return freeze({
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="20">
+      <Item class="ModuleScript" referent="21">
         <Properties>
           <string name="Name">TingenLayout</string>
           <string name="Source"><![CDATA[--!strict
@@ -1332,7 +1362,7 @@ return require(script.Parent.Freeze)(Layout)
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="21">
+      <Item class="ModuleScript" referent="22">
         <Properties>
           <string name="Name">TingenPlan</string>
           <string name="Source"><![CDATA[--!strict
@@ -5220,7 +5250,7 @@ return require(script.Parent.Freeze)(plan)
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="22">
+      <Item class="ModuleScript" referent="23">
         <Properties>
           <string name="Name">Types</string>
           <string name="Source"><![CDATA[--!strict
@@ -5258,7 +5288,7 @@ return table.freeze({})
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="23">
+      <Item class="ModuleScript" referent="24">
         <Properties>
           <string name="Name">VfxConfig</string>
           <string name="Source"><![CDATA[--!strict
@@ -5400,7 +5430,7 @@ return freeze({
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="24">
+      <Item class="ModuleScript" referent="25">
         <Properties>
           <string name="Name">VisualBudget</string>
           <string name="Source"><![CDATA[--!strict
@@ -5476,7 +5506,7 @@ return Budget
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="25">
+      <Item class="ModuleScript" referent="26">
         <Properties>
           <string name="Name">VisualLayout</string>
           <string name="Source"><![CDATA[--!strict
@@ -5556,7 +5586,7 @@ return table.freeze(Layout)
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="26">
+      <Item class="ModuleScript" referent="27">
         <Properties>
           <string name="Name">VisualModel</string>
           <string name="Source"><![CDATA[--!strict
@@ -5634,11 +5664,11 @@ return table.freeze(Model)
       </Item>
     </Item>
   </Item>
-  <Item class="ServerScriptService" referent="27">
+  <Item class="ServerScriptService" referent="28">
     <Properties>
       <string name="Name">ServerScriptService</string>
     </Properties>
-    <Item class="ModuleScript" referent="28">
+    <Item class="ModuleScript" referent="29">
       <Properties>
         <string name="Name">AdminConfig</string>
         <string name="Source"><![CDATA[--!strict
@@ -5649,7 +5679,7 @@ return table.freeze({AdminUserIds=table.freeze({}),AdminUsernames=table.freeze({
 ]]></string>
       </Properties>
     </Item>
-    <Item class="Script" referent="29">
+    <Item class="Script" referent="30">
       <Properties>
         <string name="Name">Bootstrap</string>
         <token name="RunContext">0</token>
@@ -5688,6 +5718,7 @@ local RateLimiter=require(script.Parent.Domain.RateLimiter)
 local World=require(script.Parent.Services.WorldService)
 local Effects=require(script.Parent.Services.EffectService)
 local CityTravel=require(script.Parent.Services.CityTravel)
+local MythicalExposure=require(script.Parent.Services.MythicalExposure)
 local VisualEvents=require(script.Parent.Services.VisualEventService)
 local VfxConfig=require(ReplicatedStorage.Shared.VfxConfig)
 local domain=Domain.new(data)
@@ -5760,6 +5791,7 @@ local function sendState(player: Player)
         Spirituality=s.Spirituality,MaxSpirituality=s.Stats.Spirituality,Sanity=s.Sanity,Mode=s.Mode,
         Gold=p.Gold,WishCredits=p.WishCredits,Inventory=Domain.Copy(p.Inventory),Loadout=Domain.Copy(p.AbilityLoadout),
         Cooldowns=cooldowns,Statuses=statuses,Dead=s.Dead,RecordedCharges=s.RecordedPower and s.RecordedPower.Charges or 0,RecordedPowerId=s.RecordedPower and s.RecordedPower.Id or false,StolenPower=s.StolenPower or false,
+        RaceId=p.RaceId,RaceChosen=p.RaceChosen,Stats=Domain.Copy(s.Stats),
         Running=s.Running~=false,UltimateStage=mythStage,UltimateRemaining=mythRemaining,
         Casting=s.Pending and s.Pending.Id or false,CastRemaining=s.Pending and math.max(0,s.Pending.EndsAt-now) or 0,CastSerial=s.CastSerial,VisualToken=s.VisualToken or 0})
 end
@@ -5878,7 +5910,22 @@ intent.OnServerEvent:Connect(function(player: Player,action: any,payload: any)
     local s=states[player]
     if not s or not s.Ready or s.Dead or type(payload)~="table" then return end
     local now=os.clock()
-    if action=="CityTravel" then
+    if action=="ChooseRace" then
+        local ok,message=domain:ChooseRace(s,payload.Id,now)
+        if ok then
+            local hum=world:Humanoid(player)
+            if hum then hum.MaxHealth=s.Stats.Health;hum.Health=s.Health end
+            applyStats(player,s,false)
+        end
+        notify(player,message)
+    elseif action=="RacialSkill" then
+        local ok,message=domain:RacialSkill(s,now)
+        if ok then
+            local root=world:Root(player)
+            if root then fx:FireAllClients({Kind="RacialSkill",Position=root.Position,PathwayId=s.Profile.PathwayId or "Seer"}) end
+        end
+        notify(player,message)
+    elseif action=="CityTravel" then
         local ok,message=CityTravel.Go(world,domain,player,s,payload.Id,now)
         stateEvent:FireClient(player,{CityTravel={Ok=ok,Message=message}})
     elseif action=="Buy" then
@@ -6017,6 +6064,10 @@ task.spawn(function()
             domain:Tick(s,dt,now)
             local root=world:Root(player);local hum=world:Humanoid(player)
             if root and hum and hum.Health>0 then
+                local racial=s.Statuses.RacialSkill
+                if racial and racial.ExpiresAt>now and s.Mode=="Normal" then
+                    hum.Health=math.min(hum.MaxHealth,hum.Health+(racial.HealPerSecond or 0)*math.min(dt,1))
+                end
                 hum.WalkSpeed=domain:MoveSpeed(s,now)
                 -- Horizontal movement guard; server-authorized travel has an explicit grace window.
                 if s.LastPosition and now>(s.TeleportGraceUntil or 0) then
@@ -6060,6 +6111,7 @@ task.spawn(function()
                 end)
             end
         end
+        MythicalExposure.Step(world,domain,math.min(dt,1),now)
         world:Step(math.min(dt,1),now);effects:Step(now);visualEvents:Step(now)
         if now>=nextState then
             nextState=now+data.Runtime.StateIntervalSeconds
@@ -6080,11 +6132,11 @@ end)
 ]]></string>
       </Properties>
     </Item>
-    <Item class="Folder" referent="30">
+    <Item class="Folder" referent="31">
       <Properties>
         <string name="Name">Domain</string>
       </Properties>
-      <Item class="ModuleScript" referent="31">
+      <Item class="ModuleScript" referent="32">
         <Properties>
           <string name="Name">AdminProgression</string>
           <string name="Source"><![CDATA[--!strict
@@ -6119,7 +6171,7 @@ return table.freeze(Admin)
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="32">
+      <Item class="ModuleScript" referent="33">
         <Properties>
           <string name="Name">PlayerDomain</string>
           <string name="Source"><![CDATA[--!strict
@@ -6146,17 +6198,18 @@ function Domain.new(data: any, random: (() -> number)?): Domain
 end
 function Domain.Default(self: Domain): any
     local p=copy(self.Data.Progression.DefaultPlayer)
-    p.Sanity=100; p.Gold=0; p.WishCredits=0
+    p.Sanity=100; p.Gold=0; p.WishCredits=0;p.RaceId="Human";p.RaceChosen=false
     for id,potion in pairs(self.Data.Potions.ById) do
         if potion.TargetSequence==9 then p.Inventory[id]=1 end
     end
     return p
 end
 function Domain.Stats(self: Domain, profile: any): any
-    if profile.PathwayId then
-        return copy(self.Data.Pathways[profile.PathwayId].Sequences[profile.Sequence].BaseStats)
-    end
-    return {Health=100,Spirituality=50,Sanity=100,Strength=8,Agility=10,Perception=20,Intuition=8,Resistance=8,SpiritualityRegen=2}
+    local stats=if profile.PathwayId then copy(self.Data.Pathways[profile.PathwayId].Sequences[profile.Sequence].BaseStats)
+        else {Health=100,Spirituality=50,Sanity=100,Strength=8,Agility=10,Perception=20,Intuition=8,Resistance=8,SpiritualityRegen=2}
+    local race=self.Data.Races.ById[profile.RaceId or "Human"] or self.Data.Races.ById.Human
+    for key,mult in pairs(race.Multipliers) do stats[key]=math.round(stats[key]*mult*100)/100 end
+    return stats
 end
 function Domain.Unlocked(self: Domain, p: any, id: any): boolean
     local a=self.Data.Abilities[id]
@@ -6203,6 +6256,10 @@ function Domain.Validate(self: Domain, raw: any): (any?, string?)
             p.AbilityLoadout[slot]=id; seen[id]=true
         end
     end
+    local raceId=raw.RaceId or "Human"
+    if type(raceId)~="string" or not self.Data.Races.ById[raceId] then return nil,"Invalid ancestry" end
+    if raw.RaceChosen~=nil and type(raw.RaceChosen)~="boolean" then return nil,"Invalid ancestry selection" end
+    p.RaceId=raceId;p.RaceChosen=raw.RaceChosen==true
     -- Never trust persisted maxima: rebalance/migration derives these from the sequence.
     p.Stats=self:Stats(p)
     return p,nil
@@ -6266,6 +6323,8 @@ function Domain.MoveSpeed(self: Domain, s: any, now: number): number
     if myth and myth.ExpiresAt>now and r.Ultimate then
         base=math.min(r.MaxRunSpeed or 42,base+(r.Ultimate.SpeedBonus or 4))
     end
+    local racial=s.Statuses.RacialSkill
+    if racial and racial.ExpiresAt>now then base=math.min(r.MaxRunSpeed,base+(racial.Speed or 0)) end
     local mult=1
     for id,st in pairs(s.Statuses or {}) do
         if st.ExpiresAt>now then
@@ -6329,7 +6388,7 @@ function Domain.ActivateUltimate(self: Domain, s: any, now: number): (boolean,st
     if s.Mode~="Normal" then
         return false,"Mythical manifestation overwhelmed your sanity",nil
     end
-    s.Cooldowns.Ultimate=now+u.CooldownSeconds
+    s.Cooldowns.Ultimate=now+duration+u.CooldownSeconds
     s.Statuses.MythicalForm={ExpiresAt=now+duration,Stage=stage,PathwayId=p.PathwayId}
     s.UltimateStage=stage
     local form=u.Forms[p.PathwayId] or u.Forms.Seer
@@ -6458,13 +6517,40 @@ function Domain.BuyNextPotion(self: Domain, s: any): (boolean,string)
     p.Gold-=self.Data.Runtime.NextPotionGoldCost; p.Inventory[id]=1
     return true,"Next potion acquired"
 end
+function Domain.ChooseRace(self: Domain,s: any,id: any,now: number): (boolean,string)
+    if type(id)~="string" or not self.Data.Races.ById[id] then return false,"Unknown ancestry" end
+    if s.Profile.RaceChosen then return false,"Ancestry has already been chosen" end
+    if s.Dead or s.Mode~="Normal" or s.Pending or next(s.Statuses) or now-s.LastCombat<10 then return false,"Choose ancestry outside combat" end
+    local health=s.Health/s.Stats.Health;local spirit=s.Spirituality/s.Stats.Spirituality
+    s.Profile.RaceId=id;s.Profile.RaceChosen=true;s.Stats=self:Stats(s.Profile)
+    s.Health=s.Stats.Health*health;s.Spirituality=s.Stats.Spirituality*spirit
+    return true,"Ancestry chosen: "..self.Data.Races.ById[id].Name
+end
+function Domain.RacialSkill(self: Domain,s: any,now: number): (boolean,string)
+    local race=self.Data.Races.ById[s.Profile.RaceId or "Human"]
+    if not s.Ready or s.Dead or s.Mode~="Normal" or s.Pending then return false,"Cannot use ancestry skill now" end
+    if now<(s.Cooldowns.RacialSkill or 0) then return false,"Ancestry skill is cooling down" end
+    if s.Spirituality<race.Cost then return false,"Not enough spirituality" end
+    s.Spirituality-=race.Cost;s.LastCast=now;s.Cooldowns.RacialSkill=now+race.Cooldown
+    s.Statuses.RacialSkill={ExpiresAt=now+race.Duration,Speed=race.Speed or 0,HealPerSecond=(race.HealFraction or 0)*s.Stats.Health/race.Duration}
+    if race.Status then s.Statuses[race.Status]={ExpiresAt=now+race.Duration} end
+    s.Sanity=math.min(100,s.Sanity+(race.Sanity or 0))
+    return true,race.Skill
+end
+-- Sequence 9 is weaker than 1. Equal/stronger observers are not damaged by this mechanic.
+function Domain.MythicalExposure(self: Domain,sourceSequence: number,targetSequence: number,maxHealth: number,dt: number,complete: boolean): (number,number)
+    local gap=math.max(0,targetSequence-sourceSequence)
+    local scale=gap*(if complete then 1 else 0.5)*math.clamp(dt,0,1)
+    local u=self.Data.Runtime.Ultimate
+    return maxHealth*u.ExposureHealthFraction*scale,u.ExposureSanityPerSecond*scale
+end
 Domain.Copy=copy
 Domain.Finite=finite
 return Domain
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="33">
+      <Item class="ModuleScript" referent="34">
         <Properties>
           <string name="Name">RateLimiter</string>
           <string name="Source"><![CDATA[--!strict
@@ -6487,7 +6573,7 @@ return RateLimiter
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="34">
+      <Item class="ModuleScript" referent="35">
         <Properties>
           <string name="Name">SessionStore</string>
           <string name="Source"><![CDATA[--!strict
@@ -6562,7 +6648,7 @@ return SessionStore
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="35">
+      <Item class="ModuleScript" referent="36">
         <Properties>
           <string name="Name">VisualAccess</string>
           <string name="Source"><![CDATA[--!strict
@@ -6582,11 +6668,11 @@ return table.freeze(Access)
         </Properties>
       </Item>
     </Item>
-    <Item class="Folder" referent="36">
+    <Item class="Folder" referent="37">
       <Properties>
         <string name="Name">Services</string>
       </Properties>
-      <Item class="ModuleScript" referent="37">
+      <Item class="ModuleScript" referent="38">
         <Properties>
           <string name="Name">CityTravel</string>
           <string name="Source"><![CDATA[--!strict
@@ -6640,7 +6726,7 @@ return Travel
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="38">
+      <Item class="ModuleScript" referent="39">
         <Properties>
           <string name="Name">EffectService</string>
           <string name="Source"><![CDATA[--!strict
@@ -7064,7 +7150,56 @@ return Effects
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="39">
+      <Item class="ModuleScript" referent="40">
+        <Properties>
+          <string name="Name">MythicalExposure</string>
+          <string name="Source"><![CDATA[--!strict
+-- Server-owned visibility/exposure: observer facing, range and unobstructed sight.
+-- Client camera claims cannot authorize damage. Character facing approximates gaze.
+local Exposure={}
+function Exposure.Step(world: any,domain: any,dt: number,now: number)
+    local u=world.Data.Runtime.Ultimate
+    for owner,s in pairs(world.States) do
+        local form=s.Statuses and s.Statuses.MythicalForm
+        local root=world:Root(owner)
+        if not s.Ready or s.Dead or s.Mode~="Normal" or not form or form.ExpiresAt<=now or not root then continue end
+        local head=owner.Character and owner.Character:FindFirstChild("Head")
+        local target=if head and head:IsA("BasePart") then head.Position else root.Position
+        local function visible(observer: BasePart,model: Model?): boolean
+            local eye=observer.Position+Vector3.new(0,1.5,0)
+            local delta=target-eye
+            return delta.Magnitude<=u.ExposureRange and (delta.Magnitude<1 or observer.CFrame.LookVector:Dot(delta.Unit)>0.25)
+                and world:LineOfSight(eye,target,model,owner.Character)
+        end
+        for player,victim in pairs(world.States) do
+            if player==owner or not victim.Ready or victim.Dead then continue end
+            local observer=world:Root(player)
+            if not observer or not visible(observer,player.Character) then continue end
+            local health,sanity=domain:MythicalExposure(s.Profile.Sequence,victim.Profile.Sequence or 10,victim.Stats.Health,dt,form.Stage=="Complete")
+            if health>0 then
+                local hum=world:Humanoid(player)
+                if not hum or hum.Health<=0 or (player.Character and player.Character:FindFirstChildOfClass("ForceField")) then continue end
+                world:DamagePlayer(player,health,{Serial="myth:"..owner.UserId,Statuses={}},now)
+                domain:DrainSanity(victim,sanity,now)
+                if now>=(victim.NextExposureNotice or 0) then
+                    victim.NextExposureNotice=now+2
+                    world.FX:FireClient(player,{Kind="MythicalExposure",Position=observer.Position,PathwayId=s.Profile.PathwayId})
+                end
+            end
+        end
+        for _,enemy in pairs(world.Entities) do
+            if enemy.Owner==nil and enemy.Humanoid.Health>0 and visible(enemy.Root,enemy.Model) then
+                local damage=domain:MythicalExposure(s.Profile.Sequence,enemy.Tier,enemy.Humanoid.MaxHealth,dt,form.Stage=="Complete")
+                if damage>0 then world:Damage(enemy,damage,owner,now) end
+            end
+        end
+    end
+end
+return Exposure
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="41">
         <Properties>
           <string name="Name">TingenArchitecture</string>
           <string name="Source"><![CDATA[--!strict
@@ -7240,7 +7375,7 @@ return A
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="40">
+      <Item class="ModuleScript" referent="42">
         <Properties>
           <string name="Name">TingenWorld</string>
           <string name="Source"><![CDATA[--!strict
@@ -7377,7 +7512,7 @@ return City
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="41">
+      <Item class="ModuleScript" referent="43">
         <Properties>
           <string name="Name">VisualEventService</string>
           <string name="Source"><![CDATA[--!strict
@@ -7585,7 +7720,7 @@ return Visual
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="42">
+      <Item class="ModuleScript" referent="44">
         <Properties>
           <string name="Name">WorldArt</string>
           <string name="Source"><![CDATA[--!strict
@@ -7748,7 +7883,7 @@ return Art
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="43">
+      <Item class="ModuleScript" referent="45">
         <Properties>
           <string name="Name">WorldService</string>
           <string name="Source"><![CDATA[--!strict
@@ -8057,20 +8192,20 @@ return World
       </Item>
     </Item>
   </Item>
-  <Item class="StarterGui" referent="44">
+  <Item class="StarterGui" referent="46">
     <Properties>
       <string name="Name">StarterGui</string>
     </Properties>
   </Item>
-  <Item class="StarterPlayer" referent="45">
+  <Item class="StarterPlayer" referent="47">
     <Properties>
       <string name="Name">StarterPlayer</string>
     </Properties>
-    <Item class="StarterPlayerScripts" referent="46">
+    <Item class="StarterPlayerScripts" referent="48">
       <Properties>
         <string name="Name">StarterPlayerScripts</string>
       </Properties>
-      <Item class="LocalScript" referent="47">
+      <Item class="LocalScript" referent="49">
         <Properties>
           <string name="Name">Mysteries</string>
           <string name="Source"><![CDATA[--!strict
@@ -8301,6 +8436,7 @@ UserInputService.InputBegan:Connect(function(input: InputObject,processed: boole
     if promptUI.Current and input.KeyCode==promptUI.Current.KeyboardKeyCode then return end
     if input.KeyCode==T.Input.SprintLeft or input.KeyCode==T.Input.SprintRight then toggleRun();return end
     if input.KeyCode==T.Input.Dash then dash();return end
+    if input.KeyCode==Enum.KeyCode.G then if not modal then send("RacialSkill",{}) end;return end
     if input.KeyCode==T.Input.Ultimate then ultimate();return end
     if input.UserInputType==Enum.UserInputType.MouseButton1 then melee();return end
     for i,key in ipairs(T.Input.Keys) do if input.KeyCode==key then cast(i);return end end
@@ -8326,11 +8462,11 @@ script.Destroying:Connect(function() cityMap:Destroy();testRoom:Close();worldVie
 ]]></string>
         </Properties>
       </Item>
-      <Item class="Folder" referent="48">
+      <Item class="Folder" referent="50">
         <Properties>
           <string name="Name">UI</string>
         </Properties>
-        <Item class="ModuleScript" referent="49">
+        <Item class="ModuleScript" referent="51">
           <Properties>
             <string name="Name">CityMap</string>
             <string name="Source"><![CDATA[--!strict
@@ -8473,7 +8609,7 @@ return Map
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="50">
+        <Item class="ModuleScript" referent="52">
           <Properties>
             <string name="Name">Developer</string>
             <string name="Source"><![CDATA[--!strict
@@ -8596,7 +8732,7 @@ return Developer
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="51">
+        <Item class="ModuleScript" referent="53">
           <Properties>
             <string name="Name">Feedback</string>
             <string name="Source"><![CDATA[--!strict
@@ -8762,7 +8898,7 @@ return Feedback
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="52">
+        <Item class="ModuleScript" referent="54">
           <Properties>
             <string name="Name">Hud</string>
             <string name="Source"><![CDATA[--!strict
@@ -9113,7 +9249,7 @@ return Hud
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="53">
+        <Item class="ModuleScript" referent="55">
           <Properties>
             <string name="Name">Kit</string>
             <string name="Source"><![CDATA[--!strict
@@ -9279,7 +9415,7 @@ return Kit
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="54">
+        <Item class="ModuleScript" referent="56">
           <Properties>
             <string name="Name">Menus</string>
             <string name="Source"><![CDATA[--!strict
@@ -9301,7 +9437,7 @@ function Menus.new(parent: Instance,data: any,callbacks: any): any
     self.Navigation=Kit.New("Frame",self.Card,{BackgroundTransparency=1})
     self.NavLayout=Kit.List(self.Navigation,T.Layout.Modal.NavGap,true)
     self.Tabs={}
-    for index,tab in ipairs({"Journal","Pathway","Inventory"}) do
+    for index,tab in ipairs({"Journal","Pathway","Inventory","Character"}) do
         local b=Kit.Button(self.Navigation,tab,function() self.Tab=tab;self.View="Page";self:Render() end);b.LayoutOrder=index
         self.Tabs[tab]=b
     end
@@ -9335,7 +9471,7 @@ function Menus.Resize(self: any,layout: any)
     self.Wallet.Position=UDim2.fromOffset(m.BodyPad,m.TitleHeight);self.Wallet.Size=UDim2.new(1,-m.BodyPad*2,0,m.Header-m.TitleHeight)
     self.CloseButton.Size=UDim2.fromOffset(m.Close,m.Close);self.CloseButton.Position=UDim2.new(1,-m.Close,0,0)
     self.Navigation.Position=UDim2.fromOffset(m.BodyPad,m.Header);self.Navigation.Size=UDim2.new(1,-m.BodyPad*2,0,m.Tabs)
-    for _,b in pairs(self.Tabs) do b.Size=UDim2.new(1/3,-m.NavGap,1,0);b.TextSize=layout.Profile.NumberSize end
+    for _,b in pairs(self.Tabs) do b.Size=UDim2.new(1/4,-m.NavGap,1,0);b.TextSize=layout.Profile.NumberSize end
     self.Navigation.Visible=self.View=="Page"
     self.PreviewActions.Visible=self.View=="Preview"
     self.PreviewActions.Size=UDim2.new(1,-m.BodyPad*2,0,m.ConfirmHeight);self.PreviewActions.Position=UDim2.new(0,m.BodyPad,1,-m.Footer-m.ConfirmHeight-m.Gap)
@@ -9466,6 +9602,34 @@ function Menus.Render(self: any)
             if self.Callbacks.LowGraphics then self.Callbacks.LowGraphics(self.LowGraphics) end
             self:Render()
         end)
+    elseif self.Tab=="Character" then
+        local race=self.Data.Races.ById[state.RaceId or "Human"]
+        self:TextRow(race.Name.." · Ancestry",true)
+        self:TextRow(race.Description)
+        self:TextRow("Sequence, pathway and ancestry determine these stats. Numerical bonuses are game balance.")
+        for _,stat in ipairs({"Health","Spirituality","Sanity","Strength","Agility","Perception","Intuition","Resistance","SpiritualityRegen"}) do
+            self:TextRow(stat..": "..tostring(state.Stats and state.Stats[stat] or "—"))
+        end
+        self:TextRow("Ancestry passives",true)
+        local keys={};for stat in pairs(race.Multipliers) do table.insert(keys,stat) end;table.sort(keys)
+        for _,stat in ipairs(keys) do self:TextRow(string.format("%s: %+.0f%%",stat,(race.Multipliers[stat]-1)*100)) end
+        if #keys==0 then self:TextRow("Balanced base attributes; no stat penalties.") end
+        self:TextRow(race.Skill.." [G]",true)
+        self:TextRow("Cooldown remaining: "..math.ceil((state.Cooldowns or {}).RacialSkill or 0).."s")
+        self:TextRow(race.Detail.." · "..race.Cost.." spirituality · "..race.Cooldown.."s cooldown")
+        self:ActionRow("Use "..race.Skill.." [G]",function() self.Callbacks.Intent("RacialSkill",{}) end)
+        if not state.RaceChosen then
+            self:TextRow("Choose ancestry once · permanent after confirmation",true)
+            for _,id in ipairs(self.Data.Races.Order) do
+                local option=self.Data.Races.ById[id]
+                self:TextRow(option.Name..": "..option.Description.." Special: "..option.Detail)
+                local label=if self.PendingRace==id then "Confirm permanent choice: "..option.Name else "Choose "..option.Name
+                self:ActionRow(label,function()
+                    if self.PendingRace==id then self.Callbacks.Intent("ChooseRace",{Id=id});self.PendingRace=nil
+                    else self.PendingRace=id;self:Render() end
+                end)
+            end
+        end
     elseif self.Tab=="Pathway" then
         if state.PathwayId then
             local path=self.Data.Pathways[state.PathwayId];local seq=path.Sequences[state.Sequence]
@@ -9535,7 +9699,7 @@ function Menus.Update(self: any,state: any)
     for i=1,T.Layout.Hotbar.Slots do loadout[i]=state.Loadout[i] or "-" end
     local keys={tostring(state.PathwayId),tostring(state.Sequence),table.concat(inventory,","),table.concat(loadout,"|"),
         tostring(state.RecordedPowerId),tostring(state.RecordedCharges),tostring(state.StolenPower),tostring(state.Digestion),tostring(state.ActingProgress),
-        tostring(state.UltimateStage)}
+        tostring(state.UltimateStage),tostring(state.RaceId),tostring(state.RaceChosen),if self.Tab=="Character" then tostring(math.ceil((state.Cooldowns or {}).RacialSkill or 0)) else ""}
     local key=table.concat(keys,";")
     if self.Root.Visible then
         if self.View=="Preview" then
@@ -9560,7 +9724,7 @@ return Menus
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="55">
+        <Item class="ModuleScript" referent="57">
           <Properties>
             <string name="Name">Presentation</string>
             <string name="Source"><![CDATA[--!strict
@@ -9705,6 +9869,12 @@ function Presentation.Event(self: any,event: any)
             {Name="RingBurst",Position=origin,Palette=palette,Options={Scale=C.Dash.Scale*0.82}},
         }
         self.Blocks:Compose(dashSpecs,1,C.Composition.Priority,C.Dash.Life)
+    elseif event.Kind=="MythicalExposure" then
+        if self.Callbacks.Notice then self.Callbacks.Notice("Mythical corruption · turn away or break line of sight") end
+        if not self.Reduced and self.Callbacks.ScreenEdgePulse then self.Callbacks.ScreenEdgePulse() end
+    elseif event.Kind=="RacialSkill" then
+        self.Blocks:Compose({{Name="RisingMotes",Position=event.Position,Palette=event.PathwayId,Options={Scale=1}},
+            {Name="RingBurst",Position=event.Position,Palette=event.PathwayId,Options={Scale=1}}},1,1,1.5)
     elseif event.Kind=="UltimateVisual" then
         local ownerPlayer=if type(event.Owner)=="number" then Players:GetPlayerByUserId(event.Owner) else nil
         local character=if typeof(event.Character)=="Instance" and event.Character:IsA("Model") then event.Character elseif ownerPlayer then ownerPlayer.Character else nil
@@ -9817,7 +9987,7 @@ return Presentation
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="56">
+        <Item class="ModuleScript" referent="58">
           <Properties>
             <string name="Name">Prompts</string>
             <string name="Source"><![CDATA[--!strict
@@ -9965,11 +10135,11 @@ return Prompts
           </Properties>
         </Item>
       </Item>
-      <Item class="Folder" referent="57">
+      <Item class="Folder" referent="59">
         <Properties>
           <string name="Name">Visuals</string>
         </Properties>
-        <Item class="ModuleScript" referent="58">
+        <Item class="ModuleScript" referent="60">
           <Properties>
             <string name="Name">AbilityPresentation</string>
             <string name="Source"><![CDATA[--!strict
@@ -10206,7 +10376,7 @@ return Ability
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="59">
+        <Item class="ModuleScript" referent="61">
           <Properties>
             <string name="Name">AnimationController</string>
             <string name="Source"><![CDATA[--!strict
@@ -10456,7 +10626,7 @@ return AnimationController
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="60">
+        <Item class="ModuleScript" referent="62">
           <Properties>
             <string name="Name">CameraFeel</string>
             <string name="Source"><![CDATA[--!strict
@@ -10603,7 +10773,7 @@ return CameraFeel
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="61">
+        <Item class="ModuleScript" referent="63">
           <Properties>
             <string name="Name">CharacterArt</string>
             <string name="Source"><![CDATA[--!strict
@@ -10633,7 +10803,7 @@ function Outfit.Build(self: any,character: Model,path: string,sequence: number,t
         local ending: {any}={
             {Name="VeilRibbon",Position=endingPosition,Palette=previous.Path,Options={Scale=M.AuraScale*(previous.Scale or 1),Coil=true}},
             {Name="RisingMotes",Position=endingPosition,Palette=previous.Path,Options={Scale=M.AuraScale*(previous.Scale or 1),Intake=true}},
-            {Name="SigilStencil",Position=endingPosition,Palette=previous.Path,Options={Glyph="Worm",LowGlyph="WormLow",Scale=M.AuraScale*(previous.Scale or 1)}},
+            {Name="SigilStencil",Position=endingPosition,Palette=previous.Path,Options={Glyph=if previous.Path=="Seer" then "Worm" elseif previous.Path=="Marauder" then "Clock" else "Arch",LowGlyph=if previous.Path=="Seer" then "WormLow" elseif previous.Path=="Marauder" then "Clock" else "Arch",Scale=M.AuraScale*(previous.Scale or 1)}},
         }
         self.Blocks:Compose(ending,1,2,M.FoolEndLife)
     end
@@ -10896,7 +11066,7 @@ return Outfit
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="62">
+        <Item class="ModuleScript" referent="64">
           <Properties>
             <string name="Name">Choreography</string>
             <string name="Source"><![CDATA[--!strict
@@ -11025,7 +11195,7 @@ return Choreography
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="63">
+        <Item class="ModuleScript" referent="65">
           <Properties>
             <string name="Name">EffectBlocks</string>
             <string name="Source"><![CDATA[--!strict
@@ -11462,7 +11632,7 @@ return Blocks
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="64">
+        <Item class="ModuleScript" referent="66">
           <Properties>
             <string name="Name">EnemyPresentation</string>
             <string name="Source"><![CDATA[--!strict
@@ -11639,7 +11809,7 @@ return Enemies
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="65">
+        <Item class="ModuleScript" referent="67">
           <Properties>
             <string name="Name">HitPresentation</string>
             <string name="Source"><![CDATA[--!strict
@@ -11714,7 +11884,7 @@ return HitPresentation
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="66">
+        <Item class="ModuleScript" referent="68">
           <Properties>
             <string name="Name">MotionSpring</string>
             <string name="Source"><![CDATA[--!strict
@@ -11750,11 +11920,11 @@ return MotionSpring
 ]]></string>
           </Properties>
         </Item>
-        <Item class="Folder" referent="67">
+        <Item class="Folder" referent="69">
           <Properties>
             <string name="Name">PathwayEffects</string>
           </Properties>
-          <Item class="ModuleScript" referent="68">
+          <Item class="ModuleScript" referent="70">
             <Properties>
               <string name="Name">Apprentice</string>
               <string name="Source"><![CDATA[--!strict
@@ -11967,7 +12137,7 @@ return Apprentice
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="69">
+          <Item class="ModuleScript" referent="71">
             <Properties>
               <string name="Name">Marauder</string>
               <string name="Source"><![CDATA[--!strict
@@ -12152,7 +12322,7 @@ return Marauder
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="70">
+          <Item class="ModuleScript" referent="72">
             <Properties>
               <string name="Name">Seer</string>
               <string name="Source"><![CDATA[--!strict
@@ -12344,7 +12514,7 @@ return Seer
             </Properties>
           </Item>
         </Item>
-        <Item class="ModuleScript" referent="71">
+        <Item class="ModuleScript" referent="73">
           <Properties>
             <string name="Name">PerformanceProbe</string>
             <string name="Source"><![CDATA[--!strict
@@ -12406,7 +12576,7 @@ return Probe
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="72">
+        <Item class="ModuleScript" referent="74">
           <Properties>
             <string name="Name">StatusPresentation</string>
             <string name="Source"><![CDATA[--!strict
@@ -12615,7 +12785,7 @@ return Status
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="73">
+        <Item class="ModuleScript" referent="75">
           <Properties>
             <string name="Name">VfxService</string>
             <string name="Source"><![CDATA[--!strict
@@ -12848,7 +13018,7 @@ return Service
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="74">
+        <Item class="ModuleScript" referent="76">
           <Properties>
             <string name="Name">VfxTestRoom</string>
             <string name="Source"><![CDATA[--!strict
@@ -13054,7 +13224,7 @@ return TestRoom
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="75">
+        <Item class="ModuleScript" referent="77">
           <Properties>
             <string name="Name">WorldPresentation</string>
             <string name="Source"><![CDATA[--!strict
@@ -13243,7 +13413,7 @@ return WorldView
       </Item>
     </Item>
   </Item>
-  <Item class="Workspace" referent="76">
+  <Item class="Workspace" referent="78">
     <Properties>
       <string name="Name">Workspace</string>
       <bool name="NeedsPivotMigration">false</bool>

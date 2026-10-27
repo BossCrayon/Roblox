@@ -67,6 +67,12 @@ if '--stats' not in sys.argv and '--catalog' not in sys.argv:
               'adminTests(data,moduleRequire(nodes["Server/Domain/PlayerDomain"]),moduleRequire(nodes["Server/Domain/AdminProgression"]))']
     lines += ['local coreTests=assert(loadstring(' + literal((root/'tests/core.luau').read_text()) + ', "core"))()',
               'coreTests(data,moduleRequire(nodes["Server/Domain/PlayerDomain"]),moduleRequire(nodes["Server/Domain/SessionStore"]),moduleRequire(nodes["Server/Domain/RateLimiter"]))']
+    lines += ['local mythicalTests=assert(loadstring(' + literal((root/'tests/mythical.luau').read_text()) + ', "mythical"))()',
+              '''mythicalTests(data,moduleRequire(nodes["Server/Domain/PlayerDomain"]),function(environment)
+                  moduleOverrides["Server/Services/MythicalExposure"]=environment
+                  cache[nodes["Server/Services/MythicalExposure"]]=nil
+                  return moduleRequire(nodes["Server/Services/MythicalExposure"])
+              end)''']
     lines += ['local effectTests=assert(loadstring(' + literal((root/'tests/effects.luau').read_text()) + ', "effects"))()',
               '''effectTests(data,moduleRequire(nodes["Server/Domain/PlayerDomain"]),function(environment)
                   moduleOverrides["Server/Services/EffectService"]=environment

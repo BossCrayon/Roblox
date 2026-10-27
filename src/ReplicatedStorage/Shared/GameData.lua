@@ -3,6 +3,7 @@
 local freeze = require(script.Parent.Freeze)
 return freeze({
     Runtime=require(script.Parent.RuntimeConfig),
+    Races=require(script.Parent.RaceData),
     Pathways=require(script.Parent.PathwayData),
     Abilities=require(script.Parent.AbilityData),
     Potions=require(script.Parent.PotionData),
