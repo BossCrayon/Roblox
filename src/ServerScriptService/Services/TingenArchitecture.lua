@@ -14,9 +14,16 @@ function A.Build(parent: Instance,spec: any): Model
     local detailed=spec.Id~=nil
     local cathedral=spec.Kind=="Cathedral"
     local factory=spec.Kind=="Factory"
-    local floors=spec.Floors or (if factory then 1 else 2)
-    local h=if cathedral then 44 elseif factory then 23 else floors*10
-    local color=if spec.Id==11 then Color3.fromRGB(111,127,148) elseif cathedral then Color3.fromRGB(77,81,88) else palettes[(spec.Seed or 0)%#palettes+1]
+    local worker=spec.Kind=="Tenement" or spec.Id==15 or spec.Id==55
+    local middle=not worker and (spec.Kind=="Terrace" or spec.Kind=="House") and spec.Id~=5
+    local estate=spec.Kind=="Estate"
+    local ornament=detailed or (spec.Seed or 0)%3==0
+    model:SetAttribute("HousingClass",if worker then "Workers" elseif middle then "MiddleClass" elseif estate then "Estate" else "NonResidential")
+    model:SetAttribute("ClassEvidence",if spec.Id==10 or spec.Id==14 then "Iron Cross Street" elseif spec.Id==11 then "Daffodil Street" elseif spec.Id==35 or spec.Id==52 then "Affluent named estate" else "Inferred architectural treatment")
+    local floors=if worker then 2 elseif middle then (if spec.Id==11 then 2 else 3) else spec.Floors or (if factory then 1 else 2)
+    local storey=if worker or middle then 12 else 10
+    local h=if cathedral then 44 elseif factory then 23 else floors*storey
+    local color=if spec.Id==11 then Color3.fromRGB(111,127,148) elseif cathedral then Color3.fromRGB(77,81,88) elseif worker then Color3.fromRGB(91,59,51) elseif middle then Color3.fromRGB(122,90,67) else palettes[(spec.Seed or 0)%#palettes+1]
     local function b(name: string,size: Vector3,pos: Vector3,c: Color3,solid: boolean?): Part
         return Art.Part(model,name,size,frame*CFrame.new(pos),c,solid)
     end
@@ -44,8 +51,19 @@ function A.Build(parent: Instance,spec: any): Model
 
     local function roof(height: number,hipped: boolean)
         -- Four slopes form a hipped roof; no flat slab or roof overhang into adjacent plots.
-        local rise=if cathedral then 20 else 5
-        if hipped then
+        local rise=if cathedral then 20 elseif worker then 8 elseif middle then 10 else 5
+        if middle and spec.Id~=11 then
+            -- Steep four-sided mansard with a flat upper deck. Slopes stay inside
+            -- the original parcel, so denser streets keep their clearance.
+            local inset=math.min(w,d)*.2
+            local corners={Vector3.new(-w/2,height,-d/2),Vector3.new(w/2,height,-d/2),Vector3.new(w/2,height,d/2),Vector3.new(-w/2,height,d/2)}
+            local upper={Vector3.new(-w/2+inset,height+rise,-d/2+inset),Vector3.new(w/2-inset,height+rise,-d/2+inset),Vector3.new(w/2-inset,height+rise,d/2-inset),Vector3.new(-w/2+inset,height+rise,d/2-inset)}
+            for i=1,4 do
+                local j=i%4+1
+                triangle(corners[i],corners[j],upper[j]);triangle(corners[i],upper[j],upper[i])
+            end
+            b("Mansard deck",Vector3.new(w-2*inset,.4,d-2*inset),Vector3.new(0,height+rise,0),slate,false).Material=Enum.Material.Slate
+        elseif hipped then
             local front=Vector3.new(0,height+rise,-math.max(0,(d-w)/2))
             local rear=Vector3.new(0,height+rise,math.max(0,(d-w)/2))
             local a=Vector3.new(-w/2,height,-d/2);local bp=Vector3.new(w/2,height,-d/2)
@@ -62,6 +80,55 @@ function A.Build(parent: Instance,spec: any): Model
             triangle(Vector3.new(w/2,height,d/2),Vector3.new(-w/2,height,d/2),Vector3.new(0,height+rise,d/2),color)
         end
     end
+    if estate then
+        local pale=Color3.fromRGB(167,159,140);local metal=Color3.fromRGB(79,124,107)
+        local gold=Color3.fromRGB(201,162,77);local dark=Color3.fromRGB(27,29,34)
+        local warm=Color3.fromRGB(232,166,74)
+        local cw=w*.375;local wing=w*.3125;local facade=-d*.2
+        local top=if spec.Id==36 then 28 else 42
+        -- Three joined masses, leaving a front garden and open central doorway.
+        for _,section in ipairs({{0,cw,top},{-(cw+wing)/2,wing,28},{(cw+wing)/2,wing,28}}) do
+            local x,sw,sh=section[1],section[2],section[3]
+            b("Estate rear wall",Vector3.new(sw,sh,1),Vector3.new(x,sh/2,d/2-.5),pale,true).Material=Enum.Material.Limestone
+            for _,side in ipairs({-1,1}) do
+                b("Estate side wall",Vector3.new(1,sh,d*.7),Vector3.new(x+side*(sw/2-.5),sh/2,d*.15),pale,true).Material=Enum.Material.Limestone
+            end
+            if x==0 then
+                for _,side in ipairs({-1,1}) do b("Estate entry surround",Vector3.new((sw-6)/2,sh,1),Vector3.new(side*(sw+6)/4,sh/2,facade),pale,true).Material=Enum.Material.Limestone end
+                b("Estate entry lintel",Vector3.new(6,sh-10,1),Vector3.new(0,(sh+10)/2,facade),pale,true).Material=Enum.Material.Limestone
+            else b("Estate facade",Vector3.new(sw,sh,1),Vector3.new(x,sh/2,facade),pale,true).Material=Enum.Material.Limestone end
+            b("Estate floor",Vector3.new(sw,1,d*.7),Vector3.new(x,0,d*.15),pale,true)
+            for _,side in ipairs({-1,1}) do
+                Art.Part(model,"Estate mansard slope",Vector3.new(sw/2+1,1,d*.7),frame*CFrame.new(x+side*sw/4,sh+3,d*.15)*CFrame.Angles(0,0,-side*math.atan2(6,sw/2)),slate,false).Material=Enum.Material.Slate
+            end
+            triangle(Vector3.new(x-sw/2,sh,facade),Vector3.new(x+sw/2,sh,facade),Vector3.new(x,sh+6,facade),slate)
+            b("Estate cornice",Vector3.new(sw,.7,d*.7),Vector3.new(x,sh,d*.15),pale,false)
+            for floor=1,sh/14 do for _,side in ipairs({-1,1}) do
+                local wx=x+side*sw*.28;local wy=(floor-1)*14+7
+                b("Estate window surround",Vector3.new(4.6,8,.4),Vector3.new(wx,wy,facade-.5),dark,false)
+                b("Estate window glass",Vector3.new(4,7,.5),Vector3.new(wx,wy,facade-.6),if (floor+(spec.Seed or 0))%3==0 then slate else warm,false).Material=Enum.Material.Glass
+                b("Estate window mullion",Vector3.new(.2,7,.6),Vector3.new(wx,wy,facade-.7),dark,false)
+                b("Estate window crossbar",Vector3.new(4,.2,.6),Vector3.new(wx,wy,facade-.7),dark,false)
+            end end
+        end
+        for _,x in ipairs({-cw*.45,-cw*.3,cw*.3,cw*.45}) do
+            b("Marble portico column",Vector3.new(1,12,1),Vector3.new(x,6,-d*.34),pale,true).Material=Enum.Material.Marble
+        end
+        b("Portico entablature",Vector3.new(cw,1,d*.18),Vector3.new(0,12,-d*.3),pale,false)
+        triangle(Vector3.new(-cw/2,12,-d*.4),Vector3.new(cw/2,12,-d*.4),Vector3.new(0,17,-d*.4),pale)
+        b("Verdigris roof cap",Vector3.new(cw*.35,.7,2),Vector3.new(0,top+6.5,d*.15),metal,false).Material=Enum.Material.Metal
+        for _,side in ipairs({-1,1}) do
+            b("Garden bed",Vector3.new(w*.34,.4,d*.18),Vector3.new(side*w*.31,.2,-d*.38),Color3.fromRGB(69,88,59),false).Material=Enum.Material.Grass
+            b("Wrought iron fence rail",Vector3.new((w-8)/2,.2,.2),Vector3.new(side*(w+8)/4,3,-d/2+.4),dark,false)
+            for x=4,w/2-1,2 do
+                b("Fence upright",Vector3.new(.16,4,.16),Vector3.new(side*x,2,-d/2+.4),dark,false).Material=Enum.Material.Metal
+            end
+            local post=b("Gate pier",Vector3.new(.6,5,.6),Vector3.new(side*4,2.5,-d/2+.4),metal,false);post.Material=Enum.Material.Metal
+            b("Brass gate finial",Vector3.new(.8,.8,.8),Vector3.new(side*4,5.4,-d/2+.4),gold,false).Shape=Enum.PartType.Ball
+        end
+        model:SetAttribute("VisualName",spec.Name)
+        return model
+    end
     if not detailed then
         b("Street frontage",Vector3.new(w,h,d),Vector3.new(0,h/2,0),color,true).Material=Enum.Material.Brick
     else
@@ -74,14 +141,16 @@ function A.Build(parent: Instance,spec: any): Model
         b("Rear masonry",Vector3.new(w,h,1),Vector3.new(0,h/2,d/2-.5),color,true).Material=Enum.Material.Brick
         if not cathedral and not factory then
             -- Upper floor leaves a stairwell along the right wall.
-            b("Upper floor",Vector3.new(w-8,1,d-2),Vector3.new(-4,10,0),wood,true)
-            for step=1,16 do b("Stair tread",Vector3.new(6,.625,1.2),Vector3.new(w/2-4,step*.625,-d/2+3+step*1.2),wood,true) end
+            for level=1,floors-1 do
+                b("Upper floor",Vector3.new(w-8,1,d-2),Vector3.new(-4,level*storey,0),wood,true)
+                for step=1,16 do b("Stair tread",Vector3.new(6,storey/16,1.2),Vector3.new(w/2-4,(level-1)*storey+step*storey/16,-d/2+3+step*1.2),wood,true) end
+            end
         end
     end
     b("Stone cornice",Vector3.new(w,.7,d),Vector3.new(0,h-.3,0),stone,false)
-    roof(h,spec.Kind=="Terrace" or spec.Id==11)
+    roof(h,middle or spec.Id==11)
     for floor=1,floors-1 do
-        b("Storey stringcourse",Vector3.new(w,.45,.45),Vector3.new(0,floor*10,-d/2-.2),stone,false)
+        b("Storey stringcourse",Vector3.new(w,.45,.45),Vector3.new(0,floor*storey,-d/2-.2),stone,false)
     end
     if detailed then
         for _,side in ipairs({-1,1}) do
@@ -89,18 +158,44 @@ function A.Build(parent: Instance,spec: any): Model
         end
     end
     if not cathedral then
-        b("Brick chimney",Vector3.new(2.5,if factory then 38 else 7,3),Vector3.new(w/2-3,if factory then 19 else h+4,d/2-4),palettes[4],true).Material=Enum.Material.Brick
+        local chimney=b("Brick chimney",Vector3.new(2.5,if factory then 38 else 7,3),Vector3.new(w/2-3,if factory then 19 else h+4,d/2-4),palettes[4],true);chimney.Material=Enum.Material.Brick
+        if worker and (spec.Seed or 0)%12==0 then
+            local smoke=Instance.new("Smoke");smoke.Name="Coal smoke";smoke.Color=Color3.fromRGB(47,53,68)
+            smoke.Opacity=.12;smoke.RiseVelocity=3;smoke.Size=4;smoke.Parent=chimney
+        end
     end
     if not detailed then b("Front door",Vector3.new(4,8,.2),Vector3.new(0,4,-d/2-.1),wood,false) end
-    local windowColor=if cathedral then Color3.fromRGB(56,69,106) else Color3.fromRGB(114,143,151)
+    local warm=Color3.fromRGB(232,166,74)
+    local iron=Color3.fromRGB(27,29,34)
+    local windowColor=if cathedral then Color3.fromRGB(56,69,106) elseif worker or middle then (if (spec.Seed or 0)%2==0 then warm else Color3.fromRGB(47,53,68)) else Color3.fromRGB(114,143,151)
     for floor=1,(if cathedral then 2 else floors) do
         for _,side in ipairs({-1,1}) do
-            local x=side*w*.28;local y=(floor-1)*10+6
+            local x=side*w*.28;local y=(floor-1)*storey+6
             b("Window sash",Vector3.new(4.6,6,.3),Vector3.new(x,y,-d/2-.1),stone,false)
             b("Window glass",Vector3.new(3.8,5,.35),Vector3.new(x,y,-d/2-.15),windowColor,false).Material=Enum.Material.Glass
-            if detailed then
+            if detailed or ornament and worker then
+                b("Window crossbar",Vector3.new(3.8,.18,.4),Vector3.new(x,y,-d/2-.3),iron,false)
                 b("Window mullion",Vector3.new(.2,5,.4),Vector3.new(x,y,-d/2-.2),wood,false)
                 b("Window sill",Vector3.new(5,.5,.7),Vector3.new(x,y-3,-d/2-.2),stone,false)
+            end
+        end
+    end
+    if worker or middle then
+        b("Door transom",Vector3.new(3.6,1,.25),Vector3.new(0,8.8,-d/2-.16),windowColor,false).Material=Enum.Material.Glass
+        b("Stone doorstep",Vector3.new(5,.5,1),Vector3.new(0,.25,-d/2+.5),stone,true).Material=Enum.Material.Limestone
+        for _,dx in ipairs({-.65,.65}) do
+            b("Paired chimney pot",Vector3.new(.65,2,.65),Vector3.new(w/2-3+dx,h+8,d/2-4),color,false).Material=Enum.Material.Brick
+        end
+        if middle and ornament and spec.Id~=11 then
+            local bay=b("Projecting bay stonework",Vector3.new(6,7,1),Vector3.new(-w*.28,5,-d/2),stone,false);bay.Material=Enum.Material.Limestone
+            b("Bay window",Vector3.new(5,6,.3),Vector3.new(-w*.28,5,-d/2-.55),windowColor,false).Material=Enum.Material.Glass
+            b("Bay mullion",Vector3.new(.2,6,.4),Vector3.new(-w*.28,5,-d/2-.6),iron,false)
+            b("Dormer",Vector3.new(4,4,3),Vector3.new(0,h+3,-d*.22),stone,false)
+            b("Dormer glass",Vector3.new(2.8,2.8,.2),Vector3.new(0,h+3,-d*.22-1.6),windowColor,false).Material=Enum.Material.Glass
+            triangle(Vector3.new(-2.5,h+5,-d*.22-1.7),Vector3.new(2.5,h+5,-d*.22-1.7),Vector3.new(0,h+7,-d*.22-1.7),stone)
+            for step=1,3 do b("Stoop step",Vector3.new(5,step*.3,1),Vector3.new(0,step*.15,-d/2+(step-1)),stone,true) end
+            for _,side in ipairs({-1,1}) do
+                b("Iron stoop rail",Vector3.new(.18,3,2.5),Vector3.new(side*2.6,1.8,-d/2+1.25),iron,false).Material=Enum.Material.Metal
             end
         end
     end

@@ -64,6 +64,19 @@ return function(data: any,load: any,shared: any,e: any)
     check(cathedral and cathedral:FindFirstChild("Black clock tower") and cathedral:FindFirstChild("Stained glass"),"Saint Selena has its documented central dark tower and stained glass")
     check(daffodil and daffodil:FindFirstChild("Balcony rail") and daffodil:FindFirstChild("Upper floor"),"Daffodil terrace retains two storeys and balcony")
     check(blackthorn and blackthorn:FindFirstChild("Reception desk") and blackthorn:FindFirstChild("Arched window frame"),"Earlier Blackthorn office has paired arch frames and upstairs reception")
+    local classes={Workers=0,MiddleClass=0,Estate=0}
+    for _,model in ipairs(world.Folder:GetDescendants()) do
+        local class=model:GetAttribute("HousingClass")
+        if classes[class] then classes[class]+=1 end
+        if model:GetAttribute("MapId")==10 or model:GetAttribute("MapId")==14 then
+            check(class=="Workers" and model:FindFirstChild("Door transom"),"Iron Cross housing uses workers terrace vocabulary")
+        elseif model:GetAttribute("MapId")==35 then
+            check(class=="Estate" and model:FindFirstChild("Marble portico column") and model:FindFirstChild("Brass gate finial"),"Deweyville estate receives stone portico and fenced garden")
+        elseif model:GetAttribute("MapId")==11 then
+            check(class=="MiddleClass" and not model:FindFirstChild("Mansard deck"),"Documented Daffodil roof overrides generic townhouse reference")
+        end
+    end
+    check(classes.Workers>200 and classes.MiddleClass>900 and classes.Estate>=4,"Housing classes populate the city at existing density")
     local parts=0;local prompts=0
     for _,object in ipairs(world.Folder:GetDescendants()) do
         if object:IsA("BillboardGui") then check(object.MaxDistance<=110,"Landmark labels are distance bounded") end
